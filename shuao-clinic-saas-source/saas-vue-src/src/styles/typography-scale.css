@@ -1,0 +1,142 @@
+:root {
+  --ui-font-base: 15px;
+  --ui-font-small: 14px;
+  --ui-font-tiny: 13px;
+  --ui-font-title: 17px;
+  --ui-font-heading: 26px;
+  --ui-line-height-base: 1.6;
+}
+
+html {
+  font-size: var(--ui-font-base);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-size: var(--ui-font-base);
+  line-height: var(--ui-line-height-base);
+}
+
+#app,
+#app input,
+#app textarea,
+#app button,
+#app select {
+  font-size: inherit;
+}
+
+#app .el-button,
+#app .el-input__inner,
+#app .el-textarea__inner,
+#app .el-form-item__label,
+#app .el-form-item__content,
+#app .el-radio-button__inner,
+#app .el-checkbox__label,
+#app .el-select-dropdown__item,
+#app .el-dropdown-menu__item,
+#app .el-tabs__item,
+#app .el-pagination,
+#app .el-dialog__body,
+#app .el-dialog__footer,
+#app .el-table,
+#app .el-table th,
+#app .el-table td,
+#app .el-tag,
+#app .el-card,
+#app .el-message-box__message,
+#app .el-message,
+#app .el-alert__title,
+#app .el-alert__description,
+#app .el-menu-item,
+#app .el-submenu__title {
+  font-size: var(--ui-font-small);
+}
+
+#app .page-kicker,
+#app .h5-page-kicker,
+#app .mini-label,
+#app .summary-label,
+#app .stat-label,
+#app .bs-label,
+#app .info-item span,
+#app .list-card__meta,
+#app .list-card__desc,
+#app .consultation-card__meta,
+#app .consultation-card__desc,
+#app .thumb-card__meta,
+#app .record-expand-item span,
+#app .record-expand-label,
+#app .record-tab-indicator__label,
+#app .record-template-panel__tip,
+#app .record-operation-panel__tip,
+#app .record-operation-suggestion-empty,
+#app .record-operation-empty,
+#app .record-treatment-toolbar__hint,
+#app .treatment-batch-list__tip,
+#app .treatment-price-summary__tip,
+#app .charge-channel-footer,
+#app .image-name,
+#app .image-date,
+#app .image-notes,
+#app .consent-preview-item span,
+#app .consent-preview-sign__meta,
+#app .timeline-detail,
+#app .field-tip,
+#app .hero-card p,
+#app .h5-hero-card p,
+#app .doctor-hero-card p,
+#app .page-subtitle,
+#app .brand-subtitle,
+#app .thumb-card__meta,
+#app .h5-hero-card .summary-label {
+  font-size: var(--ui-font-small) !important;
+}
+
+#app .section-title,
+#app .panel-title,
+#app .chart-title,
+#app .sheet-label,
+#app .record-template-panel__title,
+#app .record-operation-panel__title,
+#app .treatment-batch-list__title,
+#app .consultation-card__name,
+#app .list-card__title,
+#app .thumb-card__title {
+  font-size: var(--ui-font-title) !important;
+}
+
+#app .hero-card h1,
+#app .doctor-hero-card h1,
+#app .hero-card h2,
+#app .h5-hero-card h2 {
+  font-size: var(--ui-font-heading) !important;
+}
+
+#app .page-title {
+  font-size: 22px !important;
+}
+
+#app .brand-title {
+  font-size: 18px !important;
+}
+
+#app .user-name {
+  font-size: 15px !important;
+}
+
+#app .user-role {
+  font-size: var(--ui-font-small) !important;
+}
+
+@media (max-width: 768px) {
+  #app .hero-card h1,
+  #app .doctor-hero-card h1,
+  #app .hero-card h2,
+  #app .h5-hero-card h2 {
+    font-size: 24px !important;
+  }
+
+  #app .page-title {
+    font-size: 20px !important;
+  }
+}

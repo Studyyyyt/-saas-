@@ -1,0 +1,36 @@
+package com.example.springboot;
+
+import com.example.springboot.common.Result;
+import com.example.springboot.controller.TreatmentCatalogController;
+import com.example.springboot.entity.TreatmentCatalog;
+import com.example.springboot.service.TreatmentCatalogService;
+import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+class TreatmentCatalogControllerTest {
+
+    @Test
+    void selectEnabledShouldReturnCatalogList() {
+        TreatmentCatalogService service = mock(TreatmentCatalogService.class);
+        TreatmentCatalogController controller = new TreatmentCatalogController();
+        ReflectionTestUtils.setField(controller, "treatmentCatalogService", service);
+
+        TreatmentCatalog item = new TreatmentCatalog();
+        item.setId(1L);
+        item.setItem_name("超声洁牙");
+        item.setDefault_fee("300");
+        when(service.selectEnabled()).thenReturn(List.of(item));
+
+        Result result = controller.selectEnabled();
+        List<?> data = (List<?>) result.getData();
+
+        assertEquals("200", result.getCode());
+        assertEquals(1, data.size());
+    }
+}

@@ -1,0 +1,55 @@
+spring:
+  config:
+    import: optional:file:./.runtime-openai.yml
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+    clean-disabled: true
+    locations: classpath:db/migration
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DB_URL:jdbc:mysql://127.0.0.1:3306/clinic_system?autoReconnect=true&useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8}
+    username: ${DB_USER:change_me}
+    password: ${DB_PASSWORD:change_me}
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 500MB
+
+openai:
+  enabled: ${OPENAI_ENABLED:false}
+  api-key: ${OPENAI_API_KEY:}
+  base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
+  disable-response-storage: ${OPENAI_DISABLE_RESPONSE_STORAGE:true}
+  business-analysis:
+    model: ${OPENAI_BUSINESS_ANALYSIS_MODEL:gpt-5.4-mini}
+    reasoning-effort: ${OPENAI_BUSINESS_ANALYSIS_REASONING_EFFORT:medium}
+    max-output-tokens: ${OPENAI_BUSINESS_ANALYSIS_MAX_OUTPUT_TOKENS:3000}
+    daily-cron: ${OPENAI_BUSINESS_ANALYSIS_DAILY_CRON:0 10 0 * * *}
+    weekly-cron: ${OPENAI_BUSINESS_ANALYSIS_WEEKLY_CRON:0 20 0 * * MON}
+    monthly-cron: ${OPENAI_BUSINESS_ANALYSIS_MONTHLY_CRON:0 30 0 1 * *}
+    alert-cron: ${OPENAI_BUSINESS_ANALYSIS_ALERT_CRON:0 40 0 * * *}
+
+security:
+  patient-admin-secondary-password: ${SECURITY_PATIENT_ADMIN_SECONDARY_PASSWORD:246810}
+
+wechat:
+  delivery-mode: ${WECHAT_DELIVERY_MODE:mock}
+  app-id: ${WECHAT_APP_ID:}
+  app-secret: ${WECHAT_APP_SECRET:}
+  notice-base-url: ${WECHAT_NOTICE_BASE_URL:https://example.com}
+  admin-report-url: ${WECHAT_ADMIN_REPORT_URL:https://example.com/admin-report-h5}
+  template:
+    appointment-created: ${WECHAT_TEMPLATE_APPOINTMENT_CREATED:}
+    business-analysis: ${WECHAT_TEMPLATE_BUSINESS_ANALYSIS:}
+    business-alert: ${WECHAT_TEMPLATE_BUSINESS_ALERT:}
+  oauth:
+    app-id: ${WECHAT_OAUTH_APP_ID:${WECHAT_APP_ID:}}
+    app-secret: ${WECHAT_OAUTH_APP_SECRET:${WECHAT_APP_SECRET:}}
+  bind:
+    base-url: ${WECHAT_BIND_BASE_URL:https://example.com}
+    success-url: ${WECHAT_BIND_SUCCESS_URL:https://example.com/app/bind-success}
