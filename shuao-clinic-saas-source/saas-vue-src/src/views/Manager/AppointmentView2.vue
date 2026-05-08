@@ -1,6 +1,6 @@
 <template>
   <div class="page-wrap">
-    <div class="page-title-bar">
+    <div v-if="!embedded" class="page-title-bar">
       <div>
         <div class="page-kicker">预约管理</div>
         <h2>日程预约</h2>
@@ -149,7 +149,7 @@
                 >
                   <div class="resize-handle resize-handle--top" @mousedown.stop.prevent="startResize($event, item, 'top')"></div>
                   <div class="appointment-block__title-row">
-                    <div class="appointment-block__name">{{ item.patient_name || '未命名患者' }}</div>
+                    <div class="appointment-block__name" @click.stop="goPatient360(item)">{{ item.patient_name || '未命名患者' }}</div>
                   <div v-if="showAppointmentBadges(item)" class="appointment-block__badges">
                     <span class="appointment-block__status-chip">{{ displayStatus(item.status) }}</span>
                     <span v-if="item.has_arrears" class="appointment-block__arrears-chip">欠费</span>
@@ -324,6 +324,12 @@ const QUICK_STATUS_OPTIONS = [
 
 export default {
   name: 'AppointmentView2',
+  props: {
+    embedded: {
+      type: Boolean,
+      default: false
+    }
+  },
   data() {
     return {
       selectedDate: '',

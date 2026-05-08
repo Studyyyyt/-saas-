@@ -547,7 +547,7 @@ export default {
           patient_phone: this.form.contact_phone,
           appointment_purpose: this.form.chief_project
         })
-        this.$router.push({ path: '/Appointment2', query: { fromConsultation: '1' } }).catch(() => {})
+        this.$router.push({ path: '/Appointment', query: { fromConsultation: '1' } }).catch(() => {})
       }).catch(() => {})
     },
     handleClose() {

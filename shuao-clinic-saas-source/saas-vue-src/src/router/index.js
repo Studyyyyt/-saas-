@@ -6,7 +6,6 @@ import InventoryView2 from "@/views/Manager/InventoryView2.vue";
 import AppointmentView from "@/views/Manager/AppointmentView.vue";
 import TreatmentView from "@/views/Manager/TreatmentView.vue";
 import TreatmentView2 from "@/views/Manager/TreatmentView2.vue";
-import AppointmentView2 from "@/views/Manager/AppointmentView2.vue";
 import FinancialView from "@/views/Manager/FinancialView.vue";
 import DoctorView from "@/views/Manager/DoctorView.vue";
 import AccountView from "@/views/Manager/AccountView.vue";
@@ -112,7 +111,6 @@ const routes = [
       { path: 'Inventory2', redirect: '/material-statistics' },
       { path: 'Inventory3', redirect: '/material-purchases' },
       { path: 'Appointment', name: 'AppointmentView',component: AppointmentView},
-      { path: 'Appointment2',name: 'AppointmentView2',component: AppointmentView2},
       { path: 'Treatment',name: 'TreatmentView',component: TreatmentView},
       { path: 'Treatment2',name: 'TreatmentView2',component: TreatmentView2},
       { path: 'Financial', name: 'FinancialView',component: FinancialView, meta: { allowedRoles: ['admin', 'nurse'] }},

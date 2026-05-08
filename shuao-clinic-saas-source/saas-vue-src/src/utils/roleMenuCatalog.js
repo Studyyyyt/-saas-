@@ -17,7 +17,6 @@ export const ROLE_MENU_CATALOG = [
   { key: '/material-purchases', label: '采购记录', group: '耗材管理', defaultRoles: ['admin', 'nurse'] },
   { key: '/material-statistics', label: '耗材统计', group: '耗材管理', defaultRoles: ['admin'] },
   { key: '/Appointment', label: '预约工作台', group: '接诊与排班', defaultRoles: ['admin', 'doctor', 'nurse'] },
-  { key: '/Appointment2', label: '预约列表', group: '接诊与排班', defaultRoles: ['admin', 'doctor', 'nurse'] },
   { key: '/Doctor', label: '医生排班', group: '接诊与排班', defaultRoles: ['admin', 'doctor', 'nurse'] },
   { key: '/Financial', label: '财务信息', group: '财务管理', defaultRoles: ['admin', 'nurse'] },
   { key: '/Financial2', label: '财务分析', group: '财务管理', defaultRoles: ['admin', 'nurse'] },
@@ -70,7 +69,7 @@ export function findFirstAccessibleMenuKey(session) {
   if (!allowedKeys.length) {
     return '/login1'
   }
-  const preferred = ['/home', '/Consultation', '/Patient', '/Appointment2']
+  const preferred = ['/home', '/Consultation', '/Patient', '/Appointment']
   const matchedPreferred = preferred.find(key => allowed.has(key))
   if (matchedPreferred) {
     return matchedPreferred

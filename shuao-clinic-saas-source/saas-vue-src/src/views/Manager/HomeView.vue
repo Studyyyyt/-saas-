@@ -26,7 +26,7 @@
     <!-- KPI 栏 -->
     <div class="kpi-bar">
       <template v-if="isDoctor">
-        <div class="kpi-card kpi-blue" @click="goPage('/Appointment2')">
+        <div class="kpi-card kpi-blue" @click="goPage('/Appointment')">
           <div class="kpi-card-top">
             <div class="kpi-icon-wrap kpi-icon-blue">
               <span class="kpi-card-icon">🩺</span>
@@ -53,7 +53,7 @@
           </div>
           <div class="kpi-card-value">{{ doctorTodos.pendingFollowups }}</div>
         </div>
-        <div class="kpi-card kpi-amber" @click="goPage('/Appointment2')">
+        <div class="kpi-card kpi-amber" @click="goPage('/Appointment')">
           <div class="kpi-card-top">
             <div class="kpi-icon-wrap kpi-icon-amber">
               <span class="kpi-card-icon">📅</span>
@@ -64,7 +64,7 @@
         </div>
       </template>
       <template v-else>
-        <div class="kpi-card kpi-blue" @click="goPage('/Appointment2')">
+        <div class="kpi-card kpi-blue" @click="goPage('/Appointment')">
           <div class="kpi-card-top">
             <div class="kpi-icon-wrap kpi-icon-blue">
               <span class="kpi-card-icon">📅</span>
@@ -119,9 +119,15 @@
               <span class="ai-tab-dot" :style="{ background: agent.gradient }"></span>
               <span class="ai-tab-name">{{ agent.name }}</span>
             </div>
+            <div class="ai-tab ai-tab-add" title="管理 AI 助手" @click="goPage('/AIAgentConfig')">
+              <span class="ai-tab-dot" style="background: #e5e7eb;"></span>
+              <span class="ai-tab-name"><i class="el-icon-setting"></i> 管理</span>
+            </div>
           </div>
-          <div class="ai-header-action" title="清空对话" @click="clearChat">
-            <i class="el-icon-delete"></i>
+          <div class="ai-header-actions">
+            <div class="ai-header-action" title="清空对话" @click="clearChat">
+              <i class="el-icon-delete"></i>
+            </div>
           </div>
         </div>
 
@@ -221,7 +227,7 @@ import axios from 'axios'
 import * as echarts from 'echarts'
 import { ADMIN_SESSION_EVENT, getAdminSession } from '@/utils/adminSession'
 import { loadAgentsFromStorage } from '@/views/Manager/AIAgentConfigView'
-import { streamChat } from '@/utils/aiStreamClient'
+import { streamChat, fetchAgentConfigs } from '@/utils/aiStreamClient'
 import { fetchCachedResource } from '@/utils/offline/apiClient'
 import { savePendingAppointmentPatient } from '@/utils/appointmentPrefill'
 
@@ -284,11 +290,8 @@ export default {
       // AI 相关
       chatInput: '',
       showAgentMenu: false,
-      currentAgent: (() => {
-        const list = loadAgentsFromStorage()
-        return list[0] || { id: 'default' }
-      })(),
-      agents: loadAgentsFromStorage(),
+      currentAgent: { id: 'default', name: '智能助手', gradient: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)' },
+      agents: [],
       chatMessages: [
         {
           role: 'assistant',
@@ -380,6 +383,7 @@ export default {
     this.syncUserFromStorage()
     this.updateTime()
     this.loadDashboard()
+    this.loadAgents()
     this.configureDashboardRefresh()
     this.timer = setInterval(this.updateTime, 1000)
     window.addEventListener(ADMIN_SESSION_EVENT, this.handleIdentityRefresh)
@@ -574,7 +578,7 @@ export default {
         patient_name: reminder.patient_name || '',
         appointment_purpose: reminder.latest_treatment || ''
       })
-      this.$router.push('/Appointment2')
+      this.$router.push('/Appointment')
     },
     async markReminderCompleted(reminder) {
       if (!reminder || !reminder.key) return
@@ -939,6 +943,37 @@ export default {
           time: this.formatChatTime()
         }
       ]
+    },
+    async loadAgents() {
+      try {
+        const accountId = this.user.id || null
+        const res = await fetchAgentConfigs(accountId)
+        if (res.code === '200' && Array.isArray(res.data) && res.data.length > 0) {
+          this.agents = res.data.map(item => ({
+            id: item.agentKey || String(item.id),
+            name: item.name,
+            icon: item.icon,
+            desc: item.description || '',
+            gradient: item.gradient,
+            chips: Array.isArray(item.chips) ? item.chips : [],
+            systemPrompt: item.systemPrompt || '',
+            enabledTools: Array.isArray(item.enabledTools) ? item.enabledTools : []
+          }))
+        } else {
+          const { loadAgentsFromStorage } = await import('@/views/Manager/AIAgentConfigView')
+          this.agents = loadAgentsFromStorage()
+        }
+        if (this.agents.length > 0 && (!this.currentAgent || this.currentAgent.id === 'default')) {
+          this.currentAgent = this.agents[0]
+        }
+      } catch (e) {
+        console.warn('加载 AI Agent 配置失败', e)
+        const { loadAgentsFromStorage } = await import('@/views/Manager/AIAgentConfigView')
+        this.agents = loadAgentsFromStorage()
+        if (this.agents.length > 0) {
+          this.currentAgent = this.agents[0]
+        }
+      }
     },
     switchAgent(agent) {
       if (this.currentAgent.id === agent.id) return
@@ -1373,6 +1408,12 @@ export default {
   line-height: 1;
 }
 
+.ai-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .ai-header-action {
   width: 30px;
   height: 30px;
@@ -1384,12 +1425,22 @@ export default {
   color: var(--text-muted);
   transition: all 0.2s ease;
   flex-shrink: 0;
-  margin-left: 8px;
 }
 
 .ai-header-action:hover {
   background: var(--bg-hover);
   color: var(--danger);
+}
+
+.ai-tab-add {
+  color: var(--text-muted);
+  border: 1px dashed var(--border-color);
+}
+
+.ai-tab-add:hover {
+  background: var(--bg-hover);
+  color: var(--text-regular);
+  border-style: solid;
 }
 
 /* 消息区 */

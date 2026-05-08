@@ -15,16 +15,17 @@
           </div>
         </div>
 
-        <!-- 基础信息区块 -->
-        <el-card class="section-card" shadow="never">
-          <el-collapse v-model="activeCollapse" @change="handleCollapseChange">
-            <el-collapse-item name="basic">
-              <template slot="title">
-                <div class="collapse-title">
-                  <i class="el-icon-user-solid collapse-icon" />
-                  <span>基础信息</span>
+        <div class="editor-layout apple-page-enter">
+          <div class="editor-main">
+            <!-- 基础信息区块 -->
+            <el-card class="section-card apple-page-enter-delay-1" shadow="never">
+              <div class="section-header">
+                <div class="section-header__main">
+                  <div class="section-header__bar"></div>
+                  <i class="el-icon-user-solid section-header__icon"></i>
+                  <span class="section-header__title">基础信息</span>
                 </div>
-              </template>
+              </div>
               <div class="section-body">
                 <el-row :gutter="20">
                   <el-col :xs="24" :sm="12" :md="8" :lg="6">
@@ -91,20 +92,20 @@
                   </el-col>
                 </el-row>
               </div>
-            </el-collapse-item>
-          </el-collapse>
-        </el-card>
+            </el-card>
 
-        <!-- 主诉与现病史区块 -->
-        <el-card class="section-card" shadow="never">
-          <el-collapse v-model="activeCollapse">
-            <el-collapse-item name="complaint">
-              <template slot="title">
-                <div class="collapse-title">
-                  <i class="el-icon-s-order collapse-icon" />
-                  <span>主诉与现病史</span>
+            <!-- 主诉与现病史区块 -->
+            <el-card class="section-card apple-page-enter-delay-2" shadow="never">
+              <div class="section-header">
+                <div class="section-header__main">
+                  <div class="section-header__bar"></div>
+                  <i class="el-icon-s-order section-header__icon"></i>
+                  <span class="section-header__title">主诉与现病史</span>
                 </div>
-              </template>
+                <el-button size="mini" type="primary" plain round @click="aiAssist('complaint')">
+                  <i class="el-icon-magic-stick"></i> AI 辅助
+                </el-button>
+              </div>
               <div class="section-body">
                 <el-form-item prop="chief_complaint" label="主诉" label-width="80px">
                   <el-input v-model="form.chief_complaint" type="textarea" :rows="2" placeholder="请输入主诉" />
@@ -131,20 +132,20 @@
                   <el-input v-model="form.general_condition" placeholder="例如：体健" round />
                 </el-form-item>
               </div>
-            </el-collapse-item>
-          </el-collapse>
-        </el-card>
+            </el-card>
 
-        <!-- 检查与诊断区块 -->
-        <el-card class="section-card" shadow="never">
-          <el-collapse v-model="activeCollapse">
-            <el-collapse-item name="examination">
-              <template slot="title">
-                <div class="collapse-title">
-                  <i class="el-icon-search collapse-icon" />
-                  <span>检查与诊断</span>
+            <!-- 检查与诊断区块 -->
+            <el-card class="section-card apple-page-enter-delay-3" shadow="never">
+              <div class="section-header">
+                <div class="section-header__main">
+                  <div class="section-header__bar"></div>
+                  <i class="el-icon-search section-header__icon"></i>
+                  <span class="section-header__title">检查与诊断</span>
                 </div>
-              </template>
+                <el-button size="mini" type="primary" plain round @click="aiAssist('diagnosis')">
+                  <i class="el-icon-magic-stick"></i> AI 辅助
+                </el-button>
+              </div>
               <div class="section-body">
                 <el-form-item label="检查" label-width="80px">
                   <el-input v-model="form.examination" type="textarea" :rows="3" placeholder="请输入检查内容" />
@@ -162,21 +163,21 @@
                   <div class="sheet-field-hint">开启牙位同步时，会优先使用"本次操作"里的牙位集合。</div>
                 </el-form-item>
               </div>
-            </el-collapse-item>
-          </el-collapse>
-        </el-card>
+            </el-card>
 
-        <!-- 本次操作区块 -->
-        <el-card class="section-card" shadow="never">
-          <el-collapse v-model="activeCollapse">
-            <el-collapse-item name="operation">
-              <template slot="title">
-                <div class="collapse-title">
-                  <i class="el-icon-s-tools collapse-icon" />
-                  <span>本次操作</span>
+            <!-- 本次操作区块 -->
+            <el-card class="section-card apple-page-enter-delay-4" shadow="never">
+              <div class="section-header">
+                <div class="section-header__main">
+                  <div class="section-header__bar"></div>
+                  <i class="el-icon-s-tools section-header__icon"></i>
+                  <span class="section-header__title">本次操作</span>
                   <el-tag v-if="form.operation_items && form.operation_items.length" size="mini" type="primary" style="margin-left: 8px;">{{ form.operation_items.length }} 条</el-tag>
                 </div>
-              </template>
+                <el-button size="mini" type="primary" plain round @click="aiAssist('operation')">
+                  <i class="el-icon-magic-stick"></i> AI 辅助
+                </el-button>
+              </div>
               <div class="section-body">
                 <div class="operation-panel">
                   <div class="operation-panel__head">
@@ -256,20 +257,20 @@
                   <div v-else class="operation-empty">未勾选任何操作时，病历仍可按原方式保存。</div>
                 </div>
               </div>
-            </el-collapse-item>
-          </el-collapse>
-        </el-card>
+            </el-card>
 
-        <!-- 治疗计划区块 -->
-        <el-card class="section-card" shadow="never">
-          <el-collapse v-model="activeCollapse">
-            <el-collapse-item name="treatment">
-              <template slot="title">
-                <div class="collapse-title">
-                  <i class="el-icon-s-claim collapse-icon" />
-                  <span>治疗计划</span>
+            <!-- 治疗计划区块 -->
+            <el-card class="section-card apple-page-enter-delay-5" shadow="never">
+              <div class="section-header">
+                <div class="section-header__main">
+                  <div class="section-header__bar"></div>
+                  <i class="el-icon-s-claim section-header__icon"></i>
+                  <span class="section-header__title">治疗计划</span>
                 </div>
-              </template>
+                <el-button size="mini" type="primary" plain round @click="aiAssist('treatment')">
+                  <i class="el-icon-magic-stick"></i> AI 辅助
+                </el-button>
+              </div>
               <div class="section-body">
                 <el-form-item label="治疗方案" label-width="80px">
                   <el-input v-model="form.treatment_plan" type="textarea" :rows="2" placeholder="请输入治疗方案" />
@@ -282,20 +283,17 @@
                   <el-input v-model="form.treatment" type="textarea" :rows="3" placeholder="治疗文稿" @input="handleTreatmentInput" />
                 </el-form-item>
               </div>
-            </el-collapse-item>
-          </el-collapse>
-        </el-card>
+            </el-card>
 
-        <!-- 医嘱区块 -->
-        <el-card class="section-card" shadow="never">
-          <el-collapse v-model="activeCollapse">
-            <el-collapse-item name="advice">
-              <template slot="title">
-                <div class="collapse-title">
-                  <i class="el-icon-first-aid-kit collapse-icon" />
-                  <span>医嘱与其他</span>
+            <!-- 医嘱区块 -->
+            <el-card class="section-card apple-page-enter-delay-6" shadow="never">
+              <div class="section-header">
+                <div class="section-header__main">
+                  <div class="section-header__bar"></div>
+                  <i class="el-icon-first-aid-kit section-header__icon"></i>
+                  <span class="section-header__title">医嘱与其他</span>
                 </div>
-              </template>
+              </div>
               <div class="section-body">
                 <el-form-item label="医嘱" label-width="80px">
                   <el-input v-model="form.medical_advice" type="textarea" :rows="2" placeholder="请输入医嘱" />
@@ -378,75 +376,100 @@
                   <el-input v-model="form.notes" type="textarea" :rows="3" placeholder="补充说明、随访提醒或内部备注" />
                 </el-form-item>
               </div>
-            </el-collapse-item>
-          </el-collapse>
-        </el-card>
-
-        <!-- 模板库侧边栏（桌面端右侧浮动） -->
-        <el-card class="template-card section-card" shadow="never">
-          <div class="panel-head">
-            <div>
-              <div class="panel-title">病历模板库</div>
-              <div class="panel-tip">按分类选择模板，点击后立即回填到右侧录入区。</div>
-            </div>
-            <el-tag size="small" effect="plain">{{ medicalRecordTemplateOptions.length }} 个模板</el-tag>
+            </el-card>
           </div>
 
-          <el-input
-            v-model="templateKeyword"
-            clearable
-            placeholder="搜索模板名称 / 诊断"
-            prefix-icon="el-icon-search"
-            class="template-search"
-            round
-          />
-
-          <div class="template-category-bar">
-            <span>当前分类</span>
-            <el-select v-model="activeTemplateCategory" placeholder="选择分类" size="small" style="width:150px">
-              <el-option v-for="category in templateCategories" :key="category" :label="category" :value="category" />
-            </el-select>
-          </div>
-
-          <div class="template-tree-wrap">
-            <el-tree
-              :data="templateTreeData"
-              node-key="nodeKey"
-              default-expand-all
-              :expand-on-click-node="false"
-              @node-click="handleTemplateNodeClick"
-            >
-              <span slot-scope="{ data }" class="template-tree-node">
-                <span class="template-tree-node__label">
-                  <i :class="data.isTemplate ? 'el-icon-document' : 'el-icon-folder-opened'" />
-                  <span>{{ data.label }}</span>
-                </span>
-                <span v-if="!data.isTemplate" class="template-tree-node__count">{{ data.children.length }}</span>
-              </span>
-            </el-tree>
-            <el-empty v-if="!templateTreeData.length" description="暂无匹配模板"></el-empty>
-          </div>
-
-          <div class="template-actions">
-            <el-button type="success" plain round @click="saveCurrentAsTemplate">保存为模板</el-button>
-            <el-button plain round :disabled="!selectedTemplateId" @click="deleteSelectedTemplate">删除模板</el-button>
-          </div>
-
-          <div class="template-preview-card">
-            <div class="template-preview-card__title">模板预览</div>
-            <template v-if="selectedTemplatePreview">
-              <div class="template-preview-card__name">{{ selectedTemplatePreview.template_name }}</div>
-              <div class="template-preview-card__meta">
-                {{ selectedTemplatePreview.template_category || '常用模板' }} · {{ selectedTemplatePreview.record_type || '初诊' }}
+          <aside class="editor-sidebar">
+            <!-- AI 智能助手面板 -->
+            <el-card class="ai-panel-card apple-page-enter-delay-2" shadow="never">
+              <div class="ai-panel-header">
+                <div class="ai-panel-icon"><i class="el-icon-cpu"></i></div>
+                <div class="ai-panel-meta">
+                  <div class="ai-panel-title">AI 病历助手</div>
+                  <div class="ai-panel-desc">智能补全病历、生成治疗方案与定价</div>
+                </div>
+                <el-tag size="mini" type="primary" effect="plain" round><i class="el-icon-magic-stick" style="margin-right:4px;"></i>智能</el-tag>
               </div>
-              <div v-for="section in templatePreviewSections" :key="section.key" class="template-preview-row">
-                <span>{{ section.label }}</span>
-                <strong>{{ section.value }}</strong>
+              <div class="ai-panel-chips">
+                <span class="ai-chip" @click="aiAssist('complaint')"><i class="el-icon-document"></i>补全病历</span>
+                <span class="ai-chip" @click="aiAssist('diagnosis')"><i class="el-icon-first-aid-kit"></i>辅助诊断</span>
+                <span class="ai-chip" @click="aiAssist('treatment')"><i class="el-icon-s-claim"></i>生成方案</span>
+                <span class="ai-chip" @click="aiAssist('operation')"><i class="el-icon-coin"></i>推荐价格</span>
               </div>
-            </template>
-            <div v-else class="template-preview-card__empty">选中模板后，这里会展示模板摘要。</div>
-          </div>
-        </el-card>
+              <div class="ai-panel-input" @click="aiAssist('')">
+                <i class="el-icon-chat-dot-round"></i>
+                <span>向 AI 助手提问...</span>
+                <i class="el-icon-arrow-right"></i>
+              </div>
+            </el-card>
+
+            <!-- 模板库 -->
+            <el-card class="template-card section-card" shadow="never">
+              <div class="panel-head">
+                <div>
+                  <div class="panel-title">病历模板库</div>
+                  <div class="panel-tip">按分类选择模板，点击后立即回填到右侧录入区。</div>
+                </div>
+                <el-tag size="small" effect="plain">{{ medicalRecordTemplateOptions.length }} 个模板</el-tag>
+              </div>
+
+              <el-input
+                v-model="templateKeyword"
+                clearable
+                placeholder="搜索模板名称 / 诊断"
+                prefix-icon="el-icon-search"
+                class="template-search"
+                round
+              />
+
+              <div class="template-category-bar">
+                <span>当前分类</span>
+                <el-select v-model="activeTemplateCategory" placeholder="选择分类" size="small" style="width:150px">
+                  <el-option v-for="category in templateCategories" :key="category" :label="category" :value="category" />
+                </el-select>
+              </div>
+
+              <div class="template-tree-wrap">
+                <el-tree
+                  :data="templateTreeData"
+                  node-key="nodeKey"
+                  default-expand-all
+                  :expand-on-click-node="false"
+                  @node-click="handleTemplateNodeClick"
+                >
+                  <span slot-scope="{ data }" class="template-tree-node">
+                    <span class="template-tree-node__label">
+                      <i :class="data.isTemplate ? 'el-icon-document' : 'el-icon-folder-opened'" />
+                      <span>{{ data.label }}</span>
+                    </span>
+                    <span v-if="!data.isTemplate" class="template-tree-node__count">{{ data.children.length }}</span>
+                  </span>
+                </el-tree>
+                <el-empty v-if="!templateTreeData.length" description="暂无匹配模板"></el-empty>
+              </div>
+
+              <div class="template-actions">
+                <el-button type="success" plain round @click="saveCurrentAsTemplate">保存为模板</el-button>
+                <el-button plain round :disabled="!selectedTemplateId" @click="deleteSelectedTemplate">删除模板</el-button>
+              </div>
+
+              <div class="template-preview-card">
+                <div class="template-preview-card__title">模板预览</div>
+                <template v-if="selectedTemplatePreview">
+                  <div class="template-preview-card__name">{{ selectedTemplatePreview.template_name }}</div>
+                  <div class="template-preview-card__meta">
+                    {{ selectedTemplatePreview.template_category || '常用模板' }} · {{ selectedTemplatePreview.record_type || '初诊' }}
+                  </div>
+                  <div v-for="section in templatePreviewSections" :key="section.key" class="template-preview-row">
+                    <span>{{ section.label }}</span>
+                    <strong>{{ section.value }}</strong>
+                  </div>
+                </template>
+                <div v-else class="template-preview-card__empty">选中模板后，这里会展示模板摘要。</div>
+              </div>
+            </el-card>
+          </aside>
+        </div>
 
         <!-- 底部操作栏 -->
         <div class="editor-footer">
@@ -488,6 +511,22 @@
           </div>
         </div>
       </div>
+
+      <!-- AI 助手快速入口 -->
+      <el-card class="ai-list-panel" shadow="never">
+        <div class="ai-list-panel__main">
+          <div class="ai-list-panel__icon"><i class="el-icon-cpu"></i></div>
+          <div class="ai-list-panel__meta">
+            <div class="ai-list-panel__title">AI 病历助手</div>
+            <div class="ai-list-panel__desc">智能分析病历数据、辅助诊断建议、批量生成治疗方案</div>
+          </div>
+        </div>
+        <div class="ai-list-panel__actions">
+          <el-button size="small" type="primary" plain round @click="aiAssist('summary')"><i class="el-icon-data-analysis"></i> 病历数据分析</el-button>
+          <el-button size="small" type="primary" plain round @click="aiAssist('diagnosis')"><i class="el-icon-first-aid-kit"></i> 智能诊断建议</el-button>
+          <el-button size="small" type="primary" plain round @click="aiAssist('treatment')"><i class="el-icon-s-claim"></i> 批量生成方案</el-button>
+        </div>
+      </el-card>
 
       <!-- 查询条件 -->
       <el-card class="query-card" shadow="never">
@@ -1679,6 +1718,16 @@ export default {
     },
     handleCollapseChange(val) {
       this.activeCollapse = val
+    },
+    aiAssist(type) {
+      const messages = {
+        complaint: 'AI 正在分析患者信息，为您补全病历内容...',
+        diagnosis: 'AI 正在根据检查结果生成辅助诊断建议...',
+        treatment: 'AI 正在根据操作项目生成治疗方案与价格...',
+        operation: 'AI 正在推荐关联治疗项目与报价...',
+        summary: 'AI 正在分析所有病历数据，生成统计洞察...'
+      }
+      this.$message.info(messages[type] || 'AI 功能开发中')
     }
   }
 }
@@ -2603,6 +2652,231 @@ export default {
   .treatment-draft-toolbar {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+/* 双栏布局 */
+.editor-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 16px;
+  align-items: start;
+}
+.editor-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.editor-sidebar {
+  position: sticky;
+  top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-self: start;
+}
+
+/* 区块标题 */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--apple-divider);
+}
+.section-header__main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-header__bar {
+  width: 4px;
+  height: 18px;
+  border-radius: 2px;
+  background: var(--apple-accent);
+}
+.section-header__icon {
+  font-size: 16px;
+  color: var(--apple-text-secondary);
+}
+.section-header__title {
+  font-size: var(--apple-text-lg);
+  font-weight: var(--apple-weight-semibold);
+  color: var(--apple-text-primary);
+}
+
+/* AI 面板 */
+.ai-panel-card {
+  background: linear-gradient(135deg, #f0f7ff 0%, #e8f0fe 100%);
+  border: 1px solid rgba(37, 99, 235, 0.12);
+}
+.ai-panel-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.ai-panel-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--apple-accent), #3b82f6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.ai-panel-meta {
+  flex: 1;
+  min-width: 0;
+}
+.ai-panel-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--apple-text-primary);
+}
+.ai-panel-desc {
+  font-size: 12px;
+  color: var(--apple-text-secondary);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+.ai-panel-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.ai-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 100px;
+  background: #ffffff;
+  border: 1px solid rgba(37, 99, 235, 0.18);
+  color: var(--apple-accent);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.ai-chip:hover {
+  background: var(--apple-accent);
+  color: #ffffff;
+  border-color: var(--apple-accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.15);
+}
+.ai-panel-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--apple-radius-md);
+  background: #ffffff;
+  border: 1px solid rgba(37, 99, 235, 0.15);
+  color: var(--apple-text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.ai-panel-input:hover {
+  border-color: var(--apple-accent);
+  color: var(--apple-accent);
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.08);
+}
+.ai-panel-input span {
+  flex: 1;
+}
+.ai-panel-input i:first-child {
+  color: var(--apple-accent);
+  font-size: 15px;
+}
+.ai-panel-input i:last-child {
+  font-size: 13px;
+}
+
+/* section-card 微调 */
+.section-card {
+  border: 1px solid var(--apple-border);
+  box-shadow: var(--apple-shadow-sm);
+}
+.section-card:hover {
+  box-shadow: var(--apple-shadow-md);
+}
+
+/* 列表页 AI 面板 */
+.ai-list-panel {
+  background: linear-gradient(135deg, #f0f7ff 0%, #e8f0fe 100%);
+  border: 1px solid rgba(37, 99, 235, 0.12);
+}
+.ai-list-panel ::v-deep .el-card__body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 16px 20px;
+}
+.ai-list-panel__main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ai-list-panel__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--apple-accent), #3b82f6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.ai-list-panel__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--apple-text-primary);
+}
+.ai-list-panel__desc {
+  font-size: 13px;
+  color: var(--apple-text-secondary);
+  margin-top: 2px;
+}
+.ai-list-panel__actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* 响应式 */
+@media (max-width: 992px) {
+  .editor-layout {
+    grid-template-columns: 1fr;
+  }
+  .editor-sidebar {
+    position: static;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .ai-panel-card {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 768px) {
+  .editor-sidebar {
+    grid-template-columns: 1fr;
+  }
+  .section-header .el-button span {
+    display: none;
   }
 }
 </style>

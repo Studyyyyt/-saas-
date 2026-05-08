@@ -250,7 +250,6 @@ export default {
         { label: '患者列表', path: '/Patient' },
         { label: '病历工作台', path: '/MedicalRecord' },
         { label: '预约工作台', path: '/Appointment' },
-        { label: '预约列表', path: '/Appointment2' },
         { label: '回访管理', path: '/Followup' },
         {
           group: 'consultation',

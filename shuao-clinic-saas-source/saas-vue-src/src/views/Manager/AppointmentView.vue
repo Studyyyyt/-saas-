@@ -116,7 +116,26 @@
     <div v-show="viewMode === 'calendar'" class="calendar-view">
       <el-card shadow="never" class="calendar-card">
         <div class="calendar-header">
-          <div class="calendar-week-label">本周预约排班</div>
+          <div class="calendar-nav-group">
+            <el-button size="small" class="btn-week-nav" @click="prevWeek">
+              <i class="el-icon-arrow-left"></i> 上一周
+            </el-button>
+            <el-date-picker
+              v-model="calendarPickDate"
+              type="date"
+              value-format="yyyy-MM-dd"
+              format="yyyy-MM-dd"
+              placeholder="选择日期跳转"
+              size="small"
+              style="width: 140px"
+              @change="onPickDate"
+            ></el-date-picker>
+            <div class="calendar-week-label">{{ currentWeekLabel }}</div>
+            <el-button size="small" class="btn-week-nav" @click="nextWeek">
+              下一周 <i class="el-icon-arrow-right"></i>
+            </el-button>
+            <el-button size="small" class="btn-today" @click="resetWeek">本周</el-button>
+          </div>
           <div class="calendar-legend">
             <span class="legend-item"><span class="legend-dot legend-dot--arrived"></span>已到诊</span>
             <span class="legend-item"><span class="legend-dot legend-dot--pending"></span>待就诊</span>
@@ -323,6 +342,8 @@ export default {
       patientSuggestionBlurTimer: null,
       stepActive: 0,
       doctorList: [],
+      calendarWeekOffset: 0,
+      calendarPickDate: '',
       slotHeight: 36,
       resizingAppt: null,
       resizeStartY: 0,
@@ -353,8 +374,9 @@ export default {
     weekDays() {
       const days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
       const today = new Date()
+      // 基于 calendarWeekOffset 计算周起始日
       const weekStart = new Date(today)
-      weekStart.setDate(today.getDate() - today.getDay())
+      weekStart.setDate(today.getDate() - today.getDay() + this.calendarWeekOffset * 7)
       const result = []
       for (let i = 0; i < 7; i++) {
         const d = new Date(weekStart)
@@ -368,6 +390,17 @@ export default {
         })
       }
       return result
+    },
+    currentWeekLabel() {
+      const days = this.weekDays
+      if (!days.length) return ''
+      const start = days[0].fullDate
+      const end = days[6].fullDate
+      const today = new Date()
+      const weekStart = new Date(today)
+      weekStart.setDate(today.getDate() - today.getDay())
+      const isCurrentWeek = this.calendarWeekOffset === 0
+      return `${start} ~ ${end}${isCurrentWeek ? '（本周）' : ''}`
     },
     doctorOptions() {
       const doctors = new Set()
@@ -383,6 +416,34 @@ export default {
     this.searchAppointments()
   },
   methods: {
+    prevWeek() {
+      this.calendarWeekOffset--
+    },
+    nextWeek() {
+      this.calendarWeekOffset++
+    },
+    resetWeek() {
+      this.calendarWeekOffset = 0
+    },
+    onPickDate(dateStr) {
+      // 用户手动选择日期，计算该日期所在周相对于本周的偏移
+      if (!dateStr) return
+      // 安全解析 yyyy-MM-dd 格式，避免 new Date('2026-05-08') 被当作 UTC 导致时区偏差
+      const [y, m, d] = dateStr.split('-').map(Number)
+      const picked = new Date(y, m - 1, d)
+
+      const today = new Date()
+      // 计算本周的周日（周起始）
+      const todayWeekStart = new Date(today)
+      todayWeekStart.setDate(today.getDate() - today.getDay())
+      // 计算所选日期所在周的周日
+      const pickedWeekStart = new Date(picked)
+      pickedWeekStart.setDate(picked.getDate() - picked.getDay())
+      // 计算周数差
+      const msPerWeek = 7 * 24 * 60 * 60 * 1000
+      const weekDiff = Math.round((pickedWeekStart.getTime() - todayWeekStart.getTime()) / msPerWeek)
+      this.calendarWeekOffset = weekDiff
+    },
     statusClass(status) {
       const s = String(status || '').trim()
       if (['已就诊', '已治疗', '已完成', '已离开'].includes(s)) return 'completed'
@@ -1099,11 +1160,40 @@ export default {
   padding: 0 12px;
 }
 
+.calendar-nav-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.calendar-nav-group .el-date-editor {
+  margin: 0 4px;
+}
+
+.btn-week-nav {
+  padding: 0 10px !important;
+  height: 30px !important;
+  font-size: 13px !important;
+  color: var(--text-regular) !important;
+  border: 1px solid var(--border-color) !important;
+  background: var(--bg-card) !important;
+  border-radius: var(--radius-sm) !important;
+  transition: all 0.2s ease;
+}
+
+.btn-week-nav:hover {
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
 .calendar-week-label {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--text-primary);
   line-height: 1.4;
+  min-width: 200px;
+  text-align: center;
 }
 
 .calendar-legend {

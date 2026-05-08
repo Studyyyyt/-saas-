@@ -12,7 +12,7 @@
 
     <div v-if="data" class="p360-body">
       <!-- 上方：患者档案卡 + 统计卡片 -->
-      <div class="p360-info-row">
+      <div class="p360-info-row apple-page-enter apple-page-enter-delay-1">
         <!-- 患者档案卡 -->
         <el-card class="p360-card-info" shadow="never">
           <div slot="header" class="card-header">
@@ -25,7 +25,7 @@
             </div>
             <el-button type="primary" plain size="mini" icon="el-icon-edit" round @click="openEditPatient">修改资料</el-button>
           </div>
-          <el-descriptions :column="3" border size="mini">
+          <el-descriptions :column="3" border size="small" class="patient-info-desc">
             <el-descriptions-item label="姓名">{{ data.patient.name }}</el-descriptions-item>
             <el-descriptions-item label="性别">{{ data.patient.gender }}</el-descriptions-item>
             <el-descriptions-item label="手机">{{ data.patient.phone }}</el-descriptions-item>
@@ -46,33 +46,42 @@
               {{ referralDisplayText }}
             </el-descriptions-item>
           </el-descriptions>
-          <div v-if="data.hasArrears" class="arrears-banner">
+          <div v-if="data.hasArrears" class="arrears-banner pulse-animation">
             <i class="el-icon-warning" style="color:#f59e0b; font-size:16px;"></i>
             <span>当前欠费 <strong>¥{{ formatMoney(data.arrearsAmount) }}</strong></span>
           </div>
-          <div class="wechat-bind-panel">
-            <div class="wechat-bind-header">
-              <div>
-                <div class="wechat-bind-title">公众号绑定</div>
-                <div class="wechat-bind-desc">患者扫码关注公众号后自动绑定微信，仅进入患者H5页面，不进入SaaS管理后台</div>
+          <!-- AI 患者智能助手 -->
+          <div class="ai-patient-panel">
+            <div class="ai-patient-header">
+              <div class="ai-patient-icon">
+                <i class="el-icon-cpu"></i>
               </div>
-              <el-tag :type="wechatBound ? 'success' : 'info'" size="small" effect="plain" round>{{ wechatBindStatusLabel }}</el-tag>
+              <div class="ai-patient-meta">
+                <div class="ai-patient-title">AI 患者智能助手</div>
+                <div class="ai-patient-desc">基于该患者病历、预约、收费等数据进行智能分析与辅助决策</div>
+              </div>
+              <el-tag size="mini" type="primary" effect="plain" round class="ai-status-tag">
+                <i class="el-icon-magic-stick" style="margin-right:4px;"></i>智能分析
+              </el-tag>
             </div>
-            <div v-if="wechatBound" class="wechat-bind-bound-tip">
-              <i class="el-icon-success" style="margin-right:6px;"></i>该患者已完成微信公众号绑定，可直接使用患者端 H5 入口。
+            <div class="ai-patient-chips">
+              <span class="ai-chip" @click="openAiChat('请对该患者进行综合分析，包括就诊频率、治疗项目、费用情况和潜在风险')">
+                <i class="el-icon-data-analysis"></i>患者综合分析
+              </span>
+              <span class="ai-chip" @click="openAiChat('请帮我总结该患者的病历要点和诊疗历程')">
+                <i class="el-icon-document"></i>病历摘要
+              </span>
+              <span class="ai-chip" @click="openAiChat('请根据该患者情况，给出随访建议和后续治疗方案建议')">
+                <i class="el-icon-phone-outline"></i>随访建议
+              </span>
+              <span class="ai-chip" @click="openAiChat('请分析该患者的费用结构和消费能力')">
+                <i class="el-icon-coin"></i>消费分析
+              </span>
             </div>
-            <div v-else class="wechat-bind-body">
-              <div class="wechat-qr-box">
-                <img v-if="wechatQrCodeUrl" :src="wechatQrCodeUrl" alt="患者公众号绑定二维码" />
-                <div v-else class="wechat-qr-placeholder">二维码生成中</div>
-              </div>
-              <div class="wechat-bind-actions">
-                <div class="wechat-bind-tip">{{ wechatQrTip }}</div>
-                <template v-if="wechatBindUrl">
-                  <el-button type="primary" size="mini" round @click="openWechatBindLink">打开绑定链接</el-button>
-                  <el-button size="mini" round @click="copyWechatBindLink">复制绑定链接</el-button>
-                </template>
-              </div>
+            <div class="ai-patient-input" @click="openAiChat('')">
+              <i class="el-icon-chat-dot-round"></i>
+              <span>向 AI 助手询问该患者情况...</span>
+              <i class="el-icon-arrow-right"></i>
             </div>
           </div>
         </el-card>
@@ -103,7 +112,7 @@
       </div>
 
       <!-- 风险标签 -->
-      <div class="p360-tags-row">
+      <div class="p360-tags-row apple-page-enter apple-page-enter-delay-2">
         <span class="tag-label">风险标签：</span>
         <span v-if="!data.riskTags||!data.riskTags.length" style="color:#999;font-size:12px;">暂无</span>
         <el-tag v-for="tag in data.riskTags" :key="tag.id"
@@ -118,7 +127,7 @@
       </div>
 
       <!-- 5个 Tab -->
-      <el-tabs v-model="activeTab" type="border-card" class="p360-tabs">
+      <el-tabs v-model="activeTab" type="border-card" class="p360-tabs apple-page-enter apple-page-enter-delay-3">
 
         <!-- 病历记录 -->
         <el-tab-pane label="📋 病历记录" name="records">
@@ -333,11 +342,11 @@
             <el-table-column label="欠费" width="100">
               <template slot-scope="s">¥{{ formatMoney(s.row.arrears_amount) }}</template>
             </el-table-column>
-            <el-table-column label="操作" width="170" fixed="right">
+            <el-table-column label="操作" width="230" fixed="right">
               <template slot-scope="s">
                 <el-button v-if="s.row.can_charge" size="mini" type="success" @click="openChargeDialog(s.row)">{{ batchTreatmentCount(s.row) > 1 ? '汇总收费' : '收费' }}</el-button>
                 <el-button v-if="s.row.can_refund" size="mini" type="danger" plain @click="openRefundDialog(s.row)">退款</el-button>
-                <span v-if="!s.row.can_charge && !s.row.can_refund">-</span>
+                <el-button size="mini" type="danger" plain icon="el-icon-delete" @click="handleDeleteTreatment(s.row.id)">删除</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -372,7 +381,7 @@
 
           <div class="image-grid">
             <div v-for="img in data.images" :key="img.id" class="image-card">
-              <div class="image-thumb" @click="previewImage(img)">
+              <div class="image-thumb apple-img-zoom" @click="previewImage(img)">
                 <img v-if="isImage(img)" :src="`/patient-images/file/${img.id}`" :alt="img.image_name" />
                 <div v-else class="file-icon"><i class="el-icon-document"></i></div>
               </div>
@@ -483,7 +492,7 @@
     </div>
 
     <!-- 图片预览 -->
-    <el-dialog :visible.sync="previewVisible" :title="previewImg ? previewImg.image_name : ''" width="80%" top="5vh">
+    <el-dialog :visible.sync="previewVisible" :title="previewImg ? previewImg.image_name : ''" width="80%" top="5vh" append-to-body>
       <div style="text-align:center;" v-if="previewImg">
         <img v-if="isImage(previewImg)" :src="`/patient-images/file/${previewImg.id}`"
           style="max-width:100%;max-height:75vh;object-fit:contain;" />
@@ -571,7 +580,8 @@
       width="1360px"
       top="3vh"
       custom-class="record-workbench-dialog"
-      :close-on-click-modal="false">
+      :close-on-click-modal="false"
+      append-to-body>
       <el-form :model="recordForm" ref="recordForm" class="editor-form" @submit.native.prevent>
         <el-card class="editor-head-card" shadow="never">
           <div class="editor-head">
@@ -928,7 +938,7 @@
     </el-dialog>
 
     <!-- 新增回访 -->
-    <el-dialog title="新增回访计划" :visible.sync="followupDialog" width="520px">
+    <el-dialog title="新增回访计划" :visible.sync="followupDialog" width="520px" append-to-body>
       <el-form :model="followupForm" label-width="90px">
         <el-form-item label="负责医生">
           <el-select v-model="followupForm.doctor_account_id" placeholder="请选择负责医生" style="width:100%">
@@ -957,7 +967,7 @@
     </el-dialog>
 
     <!-- 新增/编辑预约 -->
-    <el-dialog :title="appointmentDialogTitle" :visible.sync="appointmentDialog" width="560px">
+    <el-dialog :title="appointmentDialogTitle" :visible.sync="appointmentDialog" width="560px" append-to-body>
       <el-form :model="appointmentForm" label-width="90px">
         <el-form-item label="预约日期">
           <el-date-picker v-model="appointmentForm.appointment_date" type="date" value-format="yyyy-MM-dd" style="width:100%" />
@@ -996,7 +1006,7 @@
     </el-dialog>
 
     <!-- 新增处置 -->
-    <el-dialog title="新增处置记录" :visible.sync="treatmentDialog" width="920px" class="treatment-batch-dialog">
+    <el-dialog title="新增处置记录" :visible.sync="treatmentDialog" width="920px" class="treatment-batch-dialog" append-to-body>
       <el-form :model="treatmentForm" label-width="90px" class="treatment-batch-form">
         <el-row :gutter="16">
           <el-col :span="12">
@@ -1107,7 +1117,7 @@
       </span>
     </el-dialog>
 
-    <el-dialog :title="chargeDialogTitle" :visible.sync="chargeDialog" width="560px">
+    <el-dialog :title="chargeDialogTitle" :visible.sync="chargeDialog" width="560px" append-to-body>
       <el-form :model="chargeForm" label-width="90px">
         <el-form-item label="收费说明">
           <div class="charge-summary-box">
@@ -1151,7 +1161,7 @@
       </span>
     </el-dialog>
 
-    <el-dialog title="治疗退款" :visible.sync="refundDialog" width="420px">
+    <el-dialog title="治疗退款" :visible.sync="refundDialog" width="420px" append-to-body>
       <el-form :model="refundForm" label-width="90px">
         <el-form-item label="退款金额">
           <el-input-number v-model="refundForm.amount" :min="0.01" :precision="2" :step="0.01" controls-position="right" style="width:100%" />
@@ -1170,7 +1180,7 @@
     </el-dialog>
 
     <!-- 添加风险标签 -->
-    <el-dialog title="添加风险标签" :visible.sync="tagDialog" width="420px">
+    <el-dialog title="添加风险标签" :visible.sync="tagDialog" width="420px" append-to-body>
       <el-form :model="tagForm" label-width="90px">
         <el-form-item label="标签名称"><el-input v-model="tagForm.tag_name" /></el-form-item>
         <el-form-item label="标签编码"><el-input v-model="tagForm.tag_code" placeholder="如：high-risk" /></el-form-item>
@@ -1187,7 +1197,7 @@
       </span>
     </el-dialog>
 
-    <el-dialog title="下发电子知情同意书" :visible.sync="consentDialog" width="620px">
+    <el-dialog title="下发电子知情同意书" :visible.sync="consentDialog" width="620px" append-to-body>
       <el-form :model="consentForm" label-width="90px">
         <el-form-item label="模板库">
           <el-select v-model="selectedConsentTemplateId" placeholder="可选：从模板库带出" style="width:100%" @change="applyConsentTemplate">
@@ -1212,7 +1222,7 @@
       </span>
     </el-dialog>
 
-    <el-dialog :title="consentPreview.title || '电子知情同意书'" :visible.sync="consentPreviewDialog" width="720px">
+    <el-dialog :title="consentPreview.title || '电子知情同意书'" :visible.sync="consentPreviewDialog" width="720px" append-to-body>
       <div v-if="consentPreview.id" class="consent-preview-box">
         <div class="consent-preview-meta">
           <div class="consent-preview-item"><span>医生</span><strong>{{ consentPreview.doctor_name || '门诊医生' }}</strong></div>
@@ -1232,11 +1242,49 @@
         <el-button @click="consentPreviewDialog=false">关闭</el-button>
       </span>
     </el-dialog>
+
+    <!-- AI 患者助手对话弹窗 -->
+    <el-dialog
+      :visible.sync="aiChatVisible"
+      :title="`AI 患者助手 - ${data && data.patient ? data.patient.name : ''}`"
+      width="680px"
+      top="8vh"
+      custom-class="ai-patient-dialog"
+      append-to-body
+      :close-on-click-modal="false">
+      <div class="ai-chat-body" ref="aiChatBody">
+        <div v-for="(msg, idx) in aiChatMessages" :key="idx" class="ai-msg" :class="msg.role">
+          <div class="ai-msg-avatar">
+            <i v-if="msg.role === 'assistant'" class="el-icon-cpu"></i>
+            <i v-else class="el-icon-user-solid"></i>
+          </div>
+          <div class="ai-msg-bubble">
+            <div class="ai-msg-text">{{ msg.content }}</div>
+            <div v-if="msg.time" class="ai-msg-time">{{ msg.time }}</div>
+          </div>
+        </div>
+        <div v-if="aiChatStreaming" class="ai-msg assistant">
+          <div class="ai-msg-avatar"><i class="el-icon-cpu"></i></div>
+          <div class="ai-msg-bubble">
+            <div class="ai-msg-text typing"><span class="typing-dots"><span></span><span></span><span></span></span></div>
+          </div>
+        </div>
+      </div>
+      <div class="ai-chat-footer">
+        <div class="ai-input-shell">
+          <input v-model="aiChatInput" class="ai-input-field" placeholder="输入问题，按回车发送..." @keyup.enter="sendAiChat" />
+          <button class="ai-input-send" :disabled="!aiChatInput.trim() || aiChatStreaming" @click="sendAiChat">
+            <i class="el-icon-s-promotion"></i>
+          </button>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import axios from 'axios'
+import { streamChat } from '@/utils/aiStreamClient'
 import ReferralSelector from '@/components/ReferralSelector.vue'
 import ToothSelector from '@/components/ToothSelector.vue'
 import TimelineItem from '@/components/design-system/TimelineItem.vue'
@@ -1370,7 +1418,13 @@ export default {
       },
       paymentChannelOptions: [],
       doctors: [],
-      currentUser: getAdminSession() || {}
+      currentUser: getAdminSession() || {},
+      // AI 患者助手
+      aiChatVisible: false,
+      aiChatInput: '',
+      aiChatMessages: [],
+      aiChatStreaming: false,
+      aiChatAbortController: null
     }
   },
   computed: {
@@ -1550,35 +1604,6 @@ export default {
         appointment_purpose: this.formatAppointmentPurpose(item.appointment_purpose)
       }))
     },
-    wechatBound() {
-      return !!(this.data && this.data.wechatBound)
-    },
-    wechatBindStatusLabel() {
-      return (this.data && this.data.wechatBindStatusLabel) || '未绑定微信'
-    },
-    wechatBindUrl() {
-      return (this.data && this.data.wechatBindUrl) || ''
-    },
-    wechatFollowQrUrl() {
-      return (this.data && this.data.wechatFollowQrUrl) || ''
-    },
-    fallbackWechatQrUrl() {
-      if (this.wechatBound || !this.wechatBindUrl) return ''
-      return `/wechat/bind/qrcode?size=220&text=${encodeURIComponent(this.wechatBindUrl)}`
-    },
-    wechatQrCodeUrl() {
-      if (this.wechatBound) return ''
-      return this.wechatFollowQrUrl || this.fallbackWechatQrUrl
-    },
-    wechatQrTip() {
-      if (this.wechatFollowQrUrl) {
-        return '请让患者使用微信扫码直接进入公众号关注界面；关注完成后会自动绑定，并通过公众号消息进入患者H5页面。'
-      }
-      if (this.wechatBindUrl) {
-        return '当前已回退为绑定入口二维码。请让患者使用微信扫码完成绑定，并进入患者H5页面。'
-      }
-      return '绑定二维码生成中'
-    }
   },
   watch: {
     '$route.query.id': {
@@ -3037,6 +3062,26 @@ export default {
         this.$message.error((error.response && error.response.data && error.response.data.msg) || '退款失败')
       })
     },
+    handleDeleteTreatment(id) {
+      this.$confirm('此操作将永久删除该处置记录，是否继续？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        axios.delete(`/treatments/delete/${id}`).then(res => {
+          if (res.data.code === '200') {
+            this.$message.success('删除成功')
+            this.load360()
+          } else {
+            this.$message.error(res.data.msg || '删除失败')
+          }
+        }).catch(error => {
+          this.$message.error((error.response && error.response.data && error.response.data.msg) || '删除失败')
+        })
+      }).catch(() => {
+        this.$message.info('已取消删除')
+      })
+    },
     // 标签
     openAddTag() {
       this.tagForm = { patient_id: Number(this.patientId), tag_name: '', tag_code: '', risk_level: 1, note: '' }
@@ -3051,45 +3096,75 @@ export default {
     deleteTag(id) {
       axios.delete(`/risk-tags/delete/${id}`).then(() => { this.load360() })
     },
-    openWechatBindLink() {
-      if (!this.wechatBindUrl) {
-        this.$message.warning('当前患者已绑定微信或绑定链接不可用')
-        return
-      }
-      window.open(this.wechatBindUrl, '_blank')
-    },
-    copyWechatBindLink() {
-      if (!this.wechatBindUrl) {
-        this.$message.warning('当前患者已绑定微信或绑定链接不可用')
-        return
-      }
-      const text = this.wechatBindUrl
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(() => {
-          this.$message.success('绑定链接已复制')
-        }).catch(() => {
-          this.fallbackCopyText(text)
+    openAiChat(presetMessage = '') {
+      this.aiChatVisible = true
+      if (this.aiChatMessages.length === 0) {
+        const patient = this.data && this.data.patient ? this.data.patient : {}
+        const greeting = `您好，我是 ${patient.name || '该患者'} 的专属 AI 助手。我可以帮您分析患者数据、总结病历、提供随访建议等。请问有什么可以帮您？`
+        this.aiChatMessages.push({
+          role: 'assistant',
+          type: 'text',
+          content: greeting,
+          time: this.formatChatTime(new Date())
         })
-        return
       }
-      this.fallbackCopyText(text)
+      if (presetMessage) {
+        this.aiChatInput = presetMessage
+        this.$nextTick(() => {
+          this.sendAiChat()
+        })
+      }
     },
-    fallbackCopyText(text) {
-      const input = document.createElement('textarea')
-      input.value = text
-      input.setAttribute('readonly', 'readonly')
-      input.style.position = 'absolute'
-      input.style.left = '-9999px'
-      document.body.appendChild(input)
-      input.select()
-      try {
-        document.execCommand('copy')
-        this.$message.success('绑定链接已复制')
-      } catch (error) {
-        this.$message.error('复制失败，请手动复制链接')
-      } finally {
-        document.body.removeChild(input)
+    sendAiChat() {
+      const text = String(this.aiChatInput || '').trim()
+      if (!text || this.aiChatStreaming) return
+      const patient = this.data && this.data.patient ? this.data.patient : {}
+      const contextPrefix = `[患者上下文] 姓名：${patient.name || '-'}，性别：${patient.gender || '-'}，年龄：${this.formatAge(patient) || '-'}，手机：${patient.phone || '-'}，来源：${patient.customer_source || '-'}，就诊次数：${this.data.visitCount || 0}，累计费用：${this.totalFeeDisplay || '0'}。问题：`
+      const fullMessage = contextPrefix + text
+      this.aiChatMessages.push({
+        role: 'user',
+        type: 'text',
+        content: text,
+        time: this.formatChatTime(new Date())
+      })
+      this.aiChatInput = ''
+      this.aiChatStreaming = true
+      const assistantMsg = {
+        role: 'assistant',
+        type: 'text',
+        content: '',
+        time: this.formatChatTime(new Date())
       }
+      this.aiChatMessages.push(assistantMsg)
+      this.scrollAiChatToBottom()
+      this.aiChatAbortController = streamChat({
+        message: fullMessage,
+        agentKey: 'default',
+        onToken: (token) => {
+          assistantMsg.content += token
+          this.scrollAiChatToBottom()
+        },
+        onDone: () => {
+          this.aiChatStreaming = false
+          this.aiChatAbortController = null
+        },
+        onError: (err) => {
+          this.aiChatStreaming = false
+          this.aiChatAbortController = null
+          assistantMsg.content += '\n\n[连接中断，请重试]'
+          this.$message.error('AI 助手响应失败：' + err)
+        }
+      })
+    },
+    scrollAiChatToBottom() {
+      this.$nextTick(() => {
+        const body = this.$refs.aiChatBody
+        if (body) body.scrollTop = body.scrollHeight
+      })
+    },
+    formatChatTime(date) {
+      const pad = n => String(n).padStart(2, '0')
+      return `${pad(date.getHours())}:${pad(date.getMinutes())}`
     },
     formatAppointmentPurpose(value) {
       if (value === null || value === undefined) return ''
@@ -3254,7 +3329,7 @@ export default {
 .p360-wrap { display:flex; flex-direction:column; height:100%; padding:0; background: var(--bg-page); }
 .p360-topbar { display:flex; align-items:center; gap:10px; padding:10px 16px; background: var(--bg-card); border-bottom:1px solid var(--border-color); flex-shrink:0; }
 .p360-title { font-size:16px; font-weight: 600; color: var(--text-primary); flex:1; }
-.p360-loading { text-align:center; padding:60px; font-size:28px; color: var(--primary); }
+.p360-loading { text-align:center; padding:60px; font-size:28px; color: var(--primary); animation: pulse-animation 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
 .p360-body { flex:1; overflow:auto; padding:12px; }
 
 ::v-deep .record-workbench-dialog {
@@ -3280,8 +3355,8 @@ export default {
 .editor-head-card:hover,
 .template-card:hover,
 .record-sheet-card:hover {
-
-  box-shadow: var(--shadow-card);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
 }
 
 .editor-form {
@@ -3455,8 +3530,8 @@ export default {
 }
 
 .template-preview-card:hover {
-
-  box-shadow: var(--shadow-card);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
 }
 
 .template-preview-card__title {
@@ -3574,8 +3649,8 @@ export default {
 }
 
 .operation-panel:hover {
-
-  box-shadow: var(--shadow-card);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
 }
 
 .operation-panel__head {
@@ -3634,8 +3709,8 @@ export default {
 }
 
 .operation-item:hover {
-
-  box-shadow: var(--shadow-card);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
 }
 
 .operation-item__head {
@@ -3720,29 +3795,35 @@ export default {
   font-size: 12px;
 }
 
-.p360-info-row { display:flex; gap:12px; margin-bottom:10px; }
-.p360-card-info { flex:1; }
+.p360-info-row { display:flex; gap:10px; margin-bottom:10px; align-items:stretch; }
+.p360-card-info { flex:1; min-width:0; }
 .p360-card-info .card-header { font-size:13px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
 .relation-link-btn { padding:0; font-size:12px; font-weight: 600; }
 .arrears-banner { margin-top:12px; display:flex; align-items:center; gap:10px; color: var(--warning); font-size:13px; background: rgba(255,149,0,0.08); border-radius: var(--radius-sm); padding: 10px 14px; }
-.wechat-bind-panel { margin-top:12px; padding:14px; border:1px solid var(--border-color); border-radius: var(--radius-sm); background: #ffffff; }
-.wechat-bind-header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:10px; }
-.wechat-bind-title { font-size:14px; font-weight: 500; color: var(--text-primary); }
-.wechat-bind-desc { margin-top:4px; font-size:12px; color: var(--text-secondary); }
-.wechat-bind-body { display:flex; align-items:center; gap:16px; }
-.wechat-qr-box { width:220px; height:220px; padding:10px; background: var(--bg-card); border:1px dashed var(--border-color); border-radius: var(--radius-sm); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-.wechat-qr-box img { width:100%; height:100%; object-fit:contain; }
-.wechat-qr-placeholder { color: var(--text-secondary); font-size:12px; }
-.wechat-bind-actions { display:flex; flex-direction:column; gap:10px; align-items:flex-start; }
-.wechat-bind-tip { font-size:12px; line-height:1.6; color: var(--text-secondary); }
-.wechat-bind-bound-tip { margin-top:8px; padding:12px; border-radius: var(--radius-sm); background: rgba(52,199,89,0.1); color: var(--success); font-size:13px; }
-.p360-stats { display:flex; gap:8px; flex-shrink:0; }
-.stat-card { background: var(--bg-card); border-radius: var(--radius-sm); padding:12px 16px; text-align:center; min-width:90px;
+/* AI 患者智能助手 */
+.ai-patient-panel { margin-top:12px; padding:14px 16px; border-radius: var(--radius-sm); background: linear-gradient(135deg, #f0f7ff 0%, #e8f0fe 100%); border: 1px solid rgba(37, 99, 235, 0.12); }
+.ai-patient-header { display:flex; align-items:flex-start; gap:12px; margin-bottom:12px; }
+.ai-patient-icon { width:36px; height:36px; border-radius:50%; background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.ai-patient-meta { flex:1; min-width:0; }
+.ai-patient-title { font-size:14px; font-weight: 600; color: var(--text-primary); }
+.ai-patient-desc { margin-top:4px; font-size:12px; color: var(--text-secondary); line-height:1.5; }
+.ai-status-tag { flex-shrink:0; }
+.ai-patient-chips { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+.ai-chip { display:inline-flex; align-items:center; gap:4px; padding:6px 12px; border-radius:100px; background:#ffffff; border:1px solid rgba(37, 99, 235, 0.18); color: var(--primary); font-size:12px; font-weight: 500; cursor:pointer; transition: all 0.2s ease; }
+.ai-chip:hover { background: var(--primary); color:#ffffff; border-color: var(--primary); transform: translateY(-1px); box-shadow: 0 4px 8px rgba(37, 99, 235, 0.15); }
+.ai-chip i { font-size:13px; }
+.ai-patient-input { display:flex; align-items:center; gap:8px; padding:8px 12px; border-radius: var(--radius-sm); background:#ffffff; border:1px solid rgba(37, 99, 235, 0.15); color: var(--text-secondary); font-size:13px; cursor:pointer; transition: all 0.2s ease; }
+.ai-patient-input:hover { border-color: var(--primary); color: var(--primary); box-shadow: 0 2px 6px rgba(37, 99, 235, 0.08); }
+.ai-patient-input span { flex:1; }
+.ai-patient-input i:first-child { color: var(--primary); font-size:15px; }
+.ai-patient-input i:last-child { font-size:13px; }
+.p360-stats { display:flex; flex-direction:column; gap:10px; flex-shrink:0; }
+.stat-card { background: var(--bg-card); border-radius: var(--radius-sm); padding:10px 14px; text-align:center; min-width:100px; flex:1;
   border:1px solid var(--border-color); display:flex; flex-direction:column; justify-content:center; box-shadow: var(--shadow-card); transition: all 0.3s ease; }
-.stat-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-card); }
-.stat-num { font-size:24px; font-weight: 500; color: var(--primary); line-height:1.2; }
-.stat-num.fee { font-size:20px; color: var(--warning); }
-.stat-num.date { font-size:16px; color: var(--success); }
+.stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08); }
+.stat-num { font-size:20px; font-weight: 600; color: var(--primary); line-height:1.2; }
+.stat-num.fee { font-size:18px; color: var(--warning); }
+.stat-num.date { font-size:14px; color: var(--success); }
 .stat-label { font-size:11px; color: var(--text-secondary); margin-top:4px; }
 
 .p360-tags-row { background: var(--bg-card); border-radius: var(--radius-sm); border:1px solid var(--border-color); padding:8px 14px; margin-bottom:10px;
@@ -3792,7 +3873,7 @@ export default {
 .treatment-batch-list__title { font-size:15px; font-weight: 600; color: var(--text-primary); }
 .treatment-batch-list__tip { margin-top:4px; font-size:12px; color: var(--text-secondary); line-height:1.6; }
 .treatment-item-card { border:1px solid var(--border-color); border-radius: var(--radius-sm); background: #ffffff; padding:14px 14px 2px; box-shadow: var(--shadow-card); transition: all 0.3s ease; }
-.treatment-item-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-card); }
+.treatment-item-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12); }
 .treatment-item-card__head { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; color: var(--text-primary); font-weight: 500; }
 .treatment-selected-project { min-height:40px; padding:10px 12px; border-radius: var(--radius-sm); background: var(--bg-card); border:1px solid var(--border-color); color: var(--text-primary); line-height:1.5; }
 .treatment-batch-footer { width:100%; display:flex; align-items:flex-end; justify-content:space-between; gap:16px; }
@@ -3875,6 +3956,23 @@ export default {
   background: var(--bg-card);
   border-bottom: 1px solid var(--border-color);
   padding: 14px 18px;
+}
+
+.patient-info-desc ::v-deep .el-descriptions__body .el-descriptions__table.is-bordered .el-descriptions-item__cell {
+  border-color: #f0f0f0;
+}
+.patient-info-desc ::v-deep .el-descriptions-item__label.is-bordered-label {
+  background: #f8fafc;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 12px 14px;
+}
+.patient-info-desc ::v-deep .el-descriptions-item__content {
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 12px 14px;
 }
 
 .p360-stats {
@@ -3969,8 +4067,8 @@ export default {
 }
 
 .image-card:hover {
-
-  box-shadow: var(--shadow-card);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
 }
 
 .image-thumb {
@@ -4004,8 +4102,8 @@ export default {
 }
 
 .record-expand-item:hover {
-
-  box-shadow: var(--shadow-card);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
 }
 
 .record-expand-section {
@@ -4043,32 +4141,182 @@ export default {
   align-items: center;
 }
 
-.wechat-bind-panel {
-  margin-top: 14px;
-  padding: 14px;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  background: #ffffff;
-  box-shadow: var(--shadow-card);
+/* AI 患者助手 — 弹窗内样式（非 scoped） */
+::v-deep .ai-patient-dialog .el-dialog__body {
+  padding: 0;
 }
-
-.wechat-bind-title {
+.ai-chat-body {
+  height: 420px;
+  overflow-y: auto;
+  padding: 16px;
+  background: #f8fafc;
+}
+.ai-msg {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.ai-msg.user {
+  flex-direction: row-reverse;
+}
+.ai-msg-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 14px;
-  font-weight: 600;
+  flex-shrink: 0;
+}
+.ai-msg.assistant .ai-msg-avatar {
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+  color: #fff;
+}
+.ai-msg.user .ai-msg-avatar {
+  background: #e5e7eb;
+  color: #6b7280;
+}
+.ai-msg-bubble {
+  max-width: 80%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.7;
   color: var(--text-primary);
 }
+.ai-msg.assistant .ai-msg-bubble {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 12px 12px 12px 4px;
+  box-shadow: var(--shadow-card);
+}
+.ai-msg.user .ai-msg-bubble {
+  background: var(--primary);
+  color: #ffffff;
+  border-radius: 12px 12px 4px 12px;
+}
+.ai-msg-time {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-align: right;
+}
+.ai-msg.user .ai-msg-time {
+  color: rgba(255,255,255,0.75);
+}
+.ai-chat-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-color);
+  background: #ffffff;
+}
+.ai-input-shell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 100px;
+  background: #f3f4f6;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+.ai-input-shell:focus-within {
+  background: #ffffff;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+}
+.ai-input-field {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+.ai-input-field::placeholder {
+  color: var(--text-secondary);
+}
+.ai-input-send {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--primary);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.ai-input-send:hover:not(:disabled) {
+  background: #1d4ed8;
+  transform: scale(1.05);
+}
+.ai-input-send:disabled {
+  background: #d1d5db;
+  cursor: not-allowed;
+}
+.typing-dots {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  height: 20px;
+}
+.typing-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  animation: typing-bounce 1.4s ease-in-out infinite both;
+}
+.typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+.typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+.typing-dots span:nth-child(3) { animation-delay: 0s; }
+@keyframes typing-bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
+}
 
-.wechat-bind-bound-tip {
-  margin-top: 10px;
-  padding: 10px 14px;
-  border-radius: var(--radius-sm);
-  background: rgba(52,199,89,0.1);
-  color: var(--success);
-  font-size: 13px;
-  border: 1px solid rgba(52,199,89,0.15);
+/* 交互增强：按钮点击反馈 */
+::v-deep .el-button {
+  transition: transform 0.1s ease, box-shadow 0.15s ease;
+}
+::v-deep .el-button:active {
+  transform: scale(0.97);
+}
+
+/* Tab 内容区淡入 */
+@keyframes local-tab-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+::v-deep .el-tabs__content {
+  animation: local-tab-fade-in 0.25s ease-out forwards;
+  min-height: 480px;
+}
+
+/* 弹窗内容缩放进入 */
+@keyframes local-sheet-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+::v-deep .el-dialog__body {
+  animation: local-sheet-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 @media (max-width: 1280px) {
+  .p360-info-row {
+    flex-direction: column;
+  }
+  .p360-stats {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .stat-card {
+    flex: 1 1 30%;
+    min-width: 80px;
+  }
   .tab-toolbar--records,
   .record-operation-panel__head,
   .record-treatment-toolbar,

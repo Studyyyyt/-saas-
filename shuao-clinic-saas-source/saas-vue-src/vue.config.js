@@ -103,6 +103,50 @@ module.exports = defineConfig({
       '/ai-agent-configs': {
         target: API_TARGET,
         changeOrigin: true
+      },
+      '/treatment-projects': {
+        target: API_TARGET,
+        changeOrigin: true
+      },
+      '/treatment-operations': {
+        target: API_TARGET,
+        changeOrigin: true
+      },
+      '/medical-record-templates': {
+        target: API_TARGET,
+        changeOrigin: true
+      },
+      '/payment-channels': {
+        target: API_TARGET,
+        changeOrigin: true
+      },
+      '/patient360': {
+        target: API_TARGET,
+        changeOrigin: true
+      },
+      '/patient-images': {
+        target: API_TARGET,
+        changeOrigin: true
+      },
+      '/followup': {
+        target: API_TARGET,
+        changeOrigin: true
+      },
+      '/patient-consent': {
+        target: API_TARGET,
+        changeOrigin: true
+      },
+      '/risk-tags': {
+        target: API_TARGET,
+        changeOrigin: true
+      },
+      '/consent-template': {
+        target: API_TARGET,
+        changeOrigin: true
+      },
+      '/wechat': {
+        target: API_TARGET,
+        changeOrigin: true
       }
     }
   }
