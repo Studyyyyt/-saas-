@@ -921,7 +921,7 @@
                 <div class="sheet-row">
                   <div class="sheet-label">病历备注</div>
                   <div class="sheet-cell">
-                    <el-input v-model="recordForm.notes" type="textarea" :rows="3" placeholder="补充备注、复诊提醒等" />
+                    <el-input v-model="recordForm.notes" type="textarea" :rows="3" placeholder="记录特殊病例要点、随访注意事项、患者特殊需求等，后续可由 AI 提取分析" />
                   </div>
                 </div>
               </div>

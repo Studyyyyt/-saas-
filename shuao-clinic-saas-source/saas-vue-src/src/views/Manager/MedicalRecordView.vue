@@ -373,7 +373,7 @@
                   </div>
                 </el-form-item>
                 <el-form-item label="病历备注" label-width="80px">
-                  <el-input v-model="form.notes" type="textarea" :rows="3" placeholder="补充说明、随访提醒或内部备注" />
+                  <el-input v-model="form.notes" type="textarea" :rows="3" placeholder="记录特殊病例要点、随访注意事项、患者特殊需求等，后续可由 AI 提取分析" />
                 </el-form-item>
               </div>
             </el-card>
@@ -609,6 +609,10 @@
                 <span v-else>-</span>
               </span>
             </div>
+            <div v-if="row.notes" class="record-card__row">
+              <span class="record-card__label">备注</span>
+              <span class="record-card__value record-card__value--ellipsis" :title="row.notes">{{ row.notes }}</span>
+            </div>
           </div>
 
           <div class="record-card__footer">
@@ -733,6 +737,10 @@
                 <div class="info-item">
                   <span class="info-label">操作汇总</span>
                   <span class="info-value text-ellipsis">{{ record.operation_summary || '-' }}</span>
+                </div>
+                <div v-if="record.notes" class="info-item">
+                  <span class="info-label">备注</span>
+                  <span class="info-value text-ellipsis" :title="record.notes">{{ record.notes }}</span>
                 </div>
               </div>
             </div>

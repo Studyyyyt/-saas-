@@ -1,54 +1,46 @@
 <template>
   <div class="patient-workbench">
-    <aside class="patient-sidebar">
-      <div class="sidebar-head">
-        <div class="sidebar-topline">
-          <div class="sidebar-kicker">患者管理</div>
-          <div class="sidebar-settings">
-            <i class="el-icon-setting"></i>
-          </div>
-        </div>
-        <div class="scope-switcher">
-          <button
-            v-for="item in quickScopeOptions"
-            :key="item.key"
-            type="button"
-            class="scope-chip"
-            :class="{ 'is-active': quickScope === item.key }"
-            @click="selectQuickScope(item.key)"
-          >
-            {{ item.label }}
-          </button>
-        </div>
-        <div class="sidebar-summary">
-          <div class="summary-main">{{ totalItems }}</div>
-          <div class="summary-label">当前结果患者数</div>
-          <div class="summary-meta">已选 {{ selectedRows.length }} 人 · 当前页 {{ patients.length }} 人</div>
-        </div>
-      </div>
-
-      <div class="group-list">
-        <button
-          v-for="group in patientGroups"
-          :key="group.key"
-          type="button"
-          class="group-item"
-          :class="{ 'is-active': activeGroupKey === group.key }"
-          @click="selectGroup(group.key)"
-        >
-          <span class="group-name">{{ group.label }}</span>
-          <span class="group-count">{{ groupCount(group.key) }}</span>
-        </button>
-      </div>
-
-      <div class="sidebar-footer">
-        <el-button plain class="sidebar-action" @click="openGroupDialog">+新增分组</el-button>
-        <el-button type="primary" class="sidebar-action" @click="showAddDialog">+新增患者</el-button>
-        <div class="sidebar-tip">当前分组、筛选和分页已切到服务端口径，后续再补可配置分组与标签字典。</div>
-      </div>
-    </aside>
-
     <section class="patient-main">
+      <!-- 顶部控制栏：原侧边栏内容平铺至此 -->
+      <div class="top-control-bar">
+        <div class="top-control-left">
+          <div class="scope-switcher scope-switcher--horizontal">
+            <button
+              v-for="item in quickScopeOptions"
+              :key="item.key"
+              type="button"
+              class="scope-chip"
+              :class="{ 'is-active': quickScope === item.key }"
+              @click="selectQuickScope(item.key)"
+            >
+              {{ item.label }}
+            </button>
+          </div>
+          <el-select
+            v-model="activeGroupKey"
+            size="small"
+            class="group-select"
+            placeholder="选择分组"
+            @change="selectGroup"
+          >
+            <el-option
+              v-for="group in patientGroups"
+              :key="group.key"
+              :label="`${group.label} (${groupCount(group.key)})`"
+              :value="group.key"
+            />
+          </el-select>
+          <el-button v-if="isAdmin" size="small" plain @click="openGroupDialog">+分组</el-button>
+        </div>
+        <div class="top-control-right">
+          <div class="top-stat">
+            <span class="top-stat-value">{{ totalItems }}</span>
+            <span class="top-stat-label">人</span>
+          </div>
+          <el-button type="primary" size="small" @click="showAddDialog">+新增患者</el-button>
+        </div>
+      </div>
+
       <div class="toolbar-shell">
         <div class="toolbar-row">
           <el-select v-model="searchType" size="small" class="toolbar-field toolbar-field--type">
@@ -93,17 +85,17 @@
             <el-option label="最近到店" value="lastVisitDesc"></el-option>
           </el-select>
           <el-button type="primary" size="small" @click="searchPatients">查询</el-button>
-          <el-button size="small" @click="toggleAdvancedFilters">{{ showAdvancedFilters ? '收起筛选' : '高级筛选' }}</el-button>
+          <el-button size="small" @click="toggleAdvancedFilters">{{ showAdvancedFilters ? '收起' : '筛选' }}</el-button>
           <el-button size="small" @click="reset">重置</el-button>
-          <el-button v-if="isAdmin" size="small" type="success" plain @click="exportPatients">导出Excel</el-button>
           <el-dropdown size="small" trigger="click" @command="handleBatchCommand">
             <el-button size="small" plain>
-              批量操作<i class="el-icon-arrow-down el-icon--right"></i>
+              批量<i class="el-icon-arrow-down el-icon--right"></i>
             </el-button>
             <el-dropdown-menu slot="dropdown">
               <el-dropdown-item command="clear">清空选择</el-dropdown-item>
               <el-dropdown-item command="group">加入分组</el-dropdown-item>
-              <el-dropdown-item v-if="isAdmin" command="delete">批量删除</el-dropdown-item>
+              <el-dropdown-item v-if="isAdmin" command="export">导出Excel</el-dropdown-item>
+              <el-dropdown-item v-if="isAdmin" command="delete" divided class="danger-dropdown-item">批量删除</el-dropdown-item>
             </el-dropdown-menu>
           </el-dropdown>
         </div>
@@ -144,10 +136,8 @@
         </div>
 
         <div class="toolbar-summary">
-          <div class="summary-chip">分组：{{ currentGroupLabel }}</div>
-          <div class="summary-chip">范围：{{ currentQuickScopeLabel }}</div>
-          <div class="summary-chip">总数：{{ totalItems }}</div>
-          <div class="summary-chip">选中：{{ selectedRows.length }}</div>
+          <div class="summary-chip">{{ currentGroupLabel }} · {{ currentQuickScopeLabel }} · 共 {{ totalItems }} 人</div>
+          <div v-if="selectedRows.length" class="summary-chip is-active">已选 {{ selectedRows.length }} 人</div>
         </div>
       </div>
 
@@ -158,6 +148,7 @@
           :data="patients"
           size="mini"
           stripe
+          border
           class="patient-table"
           :header-cell-style="tableHeaderStyle"
           @selection-change="handleSelectionChange"
@@ -181,7 +172,7 @@
                     {{ relationTypeLabel(scope.row) }}：
                     <el-button type="text" class="relation-link-btn" @click="go360ByRelation(scope.row)">{{ scope.row.related_patient_name }}</el-button>
                   </span>
-                  <span v-else>{{ scope.row.customer_source || '未标记来源' }}</span>
+                  <span v-else class="name-subline-hint">{{ latestVisitHint(scope.row) }}</span>
                 </div>
               </div>
             </template>
@@ -225,26 +216,33 @@
               </div>
             </template>
           </el-table-column>
-          <el-table-column label="最近就诊医生" width="150" show-overflow-tooltip>
+          <el-table-column label="最近病历备注" min-width="220">
             <template slot-scope="scope">
-              <div class="doctor-cell">
-                <div class="doctor-main">{{ latestVisitDoctorLabel(scope.row) }}</div>
-                <div v-if="followupDoctorHint(scope.row)" class="doctor-subline">{{ followupDoctorHint(scope.row) }}</div>
+              <div v-if="scope.row.latest_record_notes" class="notes-cell" @click="openNotesDialog(scope.row)">
+                <i class="el-icon-document"></i>
+                <span class="notes-text">{{ scope.row.latest_record_notes }}</span>
+                <el-tag v-if="String(scope.row.latest_record_notes).length > 20" size="mini" type="info" effect="plain" class="notes-more-tag">查看</el-tag>
               </div>
+              <span v-else class="notes-empty">-</span>
             </template>
-          </el-table-column>
-          <el-table-column prop="latest_treatment" label="最近开的处置" min-width="190" show-overflow-tooltip>
-            <template slot-scope="scope">{{ scope.row.latest_treatment || '-' }}</template>
           </el-table-column>
           <el-table-column label="最近动态" width="148">
             <template slot-scope="scope">{{ activityDateTime(scope.row) }}</template>
           </el-table-column>
-          <el-table-column label="操作" width="200" fixed="right">
+          <el-table-column label="操作" width="160" fixed="right">
             <template slot-scope="scope">
               <div class="action-links">
-                <el-button type="text" @click="go360(scope.row)">360视图</el-button>
-                <el-button type="text" @click="handleEdit(scope.row)">编辑</el-button>
-                <el-button v-if="isAdmin" type="text" class="danger-link" @click="handleDelete(scope.row.id)">删除</el-button>
+                <el-button type="text" class="primary-link" @click="go360(scope.row)">档案</el-button>
+                <el-button type="text" class="ai-link" @click="openAiPanel(scope.row)">
+                  <i class="el-icon-magic-stick"></i>AI
+                </el-button>
+                <el-dropdown size="small" trigger="click" @command="cmd => handleRowCommand(cmd, scope.row)">
+                  <el-button type="text" class="more-link"><i class="el-icon-more"></i></el-button>
+                  <el-dropdown-menu slot="dropdown">
+                    <el-dropdown-item command="edit">编辑</el-dropdown-item>
+                    <el-dropdown-item v-if="isAdmin" command="delete" class="danger-dropdown-item">删除</el-dropdown-item>
+                  </el-dropdown-menu>
+                </el-dropdown>
               </div>
             </template>
           </el-table-column>
@@ -268,6 +266,110 @@
         </div>
       </div>
     </section>
+
+    <!-- 病历备注详情弹窗 -->
+    <el-dialog
+      title="病历备注详情"
+      :visible.sync="notesDialogVisible"
+      width="520px"
+      append-to-body
+      @close="closeNotesDialog"
+    >
+      <div class="notes-dialog-content">
+        <div class="notes-dialog-patient">
+          <span class="notes-dialog-name">{{ notesDialogPatient.name }}</span>
+          <span class="notes-dialog-id">ID: {{ notesDialogPatient.id }}</span>
+        </div>
+        <el-divider />
+        <div class="notes-dialog-body">{{ notesDialogContent }}</div>
+      </div>
+    </el-dialog>
+
+    <!-- AI 侧边浮层面板 -->
+    <transition name="ai-panel-slide">
+      <div v-if="aiPanelVisible" class="ai-panel-overlay" @click.self="closeAiPanel">
+        <div class="ai-panel">
+          <div class="ai-panel-head">
+            <div class="ai-panel-title">
+              <i class="el-icon-magic-stick"></i>
+              AI 患者洞察
+              <span v-if="aiPatient" class="ai-patient-name">· {{ aiPatient.name }}</span>
+            </div>
+            <button class="ai-panel-close" @click="closeAiPanel">
+              <i class="el-icon-close"></i>
+            </button>
+          </div>
+
+          <div v-loading="aiLoading" class="ai-panel-body">
+            <!-- 患者画像摘要 -->
+            <div v-if="aiProfile" class="ai-section">
+              <div class="ai-section-title">
+                <i class="el-icon-user-solid"></i> 智能画像
+              </div>
+              <div class="ai-summary-card">
+                <div class="ai-summary-text">{{ aiProfile.summary || '暂无画像摘要' }}</div>
+                <div v-if="aiProfile.tags && aiProfile.tags.length" class="ai-tag-list">
+                  <el-tag v-for="tag in aiProfile.tags" :key="tag.text" :type="tag.type || 'info'" size="mini" effect="plain">
+                    {{ tag.text }}
+                  </el-tag>
+                </div>
+              </div>
+              <div v-if="aiProfile.highlights && aiProfile.highlights.length" class="ai-highlight-list">
+                <div v-for="h in aiProfile.highlights" :key="h.label" class="ai-highlight-item">
+                  <span class="ai-highlight-label">{{ h.label }}</span>
+                  <span class="ai-highlight-value">{{ h.value }}</span>
+                  <span v-if="h.trend" class="ai-highlight-trend" :class="h.trend">{{ h.trend === 'up' ? '↑' : h.trend === 'down' ? '↓' : '→' }}</span>
+                </div>
+              </div>
+              <div v-if="aiProfile.suggestions && aiProfile.suggestions.length" class="ai-suggestion-list">
+                <div v-for="(s, idx) in aiProfile.suggestions" :key="idx" class="ai-suggestion-item">
+                  <i class="el-icon-info"></i>{{ s }}
+                </div>
+              </div>
+            </div>
+
+            <!-- 流失风险预警 -->
+            <div v-if="aiChurnRisk" class="ai-section">
+              <div class="ai-section-title">
+                <i class="el-icon-warning"></i> 流失风险预警
+              </div>
+              <div class="ai-risk-card" :class="`risk-${aiChurnRisk.risk_level || 'low'}`">
+                <div class="ai-risk-score">
+                  <div class="ai-risk-score-ring">
+                    <span class="ai-risk-score-value">{{ Math.round((aiChurnRisk.risk_score || 0) * 100) }}</span>
+                    <span class="ai-risk-score-unit">%</span>
+                  </div>
+                  <div class="ai-risk-level">{{ riskLevelText(aiChurnRisk.risk_level) }}</div>
+                </div>
+                <div v-if="aiChurnRisk.reasons && aiChurnRisk.reasons.length" class="ai-risk-reasons">
+                  <div class="ai-risk-subtitle">风险原因</div>
+                  <ul>
+                    <li v-for="(r, idx) in aiChurnRisk.reasons" :key="idx">{{ r }}</li>
+                  </ul>
+                </div>
+                <div v-if="aiChurnRisk.actions && aiChurnRisk.actions.length" class="ai-risk-actions">
+                  <div class="ai-risk-subtitle">建议措施</div>
+                  <div v-for="(a, idx) in aiChurnRisk.actions" :key="idx" class="ai-action-item">
+                    <i class="el-icon-check"></i>{{ a }}
+                  </div>
+                </div>
+                <div v-if="aiChurnRisk.predicted_next_visit" class="ai-risk-predict">
+                  <i class="el-icon-date"></i>
+                  预测下次到店：{{ aiChurnRisk.predicted_next_visit }}
+                </div>
+              </div>
+            </div>
+
+            <!-- 空状态 -->
+            <div v-if="!aiProfile && !aiChurnRisk && !aiLoading" class="ai-empty">
+              <i class="el-icon-magic-stick"></i>
+              <p>AI 分析数据加载失败，请稍后重试</p>
+              <el-button size="small" plain @click="loadAiData">重新加载</el-button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
 
     <el-dialog title="新增患者分组" :visible.sync="groupDialogVisible" width="420px" append-to-body>
       <el-form :model="groupForm" label-width="88px">
@@ -514,7 +616,16 @@ export default {
       relatedPatientSuggestions: [],
       relationSuggestionVisible: false,
       relationSuggestionBlurTimer: null,
-      isEditing: false
+      isEditing: false,
+      // AI 侧边面板状态
+      aiPanelVisible: false,
+      aiPatient: null,
+      aiLoading: false,
+      aiProfile: null,
+      aiChurnRisk: null,
+      notesDialogVisible: false,
+      notesDialogPatient: {},
+      notesDialogContent: ''
     }
   },
   computed: {
@@ -672,6 +783,8 @@ export default {
         this.currentPage = Number(data.pageNum || this.currentPage)
         this.pageSize = Number(data.pageSize || this.pageSize)
         this.clearTableSelection()
+        // 批量获取最近病历备注（前端联调：后端接口增加 latest_record_notes 后可移除）
+        await this.enrichLatestRecordNotes()
       } catch (error) {
         console.error('Error fetching patients:', error)
         this.patients = []
@@ -680,6 +793,27 @@ export default {
         showApiError(this, '加载患者列表', error)
       } finally {
         this.loading = false
+      }
+    },
+    async enrichLatestRecordNotes() {
+      if (!this.patients.length) return
+      try {
+        const requests = this.patients.map((patient, index) =>
+          axios.get('/medical-records/selectByPatientId', { params: { patientId: patient.id, page: 1, size: 1 } })
+            .then(res => {
+              const list = res.data && res.data.data && Array.isArray(res.data.data.list) ? res.data.data.list : []
+              const latestRecord = list[0]
+              const notes = (latestRecord && latestRecord.notes) ? latestRecord.notes : ''
+              // Vue 2 响应式：必须通过 $set 新增属性才能触发视图更新
+              this.$set(this.patients[index], 'latest_record_notes', notes)
+            })
+            .catch(() => {
+              this.$set(this.patients[index], 'latest_record_notes', '')
+            })
+        )
+        await Promise.all(requests)
+      } catch (error) {
+        console.error('获取最近病历备注失败:', error)
       }
     },
     groupCount(key) {
@@ -691,7 +825,8 @@ export default {
       this.loadPatients({ keepPage: true })
     },
     selectGroup(key) {
-      this.activeGroupKey = key
+      const targetKey = key || this.activeGroupKey
+      this.activeGroupKey = targetKey
       this.currentPage = 1
       this.loadPatients({ keepPage: true })
     },
@@ -735,6 +870,13 @@ export default {
       this.currentPage = page
       this.loadPatients({ keepPage: true })
     },
+    handleRowCommand(command, row) {
+      if (command === 'edit') {
+        this.handleEdit(row)
+      } else if (command === 'delete') {
+        this.handleDelete(row.id)
+      }
+    },
     handleSelectionChange(val) {
       this.selectedRows = val.map(row => row.id)
     },
@@ -751,6 +893,10 @@ export default {
       }
       if (command === 'group') {
         this.openAssignGroupDialog()
+        return
+      }
+      if (command === 'export') {
+        this.exportPatients()
         return
       }
       if (command === 'delete') {
@@ -895,13 +1041,8 @@ export default {
       if (serverTags.length) {
         return serverTags.slice(0, 5)
       }
+      // fallback 标签：仅展示需要在标签区独立呈现的状态，避免与姓名列信息重复
       const tags = []
-      if (normalizeText(patient && patient.customer_source)) {
-        tags.push({ text: normalizeText(patient.customer_source), type: 'info' })
-      }
-      if (this.relationTypeLabel(patient)) {
-        tags.push({ text: this.relationTypeLabel(patient), type: 'success' })
-      }
       if (patient && patient.has_arrears) {
         tags.push({ text: `欠费 ¥${this.formatArrears(patient.arrears_amount)}`, type: 'warning' })
       }
@@ -933,6 +1074,14 @@ export default {
       if (followupDoctor && followupDoctor !== latestDoctor) {
         return `回访：${followupDoctor}`
       }
+      return ''
+    },
+    latestVisitHint(patient) {
+      const doctor = this.latestVisitDoctorLabel(patient)
+      const treatment = normalizeText(patient && patient.latest_treatment)
+      if (doctor !== '-' && treatment) return `${doctor} · ${treatment}`
+      if (doctor !== '-') return doctor
+      if (treatment) return treatment
       return ''
     },
     activityDateTime(patient) {
@@ -1225,6 +1374,107 @@ export default {
       if (relationType) return relationType
       if (relatedName) return relatedName
       return '-'
+    },
+    // 备注弹窗方法
+    openNotesDialog(row) {
+      this.notesDialogPatient = { name: row.name || '-', id: row.id }
+      this.notesDialogContent = row.latest_record_notes || ''
+      this.notesDialogVisible = true
+    },
+    closeNotesDialog() {
+      this.notesDialogVisible = false
+      this.notesDialogPatient = {}
+      this.notesDialogContent = ''
+    },
+    // AI 面板方法
+    openAiPanel(row) {
+      this.aiPatient = row
+      this.aiPanelVisible = true
+      this.aiProfile = null
+      this.aiChurnRisk = null
+      this.loadAiData()
+    },
+    closeAiPanel() {
+      this.aiPanelVisible = false
+      this.aiPatient = null
+      this.aiProfile = null
+      this.aiChurnRisk = null
+    },
+    async loadAiData() {
+      if (!this.aiPatient || !this.aiPatient.id) return
+      this.aiLoading = true
+      try {
+        await Promise.all([
+          this.loadAiProfile(),
+          this.loadAiChurnRisk()
+        ])
+      } catch (error) {
+        console.error('AI 数据加载失败:', error)
+      } finally {
+        this.aiLoading = false
+      }
+    },
+    async loadAiProfile() {
+      try {
+        const response = await axios.get(`/ai/patient/${this.aiPatient.id}/profile`)
+        if (response.data && response.data.code === '200') {
+          this.aiProfile = response.data.data || null
+        }
+      } catch (error) {
+        console.error('加载AI画像失败:', error)
+        // 预留：接口未实现时展示模拟数据，方便前端联调
+        this.aiProfile = this.buildMockAiProfile(this.aiPatient)
+      }
+    },
+    async loadAiChurnRisk() {
+      try {
+        const response = await axios.get(`/ai/patient/${this.aiPatient.id}/churn-risk`)
+        if (response.data && response.data.code === '200') {
+          this.aiChurnRisk = response.data.data || null
+        }
+      } catch (error) {
+        console.error('加载流失风险失败:', error)
+        // 预留：接口未实现时展示模拟数据
+        this.aiChurnRisk = this.buildMockChurnRisk(this.aiPatient)
+      }
+    },
+    buildMockAiProfile(patient) {
+      // 前端联调占位数据，后端接口就绪后自动失效
+      const tags = []
+      if (patient.has_arrears) tags.push({ text: '欠费预警', type: 'danger' })
+      if (Number(patient.total_spent || 0) > 50000) tags.push({ text: '高价值', type: 'success' })
+      if (Number(patient.visit_count || 0) >= 5) tags.push({ text: '复诊常客', type: 'primary' })
+      return {
+        summary: `${patient.name || '该患者'}，${patient.gender || ''}，${this.compactAge(patient)}岁，累计消费¥${this.formatMoney(patient.total_spent)}，最近${patient.latest_treatment || '无诊疗记录'}。`,
+        tags: tags.length ? tags : [{ text: '普通患者', type: 'info' }],
+        highlights: [
+          { label: '累计消费', value: `¥${this.formatMoney(patient.total_spent)}`, trend: Number(patient.total_spent || 0) > 30000 ? 'up' : 'stable' },
+          { label: '到店次数', value: `${Number(patient.visit_count || 0)}次`, trend: 'stable' }
+        ],
+        suggestions: ['建议关注患者后续复诊安排', '可推荐适合的治疗套餐']
+      }
+    },
+    buildMockChurnRisk(patient) {
+      const daysSinceLastVisit = patient.last_visit_date
+        ? Math.floor((Date.now() - new Date(patient.last_visit_date).getTime()) / (1000 * 60 * 60 * 24))
+        : 999
+      const riskLevel = daysSinceLastVisit > 180 ? 'high' : daysSinceLastVisit > 90 ? 'medium' : 'low'
+      const score = Math.min(0.95, Math.max(0.1, daysSinceLastVisit / 365))
+      return {
+        risk_level: riskLevel,
+        risk_score: score,
+        reasons: daysSinceLastVisit > 90
+          ? [`距上次到店已 ${daysSinceLastVisit} 天`, '近期无预约记录']
+          : ['患者活跃度正常'],
+        actions: daysSinceLastVisit > 90
+          ? ['电话回访了解患者近况', '发送关怀短信或优惠券']
+          : ['保持现有服务节奏'],
+        predicted_next_visit: daysSinceLastVisit > 90 ? '建议主动邀约' : '近期可能到店'
+      }
+    },
+    riskLevelText(level) {
+      const map = { high: '高风险', medium: '中风险', low: '低风险' }
+      return map[level] || '未知'
     }
   }
 }
@@ -1252,169 +1502,103 @@ export default {
   --radius-sm: 4px;
   --radius-md: 8px;
 
-  display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
-  gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   min-height: calc(100vh - 120px);
   color: var(--text-regular);
   background: var(--bg-page);
   padding: 12px;
 }
 
-.patient-sidebar,
 .patient-main {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   min-width: 0;
 }
 
-.patient-sidebar {
+/* 顶部控制栏 */
+.top-control-bar {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  overflow: hidden;
   box-shadow: var(--shadow-card);
+  padding: 10px 14px;
+  flex-wrap: wrap;
 }
 
-.sidebar-head {
-  border-bottom: 1px solid var(--border-light);
-  padding-bottom: 8px;
-}
-
-.sidebar-topline {
+.top-control-left {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 10px 12px 4px;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.sidebar-kicker {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.sidebar-settings {
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.scope-switcher {
+.top-control-right {
   display: flex;
-  gap: 0;
-  padding: 0 10px;
-  border-bottom: 1px solid var(--border-light);
+  align-items: center;
+  gap: 10px;
 }
 
-.scope-chip {
-  flex: 1;
+.scope-switcher--horizontal {
+  display: inline-flex;
+  gap: 0;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.scope-switcher--horizontal .scope-chip {
   border: 0;
-  border-bottom: 3px solid transparent;
+  border-right: 1px solid var(--border-light);
   background: transparent;
   color: var(--text-secondary);
   font-size: 13px;
   font-weight: 500;
-  padding: 8px 0 6px;
+  padding: 6px 14px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.scope-chip.is-active {
+.scope-switcher--horizontal .scope-chip:last-child {
+  border-right: 0;
+}
+
+.scope-switcher--horizontal .scope-chip.is-active {
+  background: var(--primary-light);
   color: var(--primary);
-  border-bottom-color: var(--primary);
   font-weight: 600;
 }
 
-.sidebar-summary {
-  margin: 10px 10px 0;
-  padding: 12px;
+.group-select {
+  width: 160px;
+}
+
+.top-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 4px 10px;
   border-radius: var(--radius-sm);
   background: var(--primary-light);
   border: 1px solid rgba(0, 166, 201, 0.15);
 }
 
-.summary-main {
-  font-size: 24px;
+.top-stat-value {
+  font-size: 18px;
   font-weight: 600;
-  line-height: 1;
   color: var(--primary);
+  line-height: 1;
 }
 
-.summary-label {
-  margin-top: 4px;
+.top-stat-label {
   font-size: 12px;
   color: var(--text-secondary);
-}
-
-.summary-meta {
-  margin-top: 8px;
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.group-list {
-  flex: 1;
-  overflow: auto;
-  padding: 6px 0;
-}
-
-.group-item {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  border: 0;
-  border-left: 3px solid transparent;
-  background: transparent;
-  padding: 9px 12px;
-  text-align: left;
-  cursor: pointer;
-  color: var(--text-regular);
-  font-size: 13px;
-  transition: background 0.15s ease;
-}
-
-.group-item:hover {
-  background: var(--bg-hover);
-}
-
-.group-item.is-active {
-  background: var(--primary-light);
-  border-left-color: var(--primary);
-}
-
-.group-name {
-  font-size: 13px;
-}
-
-.group-count {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.sidebar-footer {
-  border-top: 1px solid var(--border-light);
-  padding: 10px;
-  background: var(--bg-card);
-}
-
-.sidebar-action {
-  width: 100%;
-  margin: 0 0 8px !important;
-  border-radius: var(--radius-sm);
-}
-
-.sidebar-tip {
-  font-size: 11px;
-  color: var(--text-muted);
-  line-height: 1.5;
-}
-
-.patient-main {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
 }
 
 .toolbar-shell,
@@ -1488,6 +1672,12 @@ export default {
   font-size: 12px;
 }
 
+.summary-chip.is-active {
+  background: rgba(0, 166, 201, 0.1);
+  color: var(--primary);
+  font-weight: 500;
+}
+
 .table-shell {
   display: flex;
   flex-direction: column;
@@ -1497,6 +1687,16 @@ export default {
 
 .patient-table {
   width: 100%;
+}
+
+/* 列宽拖拽边框微调 */
+.patient-table.el-table--border {
+  border-color: var(--border-light);
+}
+
+.patient-table.el-table--border th,
+.patient-table.el-table--border td {
+  border-color: var(--border-light);
 }
 
 .table-empty {
@@ -1540,6 +1740,11 @@ export default {
   color: var(--text-secondary);
   font-size: 12px;
   line-height: 1.4;
+}
+
+.name-subline-hint {
+  color: var(--text-muted);
+  font-size: 12px;
 }
 
 .mono-text {
@@ -1612,6 +1817,466 @@ export default {
   text-align: right;
 }
 
+.treatment-subline {
+  color: var(--text-muted);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.record-notes-subline {
+  color: #a855f7;
+  font-size: 11px;
+  margin-top: 3px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.record-notes-subline i {
+  font-size: 11px;
+}
+
+/* 病历备注列 */
+.notes-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s ease;
+}
+
+.notes-cell:hover {
+  background: rgba(168, 85, 247, 0.06);
+}
+
+.notes-cell i {
+  color: #a855f7;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.notes-text {
+  color: var(--text-regular);
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notes-more-tag {
+  flex-shrink: 0;
+  margin-left: 2px;
+}
+
+.notes-empty {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+/* 病历备注弹窗 */
+.notes-dialog-content {
+  padding: 4px;
+}
+
+.notes-dialog-patient {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.notes-dialog-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.notes-dialog-id {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.notes-dialog-body {
+  font-size: 13px;
+  color: var(--text-regular);
+  line-height: 1.8;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: #f9fafb;
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  border: 1px solid var(--border-light);
+}
+
+/* === AI 侧边浮层面板 === */
+.ai-panel-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.ai-panel {
+  width: 420px;
+  max-width: 90vw;
+  height: 100vh;
+  background: var(--bg-page);
+  display: flex;
+  flex-direction: column;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.12);
+}
+
+.ai-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.ai-panel-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ai-panel-title i {
+  color: #a855f7;
+  font-size: 18px;
+}
+
+.ai-patient-name {
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.ai-panel-close {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-panel-close:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.ai-panel-body {
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ai-section {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  border: 1px solid var(--border-light);
+}
+
+.ai-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ai-section-title i {
+  font-size: 14px;
+}
+
+.ai-summary-card {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.06) 0%, rgba(59, 130, 246, 0.06) 100%);
+  border: 1px solid rgba(168, 85, 247, 0.12);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.ai-summary-text {
+  font-size: 13px;
+  color: var(--text-regular);
+  line-height: 1.6;
+}
+
+.ai-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.ai-highlight-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.ai-highlight-item {
+  background: var(--bg-hover);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ai-highlight-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.ai-highlight-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ai-highlight-trend {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ai-highlight-trend.up {
+  color: #f97316;
+}
+
+.ai-highlight-trend.down {
+  color: #22c55e;
+}
+
+.ai-highlight-trend.stable {
+  color: var(--text-muted);
+}
+
+.ai-suggestion-list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ai-suggestion-item {
+  font-size: 12px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  line-height: 1.5;
+}
+
+.ai-suggestion-item i {
+  color: var(--primary);
+  margin-top: 1px;
+  font-size: 12px;
+}
+
+.ai-risk-card {
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  border: 1px solid var(--border-light);
+}
+
+.ai-risk-card.risk-high {
+  background: rgba(248, 99, 89, 0.06);
+  border-color: rgba(248, 99, 89, 0.2);
+}
+
+.ai-risk-card.risk-medium {
+  background: rgba(250, 173, 20, 0.06);
+  border-color: rgba(250, 173, 20, 0.2);
+}
+
+.ai-risk-card.risk-low {
+  background: rgba(82, 196, 26, 0.06);
+  border-color: rgba(82, 196, 26, 0.2);
+}
+
+.ai-risk-score {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.ai-risk-score-ring {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 3px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.risk-high .ai-risk-score-ring {
+  border-color: var(--danger);
+}
+
+.risk-medium .ai-risk-score-ring {
+  border-color: var(--warning);
+}
+
+.risk-low .ai-risk-score-ring {
+  border-color: var(--success);
+}
+
+.ai-risk-score-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.ai-risk-score-unit {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.ai-risk-level {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.risk-high .ai-risk-level {
+  color: var(--danger);
+}
+
+.risk-medium .ai-risk-level {
+  color: var(--warning);
+}
+
+.risk-low .ai-risk-level {
+  color: var(--success);
+}
+
+.ai-risk-subtitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.ai-risk-reasons ul {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+}
+
+.ai-risk-actions {
+  margin-top: 12px;
+}
+
+.ai-action-item {
+  font-size: 12px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  line-height: 1.6;
+  margin-bottom: 6px;
+}
+
+.ai-action-item i {
+  color: var(--success);
+  margin-top: 2px;
+}
+
+.ai-risk-predict {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border-light);
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ai-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+}
+
+.ai-empty i {
+  font-size: 40px;
+  margin-bottom: 12px;
+  display: block;
+  color: var(--border-color);
+}
+
+.ai-empty p {
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.ai-panel-slide-enter-active,
+.ai-panel-slide-leave-active {
+  transition: all 0.25s ease;
+}
+
+.ai-panel-slide-enter,
+.ai-panel-slide-leave-to {
+  opacity: 0;
+}
+
+.ai-panel-slide-enter .ai-panel,
+.ai-panel-slide-leave-to .ai-panel {
+  transform: translateX(100%);
+}
+
+.primary-link {
+  font-weight: 600;
+}
+
+.ai-link {
+  color: #a855f7 !important;
+  font-weight: 500;
+}
+
+.ai-link i {
+  margin-right: 2px;
+}
+
+.more-link {
+  color: var(--text-muted) !important;
+  padding: 0 4px !important;
+}
+
+.danger-dropdown-item {
+  color: var(--danger);
+}
+
 .required-label::before {
   content: '*';
   color: var(--danger);
@@ -1662,36 +2327,21 @@ export default {
   font-size: 12px;
 }
 
-@media (max-width: 1320px) {
-  .patient-workbench {
-    grid-template-columns: 1fr;
-  }
-
-  .patient-sidebar {
-    min-height: auto;
-  }
-
-  .group-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 6px;
-    padding: 8px 10px;
-  }
-
-  .group-item {
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    padding: 8px 10px;
-  }
-
-  .group-item.is-active {
-    border-left-color: transparent;
-    border-color: var(--primary);
-    background: var(--primary-light);
-  }
-}
-
 @media (max-width: 900px) {
+  .top-control-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .top-control-left,
+  .top-control-right {
+    justify-content: space-between;
+  }
+
+  .group-select {
+    width: 100%;
+  }
+
   .table-footer,
   .toolbar-row {
     align-items: stretch;

@@ -85,6 +85,9 @@
 | GET | /patients/search | 关键词搜索患者 |
 | GET | /patients/workbench | 患者工作台查询 |
 | GET | /patients/workbench/export | 导出患者工作台 |
+
+> **患者工作台字段扩展（待后端补充）**：
+> `/patients/workbench` 返回的患者对象中，建议增加 `latest_record_notes` 字段，用于在列表中展示该患者最近一条病历的备注信息，供前台快速了解特殊病例要点，并作为后续 AI 分析的数据来源。前端已在表格【最近诊疗】列预留展示位置。
 | POST | /patients/add | 新增患者 |
 | PUT | /patients/edit | 编辑患者 |
 | PUT | /patients/bindWechat | 绑定微信 |
@@ -641,6 +644,14 @@
 ## 待开发接口预留区
 
 > 新增功能时，在此区域补充接口设计，开发完成后再归档到上方对应模块。
+
+### AI 患者画像与流失预警（患者列表页入口，待开发）
+
+| 方法 | 路径 | 功能 | 请求参数 | 响应结构 |
+|------|------|------|----------|----------|
+| GET | /ai/patient/{patientId}/profile | 智能患者画像摘要 | 路径参数 patientId | `{ code, data: { summary: "一句话画像", tags: [{text, type}], highlights: [{label, value, trend}], suggestions: ["跟进建议1", "跟进建议2"] } }` |
+| GET | /ai/patient/{patientId}/churn-risk | 流失风险预警分析 | 路径参数 patientId | `{ code, data: { risk_level: "high/medium/low", risk_score: 0.85, reasons: ["原因1", "原因2"], actions: ["挽回建议1"], predicted_next_visit: "2026-05-20" } }` |
+| POST | /ai/patient/batch/profile | 批量患者画像（用于列表快捷预览） | `{ patient_ids: [1, 2, 3] }` | `{ code, data: [{ patient_id, summary, risk_level }] }` |
 
 ### 示例：AI 写病历（待开发）
 

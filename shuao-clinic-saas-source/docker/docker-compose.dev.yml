@@ -77,6 +77,9 @@ services:
       HOST: 0.0.0.0
       # Docker 容器内访问后端使用宿主机端口映射
       VUE_APP_API_TARGET: http://host.docker.internal:8080
+      # Docker 环境下 inotify 事件丢失，启用轮询模式保证热刷新生效
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "1000"
     ports:
       - "7070:7070"
     volumes:
