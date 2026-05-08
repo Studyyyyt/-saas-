@@ -16,6 +16,7 @@ export const ROLE_MENU_CATALOG = [
   { key: '/materials', label: '耗材档案', group: '耗材管理', defaultRoles: ['admin', 'doctor', 'nurse'] },
   { key: '/material-purchases', label: '采购记录', group: '耗材管理', defaultRoles: ['admin', 'nurse'] },
   { key: '/material-statistics', label: '耗材统计', group: '耗材管理', defaultRoles: ['admin'] },
+  { key: '/Appointment', label: '预约工作台', group: '接诊与排班', defaultRoles: ['admin', 'doctor', 'nurse'] },
   { key: '/Appointment2', label: '预约列表', group: '接诊与排班', defaultRoles: ['admin', 'doctor', 'nurse'] },
   { key: '/Doctor', label: '医生排班', group: '接诊与排班', defaultRoles: ['admin', 'doctor', 'nurse'] },
   { key: '/Financial', label: '财务信息', group: '财务管理', defaultRoles: ['admin', 'nurse'] },

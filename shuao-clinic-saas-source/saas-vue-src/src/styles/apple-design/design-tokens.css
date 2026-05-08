@@ -1,0 +1,131 @@
+/* Precision Medical Instrument Design Token System v2 - 口腔门诊 SaaS */
+
+:root {
+  /* === 颜色系统 === */
+  /* 背景层：极深的冷灰蓝，带微妙的环境光 */
+  --apple-bg-primary: #eef1f5;
+  --apple-bg-secondary: #ffffff;
+  --apple-bg-tertiary: #f9fafb;
+  --apple-bg-hover: rgba(0, 0, 0, 0.03);
+  --apple-bg-active: rgba(0, 0, 0, 0.06);
+  --apple-bg-gradient: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(37, 99, 235, 0.08), transparent);
+
+  /* 表层卡片：真正的厚玻璃 */
+  --apple-surface: rgba(255, 255, 255, 0.65);
+  --apple-surface-solid: #ffffff;
+  --apple-surface-blur: blur(24px) saturate(150%);
+  --apple-surface-border: 1px solid rgba(255, 255, 255, 0.5);
+  --apple-surface-shadow-inset: inset 0 1px 1px rgba(255, 255, 255, 0.6);
+
+  /* 文字 */
+  --apple-text-primary: #0f172a;
+  --apple-text-secondary: #475569;
+  --apple-text-tertiary: #94a3b8;
+  --apple-text-inverse: #ffffff;
+
+  /* 强调色 - 医疗蓝 */
+  --apple-accent: #2563eb;
+  --apple-accent-hover: #1d4ed8;
+  --apple-accent-active: #1e40af;
+  --apple-accent-light: rgba(37, 99, 235, 0.08);
+  --apple-accent-ring: rgba(37, 99, 235, 0.15);
+  --apple-accent-glow: rgba(37, 99, 235, 0.15);
+
+  /* 功能色 */
+  --apple-success: #059669;
+  --apple-success-light: rgba(5, 150, 105, 0.08);
+  --apple-warning: #d97706;
+  --apple-warning-light: rgba(217, 119, 6, 0.08);
+  --apple-danger: #dc2626;
+  --apple-danger-light: rgba(220, 38, 38, 0.08);
+  --apple-info: #0891b2;
+  --apple-info-light: rgba(8, 145, 178, 0.08);
+  --apple-purple: #7c3aed;
+  --apple-purple-light: rgba(124, 58, 237, 0.08);
+
+  /* 边框与分割线 */
+  --apple-border: rgba(0, 0, 0, 0.08);
+  --apple-border-light: rgba(0, 0, 0, 0.04);
+  --apple-border-medium: rgba(0, 0, 0, 0.12);
+  --apple-divider: rgba(0, 0, 0, 0.06);
+
+  /* === 阴影系统（v2：更立体，模拟真实光照） === */
+  --apple-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03);
+  --apple-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.03);
+  --apple-shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.06), 0 4px 8px rgba(0, 0, 0, 0.02);
+  --apple-shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.08), 0 8px 16px rgba(0, 0, 0, 0.03);
+  --apple-shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+  --apple-shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+  --apple-shadow-glow: 0 0 40px rgba(37, 99, 235, 0.08);
+
+  /* === 圆角系统 === */
+  --apple-radius-sm: 6px;
+  --apple-radius-md: 10px;
+  --apple-radius-lg: 14px;
+  --apple-radius-xl: 20px;
+  --apple-radius-full: 9999px;
+
+  /* === 间距系统（基于 4px 网格） === */
+  --apple-space-xs: 4px;
+  --apple-space-sm: 8px;
+  --apple-space-md: 12px;
+  --apple-space-lg: 16px;
+  --apple-space-xl: 20px;
+  --apple-space-2xl: 24px;
+  --apple-space-3xl: 32px;
+  --apple-space-4xl: 40px;
+  --apple-space-5xl: 48px;
+  --apple-space-6xl: 64px;
+
+  /* === 字体系统 === */
+  --apple-font-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+  --apple-font-mono: "SF Mono", SFMono-Regular, ui-monospace, Menlo, Monaco, "Cascadia Mono", monospace;
+
+  /* 字重 */
+  --apple-weight-light: 300;
+  --apple-weight-regular: 400;
+  --apple-weight-medium: 500;
+  --apple-weight-semibold: 600;
+  --apple-weight-bold: 700;
+
+  /* 字号 */
+  --apple-text-xs: 11px;
+  --apple-text-sm: 12px;
+  --apple-text-base: 13px;
+  --apple-text-md: 14px;
+  --apple-text-lg: 16px;
+  --apple-text-xl: 20px;
+  --apple-text-2xl: 24px;
+  --apple-text-3xl: 28px;
+  --apple-text-4xl: 32px;
+  --apple-text-5xl: 40px;
+  --apple-text-6xl: 48px;
+
+  /* 行高 */
+  --apple-leading-tight: 1.25;
+  --apple-leading-normal: 1.5;
+  --apple-leading-relaxed: 1.6;
+
+  /* === 过渡与动画 === */
+  --apple-transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --apple-transition-normal: 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  --apple-transition-slow: 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* === 布局 === */
+  --apple-nav-height: 56px;
+  --apple-content-max-width: 1400px;
+  --apple-content-padding: 32px;
+}
+
+/* 响应式内容边距 */
+@media (max-width: 1200px) {
+  :root {
+    --apple-content-padding: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --apple-content-padding: 16px;
+  }
+}

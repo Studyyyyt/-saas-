@@ -28,6 +28,7 @@ public final class RoleMenuPermissionCatalog {
             item("/materials", "耗材档案", "耗材管理", ROLE_ADMIN, ROLE_DOCTOR, ROLE_NURSE),
             item("/material-purchases", "采购记录", "耗材管理", ROLE_ADMIN, ROLE_NURSE),
             item("/material-statistics", "耗材统计", "耗材管理", ROLE_ADMIN),
+            item("/Appointment", "预约工作台", "接诊与排班", ROLE_ADMIN, ROLE_DOCTOR, ROLE_NURSE),
             item("/Appointment2", "预约列表", "接诊与排班", ROLE_ADMIN, ROLE_DOCTOR, ROLE_NURSE),
             item("/Doctor", "医生排班", "接诊与排班", ROLE_ADMIN, ROLE_DOCTOR, ROLE_NURSE),
             item("/Financial", "财务信息", "财务管理", ROLE_ADMIN, ROLE_NURSE),

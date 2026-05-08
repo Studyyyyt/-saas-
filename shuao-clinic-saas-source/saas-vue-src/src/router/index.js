@@ -60,6 +60,9 @@ import SystemPaymentChannelView from "@/views/Manager/SystemPaymentChannelView.v
 import SystemConsentTemplateView from "@/views/Manager/SystemConsentTemplateView.vue";
 import SystemAccountPermissionView from "@/views/Manager/SystemAccountPermissionView.vue";
 import SystemAccountManageView from "@/views/Manager/SystemAccountManageView.vue";
+import SystemSettingsView from "@/views/Manager/SystemSettingsView.vue";
+import AIAgentConfigView from "@/views/Manager/AIAgentConfigView.vue";
+import ModelProviderConfigView from "@/views/Manager/ModelProviderConfigView.vue";
 import LabFactoryView from "@/views/Manager/LabFactoryView.vue";
 import LabFactoryDetailView from "@/views/Manager/LabFactoryDetailView.vue";
 import LabOrderView from "@/views/Manager/LabOrderView.vue";
@@ -131,6 +134,9 @@ const routes = [
       { path: 'SystemConsentTemplate', name: 'SystemConsentTemplateView', component: SystemConsentTemplateView, meta: { allowedRoles: ['admin', 'nurse'] }},
       { path: 'SystemAccountPermission', name: 'SystemAccountPermissionView', component: SystemAccountPermissionView, meta: { allowedRoles: ['admin'] }},
       { path: 'SystemAccountManage', name: 'SystemAccountManageView', component: SystemAccountManageView, meta: { allowedRoles: ['admin'] }},
+      { path: 'SystemSettings', name: 'SystemSettingsView', component: SystemSettingsView, meta: { allowedRoles: ['admin', 'nurse'] }},
+      { path: 'SystemAIAgentConfig', name: 'AIAgentConfigView', component: AIAgentConfigView, meta: { allowedRoles: ['admin', 'nurse'] }},
+      { path: 'SystemModelProviderConfig', name: 'ModelProviderConfigView', component: ModelProviderConfigView, meta: { allowedRoles: ['admin', 'nurse'] }},
       { path: 'lab-factories', alias: ['/LabFactory'], name: 'LabFactoryView', component: LabFactoryView, meta: { allowedRoles: ['admin', 'nurse'] } },
       { path: 'lab-factories/:id', alias: ['/LabFactoryDetail/:id'], name: 'LabFactoryDetailView', component: LabFactoryDetailView, meta: { allowedRoles: ['admin', 'nurse'] } },
       { path: 'lab-orders', alias: ['/LabOrder'], name: 'LabOrderView', component: LabOrderView, meta: { allowedRoles: ['admin', 'doctor', 'nurse'] } },

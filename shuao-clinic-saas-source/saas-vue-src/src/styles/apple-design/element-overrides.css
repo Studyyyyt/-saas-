@@ -1,0 +1,466 @@
+/* Precision Medical Instrument - Element UI 全局覆写 */
+
+/* === 基础重置 === */
+.apple-design-scope,
+.apple-design-scope * {
+  font-family: var(--apple-font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* === 按钮 === */
+.apple-design-scope .el-button {
+  border-radius: var(--apple-radius-md) !important;
+  font-weight: var(--apple-weight-medium) !important;
+  font-size: var(--apple-text-base) !important;
+  padding: 10px 20px !important;
+  transition: all var(--apple-transition-fast) !important;
+  border: none !important;
+}
+
+.apple-design-scope .el-button--primary {
+  background: var(--apple-accent) !important;
+  color: var(--apple-text-inverse) !important;
+}
+
+.apple-design-scope .el-button--primary:hover {
+  background: var(--apple-accent-hover) !important;
+}
+
+.apple-design-scope .el-button--primary:active {
+  background: var(--apple-accent-active) !important;
+  transform: scale(0.97);
+}
+
+.apple-design-scope .el-button--default {
+  background: var(--apple-bg-secondary) !important;
+  color: var(--apple-text-primary) !important;
+  border: 1px solid var(--apple-border) !important;
+}
+
+.apple-design-scope .el-button--default:hover {
+  background: var(--apple-bg-primary) !important;
+  border-color: var(--apple-border-medium) !important;
+}
+
+.apple-design-scope .el-button--text {
+  background: transparent !important;
+  color: var(--apple-accent) !important;
+  padding: 4px 8px !important;
+}
+
+.apple-design-scope .el-button--text:hover {
+  background: var(--apple-accent-light) !important;
+}
+
+/* 小型按钮 */
+.apple-design-scope .el-button--small {
+  padding: 6px 14px !important;
+  font-size: var(--apple-text-sm) !important;
+}
+
+/* 微型按钮 */
+.apple-design-scope .el-button--mini {
+  padding: 4px 10px !important;
+  font-size: var(--apple-text-xs) !important;
+}
+
+/* === 输入框 === */
+.apple-design-scope .el-input__inner {
+  border-radius: var(--apple-radius-md) !important;
+  border: 1px solid transparent !important;
+  background: #f3f4f6 !important;
+  color: var(--apple-text-primary) !important;
+  font-size: var(--apple-text-md) !important;
+  padding: 10px 16px !important;
+  height: 48px !important;
+  transition: all var(--apple-transition-fast) !important;
+}
+
+.apple-design-scope .el-input__inner:hover {
+  border-color: var(--apple-border-medium) !important;
+}
+
+.apple-design-scope .el-input__inner:focus {
+  background: var(--apple-bg-secondary) !important;
+  border-color: rgba(37, 99, 235, 0.4) !important;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1), 0 0 20px rgba(37, 99, 235, 0.08) !important;
+}
+
+.apple-design-scope .el-input__prefix,
+.apple-design-scope .el-input__suffix {
+  color: var(--apple-text-tertiary) !important;
+}
+
+/* === 选择器 === */
+.apple-design-scope .el-select .el-input__inner {
+  border-radius: var(--apple-radius-md) !important;
+}
+
+.apple-design-scope .el-select-dropdown {
+  border-radius: var(--apple-radius-md) !important;
+  border: 1px solid var(--apple-border) !important;
+  box-shadow: var(--apple-shadow-lg) !important;
+  padding: 6px !important;
+}
+
+.apple-design-scope .el-select-dropdown__item {
+  font-size: var(--apple-text-md) !important;
+  padding: 8px 12px !important;
+  color: var(--apple-text-primary) !important;
+  border-radius: var(--apple-radius-sm) !important;
+}
+
+.apple-design-scope .el-select-dropdown__item.hover,
+.apple-design-scope .el-select-dropdown__item:hover {
+  background: var(--apple-bg-hover) !important;
+}
+
+.apple-design-scope .el-select-dropdown__item.selected {
+  color: var(--apple-accent) !important;
+  font-weight: var(--apple-weight-medium) !important;
+  background: var(--apple-accent-light) !important;
+}
+
+/* === 卡片 === */
+.apple-design-scope .el-card {
+  border-radius: var(--apple-radius-lg) !important;
+  border: var(--apple-surface-border) !important;
+  box-shadow: var(--apple-shadow-md), var(--apple-surface-shadow-inset) !important;
+  background: var(--apple-surface) !important;
+  backdrop-filter: var(--apple-surface-blur);
+  transition: all var(--apple-transition-slow) !important;
+}
+
+.apple-design-scope .el-card:hover {
+  box-shadow: var(--apple-shadow-lg), var(--apple-shadow-glow), var(--apple-surface-shadow-inset) !important;
+  transform: translateY(-4px) scale(1.005);
+}
+
+.apple-design-scope .el-card__header {
+  border-bottom: 1px solid var(--apple-divider) !important;
+  padding: var(--apple-space-2xl) var(--apple-space-2xl) var(--apple-space-lg) !important;
+  font-weight: var(--apple-weight-semibold) !important;
+  color: var(--apple-text-primary) !important;
+  font-size: var(--apple-text-lg) !important;
+}
+
+.apple-design-scope .el-card__body {
+  padding: var(--apple-space-2xl) !important;
+}
+
+/* === 表格 === */
+.apple-design-scope .el-table {
+  border-radius: var(--apple-radius-lg) !important;
+  overflow: hidden;
+  background: var(--apple-bg-secondary) !important;
+}
+
+.apple-design-scope .el-table th {
+  background: #f9fafb !important;
+  color: #374151 !important;
+  font-weight: var(--apple-weight-semibold) !important;
+  font-size: var(--apple-text-sm) !important;
+  letter-spacing: 0.02em;
+  border-bottom: 1px solid var(--apple-border-light) !important;
+  padding: 14px 16px !important;
+  height: 52px;
+}
+
+.apple-design-scope .el-table td {
+  border-bottom: 1px solid var(--apple-border-light) !important;
+  padding: 14px 16px !important;
+  color: var(--apple-text-primary) !important;
+  font-size: var(--apple-text-md) !important;
+  height: 52px;
+}
+
+.apple-design-scope .el-table--enable-row-hover .el-table__body tr:hover > td {
+  background: #f9fafb !important;
+}
+
+.apple-design-scope .el-table::before {
+  display: none;
+}
+
+/* === 分页 === */
+.apple-design-scope .el-pagination button,
+.apple-design-scope .el-pagination span:not([class*="sizes"]) {
+  border-radius: var(--apple-radius-sm) !important;
+  font-weight: var(--apple-weight-medium) !important;
+}
+
+.apple-design-scope .el-pagination .el-pager li {
+  border-radius: var(--apple-radius-sm) !important;
+  font-weight: var(--apple-weight-medium) !important;
+  color: var(--apple-text-primary) !important;
+}
+
+.apple-design-scope .el-pagination .el-pager li.active {
+  background: #111827 !important;
+  color: var(--apple-text-inverse) !important;
+}
+
+/* === 标签/徽章 === */
+.apple-design-scope .el-tag {
+  border-radius: var(--apple-radius-sm) !important;
+  font-weight: var(--apple-weight-medium) !important;
+  font-size: var(--apple-text-xs) !important;
+  padding: 4px 10px !important;
+  border: none !important;
+}
+
+.apple-design-scope .el-tag--primary {
+  background: var(--apple-accent-light) !important;
+  color: var(--apple-accent) !important;
+}
+
+.apple-design-scope .el-tag--success {
+  background: var(--apple-success-light) !important;
+  color: var(--apple-success) !important;
+}
+
+.apple-design-scope .el-tag--warning {
+  background: var(--apple-warning-light) !important;
+  color: var(--apple-warning) !important;
+}
+
+.apple-design-scope .el-tag--danger {
+  background: var(--apple-danger-light) !important;
+  color: var(--apple-danger) !important;
+}
+
+.apple-design-scope .el-tag--info {
+  background: var(--apple-info-light) !important;
+  color: var(--apple-info) !important;
+}
+
+/* === 弹窗/对话框 === */
+.apple-design-scope .el-dialog {
+  border-radius: var(--apple-radius-xl) !important;
+  box-shadow: var(--apple-shadow-xl) !important;
+  border: none !important;
+  overflow: hidden;
+}
+
+.apple-design-scope .el-dialog__header {
+  padding: var(--apple-space-3xl) var(--apple-space-3xl) var(--apple-space-lg) !important;
+  border-bottom: none !important;
+}
+
+.apple-design-scope .el-dialog__title {
+  font-size: var(--apple-text-xl) !important;
+  font-weight: var(--apple-weight-semibold) !important;
+  color: var(--apple-text-primary) !important;
+}
+
+.apple-design-scope .el-dialog__body {
+  padding: var(--apple-space-lg) var(--apple-space-3xl) !important;
+  color: var(--apple-text-primary) !important;
+}
+
+.apple-design-scope .el-dialog__footer {
+  padding: var(--apple-space-lg) var(--apple-space-3xl) var(--apple-space-3xl) !important;
+  border-top: 1px solid var(--apple-divider) !important;
+}
+
+/* 弹窗遮罩 */
+.apple-design-scope .el-dialog__wrapper {
+  background: rgba(0, 0, 0, 0.4) !important;
+  backdrop-filter: blur(4px);
+}
+
+/* === 消息提示 === */
+.apple-design-scope .el-message {
+  top: auto !important;
+  bottom: 20px !important;
+  border-radius: var(--apple-radius-md) !important;
+  box-shadow: var(--apple-shadow-lg) !important;
+  border: none !important;
+  padding: 14px 20px !important;
+  font-weight: var(--apple-weight-medium) !important;
+}
+
+.apple-design-scope .el-message--success {
+  background: var(--apple-bg-secondary) !important;
+  color: var(--apple-success) !important;
+}
+
+.apple-design-scope .el-message--error {
+  background: var(--apple-bg-secondary) !important;
+  color: var(--apple-danger) !important;
+}
+
+.apple-design-scope .el-message--warning {
+  background: var(--apple-bg-secondary) !important;
+  color: var(--apple-warning) !important;
+}
+
+/* === 下拉菜单 === */
+.apple-design-scope .el-dropdown-menu {
+  border-radius: var(--apple-radius-md) !important;
+  box-shadow: var(--apple-shadow-lg) !important;
+  border: 1px solid var(--apple-border) !important;
+  padding: 6px !important;
+}
+
+.apple-design-scope .el-dropdown-menu__item {
+  border-radius: var(--apple-radius-sm) !important;
+  padding: 8px 12px !important;
+  font-size: var(--apple-text-md) !important;
+  color: var(--apple-text-primary) !important;
+}
+
+.apple-design-scope .el-dropdown-menu__item:hover {
+  background: var(--apple-bg-hover) !important;
+  color: var(--apple-accent) !important;
+}
+
+/* === 日期选择器 === */
+.apple-design-scope .el-date-picker {
+  border-radius: var(--apple-radius-lg) !important;
+  box-shadow: var(--apple-shadow-lg) !important;
+}
+
+.apple-design-scope .el-date-table td.current:not(.disabled) span {
+  background: var(--apple-accent) !important;
+  color: var(--apple-text-inverse) !important;
+}
+
+.apple-design-scope .el-date-table td.today span {
+  color: var(--apple-accent) !important;
+}
+
+/* === Tabs === */
+.apple-design-scope .el-tabs__item {
+  font-weight: var(--apple-weight-medium) !important;
+  font-size: var(--apple-text-md) !important;
+  color: var(--apple-text-secondary) !important;
+  padding: 0 var(--apple-space-lg) !important;
+}
+
+.apple-design-scope .el-tabs__item.is-active {
+  color: var(--apple-accent) !important;
+}
+
+.apple-design-scope .el-tabs__active-bar {
+  background: var(--apple-accent) !important;
+  height: 2px !important;
+  border-radius: 1px;
+}
+
+.apple-design-scope .el-tabs__nav-wrap::after {
+  background: var(--apple-divider) !important;
+  height: 1px !important;
+}
+
+/* === 表单 === */
+.apple-design-scope .el-form-item__label {
+  color: var(--apple-text-secondary) !important;
+  font-weight: var(--apple-weight-medium) !important;
+  font-size: var(--apple-text-sm) !important;
+}
+
+.apple-design-scope .el-form-item {
+  margin-bottom: var(--apple-space-2xl) !important;
+}
+
+/* === 开关 === */
+.apple-design-scope .el-switch.is-checked .el-switch__core {
+  background: var(--apple-accent) !important;
+  border-color: var(--apple-accent) !important;
+}
+
+.apple-design-scope .el-switch__core {
+  border-radius: var(--apple-radius-full) !important;
+}
+
+/* === 复选框 & 单选框 === */
+.apple-design-scope .el-checkbox__input.is-checked .el-checkbox__inner,
+.apple-design-scope .el-checkbox__input.is-indeterminate .el-checkbox__inner {
+  background: var(--apple-accent) !important;
+  border-color: var(--apple-accent) !important;
+}
+
+.apple-design-scope .el-checkbox__inner {
+  border-radius: 4px !important;
+}
+
+.apple-design-scope .el-radio__input.is-checked .el-radio__inner {
+  background: var(--apple-accent) !important;
+  border-color: var(--apple-accent) !important;
+}
+
+.apple-design-scope .el-radio__label {
+  color: var(--apple-text-primary) !important;
+}
+
+/* === 步骤条 === */
+.apple-design-scope .el-step__head.is-success,
+.apple-design-scope .el-step__head.is-process {
+  color: var(--apple-accent) !important;
+  border-color: var(--apple-accent) !important;
+}
+
+.apple-design-scope .el-step__title.is-success,
+.apple-design-scope .el-step__title.is-process {
+  color: var(--apple-accent) !important;
+  font-weight: var(--apple-weight-medium) !important;
+}
+
+/* === 上传 === */
+.apple-design-scope .el-upload--picture-card {
+  border-radius: var(--apple-radius-md) !important;
+  border: 1px dashed var(--apple-border) !important;
+  background: var(--apple-bg-tertiary) !important;
+  transition: all var(--apple-transition-fast) !important;
+}
+
+.apple-design-scope .el-upload--picture-card:hover {
+  border-color: var(--apple-accent) !important;
+  background: var(--apple-accent-light) !important;
+}
+
+/* === 时间线 === */
+.apple-design-scope .el-timeline-item__node {
+  background: var(--apple-accent) !important;
+}
+
+.apple-design-scope .el-timeline-item__tail {
+  border-left: 1px solid var(--apple-divider) !important;
+}
+
+/* === 树形组件 === */
+.apple-design-scope .el-tree-node__content:hover {
+  background: var(--apple-bg-hover) !important;
+}
+
+.apple-design-scope .el-tree-node:focus > .el-tree-node__content {
+  background: var(--apple-accent-light) !important;
+}
+
+/* === 骨架屏 === */
+.apple-design-scope .el-skeleton__item {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e4e4e7 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: apple-shimmer 1.5s infinite;
+}
+
+/* === 滚动条 === */
+.apple-design-scope ::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.apple-design-scope ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.apple-design-scope ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 3px;
+}
+
+.apple-design-scope ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.22);
+}

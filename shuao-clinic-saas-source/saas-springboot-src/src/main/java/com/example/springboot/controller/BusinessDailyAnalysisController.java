@@ -77,6 +77,15 @@ public class BusinessDailyAnalysisController {
         }
     }
 
+    @PostMapping(value = "/chat/stream", produces = org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE)
+    public org.springframework.web.servlet.mvc.method.annotation.SseEmitter chatStream(
+            @RequestBody BusinessAnalysisChatRequest request,
+            @RequestParam(required = false, defaultValue = "default") String agentKey) {
+        org.springframework.web.servlet.mvc.method.annotation.SseEmitter emitter = new org.springframework.web.servlet.mvc.method.annotation.SseEmitter(120000L);
+        new Thread(() -> businessAnalysisChatService.sendMessageStream(request, agentKey, emitter)).start();
+        return emitter;
+    }
+
     @GetMapping("/weekly/latest")
     public Result weeklyLatest() {
         return Result.success(businessPeriodReportService.getLatestWeeklyReport());

@@ -1,0 +1,283 @@
+/* Precision Medical Instrument 动画系统 */
+
+/* === 页面进入动画 === */
+@keyframes apple-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes apple-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes apple-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* === 内容区域进入动画 === */
+.apple-page-enter {
+  animation: apple-fade-in-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  opacity: 0;
+}
+
+.apple-page-enter-delay-1 { animation-delay: 0.04s; }
+.apple-page-enter-delay-2 { animation-delay: 0.08s; }
+.apple-page-enter-delay-3 { animation-delay: 0.12s; }
+.apple-page-enter-delay-4 { animation-delay: 0.16s; }
+.apple-page-enter-delay-5 { animation-delay: 0.20s; }
+.apple-page-enter-delay-6 { animation-delay: 0.24s; }
+
+/* === 卡片 hover 动画 === */
+.apple-card-hover {
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease;
+}
+
+.apple-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--apple-shadow-hover);
+}
+
+/* === 按钮点击反馈 === */
+.apple-btn-press {
+  transition: transform 0.1s ease, background-color 0.15s ease;
+}
+
+.apple-btn-press:active {
+  transform: scale(0.97);
+}
+
+/* === 导航指示条从中心展开 === */
+@keyframes apple-nav-indicator {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+/* === iOS Sheet 弹窗动画 === */
+@keyframes apple-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.apple-sheet-enter {
+  animation: apple-sheet-in 0.4s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+/* === 列表项 stagger 进入 === */
+@keyframes apple-list-item-in {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.apple-list-item {
+  animation: apple-list-item-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  opacity: 0;
+}
+
+/* === 脉冲动画（用于通知点） === */
+@keyframes apple-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.15); }
+}
+
+.apple-pulse {
+  animation: apple-pulse 2s ease-in-out infinite;
+}
+
+/* === 旋转加载 === */
+@keyframes apple-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.apple-spin {
+  animation: apple-spin 1s linear infinite;
+}
+
+/* === 骨架屏 shimmer === */
+@keyframes apple-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.apple-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e4e4e7 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: apple-shimmer 1.5s ease-in-out infinite;
+}
+
+/* === Tab 内容切换淡入淡出 === */
+.apple-tab-content-enter {
+  animation: apple-fade-in 0.25s ease-out forwards;
+}
+
+/* === 下拉菜单展开 === */
+@keyframes apple-dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.apple-dropdown-enter {
+  animation: apple-dropdown-in 0.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* === 图片 hover 放大 === */
+.apple-img-zoom {
+  transition: transform var(--apple-transition-normal);
+  overflow: hidden;
+}
+
+.apple-img-zoom img {
+  transition: transform var(--apple-transition-normal);
+}
+
+.apple-img-zoom:hover img {
+  transform: scale(1.05);
+}
+
+/* === 拖拽排序时的占位动画 === */
+@keyframes apple-drag-ghost {
+  0% { opacity: 0.6; }
+  50% { opacity: 0.8; }
+  100% { opacity: 0.6; }
+}
+
+.apple-drag-ghost {
+  animation: apple-drag-ghost 1s ease-in-out infinite;
+  background: rgba(37, 99, 235, 0.06);
+  border: 1px dashed rgba(37, 99, 235, 0.3);
+  border-radius: var(--apple-radius-md);
+}
+
+/* === 通用过渡类 === */
+.apple-transition-all {
+  transition: all var(--apple-transition-normal);
+}
+
+.apple-transition-fast {
+  transition: all var(--apple-transition-fast);
+}
+
+.apple-transition-colors {
+  transition: background-color var(--apple-transition-fast),
+              border-color var(--apple-transition-fast),
+              color var(--apple-transition-fast);
+}
+
+.apple-transition-transform {
+  transition: transform var(--apple-transition-fast);
+}
+
+/* === 光晕扩散动画（输入框 focus、按钮点击） === */
+@keyframes apple-glow-expand {
+  0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.2); }
+  100% { box-shadow: 0 0 0 8px rgba(37, 99, 235, 0); }
+}
+
+.apple-glow-expand {
+  animation: apple-glow-expand 0.4s ease-out forwards;
+}
+
+/* === 涟漪动画（按钮点击） === */
+@keyframes apple-ripple {
+  0% { transform: scale(0); opacity: 0.4; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+.apple-ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.apple-ripple::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.apple-ripple:active::after {
+  animation: apple-ripple 0.4s ease-out forwards;
+}
+
+/* === 呼吸光效（AI 思考中、在线状态） === */
+@keyframes apple-breath {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+.apple-breath {
+  animation: apple-breath 2s ease-in-out infinite;
+}
+
+/* === 渐变呼吸（Logo、环境光） === */
+@keyframes apple-gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.apple-gradient-shift {
+  background-size: 200% 200%;
+  animation: apple-gradient-shift 6s ease infinite;
+}
+
+/* === 打字机光标动画（AI 对话） === */
+@keyframes apple-cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.apple-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.2em;
+  background: var(--apple-accent);
+  vertical-align: text-bottom;
+  margin-left: 2px;
+  animation: apple-cursor-blink 1s step-end infinite;
+}

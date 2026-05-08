@@ -1867,3 +1867,156 @@ UNLOCK TABLES;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2026-05-06 22:35:52
+
+-- ============================================================
+-- 数据库结构修复与补全补丁 (2026-05-07)
+-- 用途：修复审查发现的所有问题，确保初始化后数据库结构完整
+-- 执行环境：MySQL 8.0+ / 9.x，空数据库或重建场景
+-- ============================================================
+
+-- --------------------------------------------------------
+-- 1. 数据类型修复：金额和日期字段使用正确的数据类型
+-- --------------------------------------------------------
+
+ALTER TABLE finances MODIFY COLUMN amount DECIMAL(12,2) DEFAULT NULL COMMENT '金额';
+ALTER TABLE finances MODIFY COLUMN date DATE DEFAULT NULL COMMENT '日期';
+ALTER TABLE treatment MODIFY COLUMN treatment_fee DECIMAL(12,2) DEFAULT NULL COMMENT '治疗费用';
+ALTER TABLE treatment_catalog MODIFY COLUMN default_fee DECIMAL(12,2) DEFAULT NULL COMMENT '默认收费';
+ALTER TABLE inventory MODIFY COLUMN price DECIMAL(12,2) DEFAULT NULL COMMENT '价格';
+ALTER TABLE purchases MODIFY COLUMN price DECIMAL(12,2) DEFAULT NULL COMMENT '价格';
+
+-- --------------------------------------------------------
+-- 2. users 表增强：补充账号管理所需字段
+-- --------------------------------------------------------
+
+ALTER TABLE users
+ADD COLUMN status TINYINT NOT NULL DEFAULT 1 COMMENT '状态：1启用 0停用' AFTER role,
+ADD COLUMN phone VARCHAR(20) DEFAULT NULL COMMENT '手机号' AFTER status,
+ADD COLUMN avatar VARCHAR(500) DEFAULT NULL COMMENT '头像地址' AFTER phone,
+ADD COLUMN created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间' AFTER avatar,
+ADD COLUMN updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间' AFTER created_at,
+ADD COLUMN last_login_at DATETIME DEFAULT NULL COMMENT '最后登录时间' AFTER updated_at;
+
+-- --------------------------------------------------------
+-- 3. 新建 clinic_info 诊所机构信息表
+-- --------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS clinic_info (
+  id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  clinic_name VARCHAR(100) NOT NULL DEFAULT '舒澳口腔' COMMENT '诊所名称',
+  clinic_code VARCHAR(64) DEFAULT NULL COMMENT '诊所编码',
+  phone VARCHAR(20) DEFAULT NULL COMMENT '联系电话',
+  address VARCHAR(500) DEFAULT NULL COMMENT '地址',
+  logo_url VARCHAR(500) DEFAULT NULL COMMENT 'Logo地址',
+  business_hours VARCHAR(200) DEFAULT NULL COMMENT '营业时间',
+  remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='诊所机构信息表';
+
+INSERT INTO clinic_info (clinic_name) VALUES ('舒澳口腔')
+ON DUPLICATE KEY UPDATE clinic_name = VALUES(clinic_name);
+
+-- --------------------------------------------------------
+-- 4. 新建 file_attachment 通用文件附件表
+-- --------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS file_attachment (
+  id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  biz_type VARCHAR(50) NOT NULL COMMENT '业务类型：patient/medical_record/material/purchase等',
+  biz_id BIGINT NOT NULL COMMENT '业务记录ID',
+  file_name VARCHAR(255) DEFAULT NULL COMMENT '原始文件名',
+  file_url VARCHAR(500) DEFAULT NULL COMMENT '文件存储路径',
+  file_size BIGINT DEFAULT NULL COMMENT '文件大小(字节)',
+  mime_type VARCHAR(100) DEFAULT NULL COMMENT '文件类型',
+  sort_order INT DEFAULT 0 COMMENT '排序',
+  created_by BIGINT DEFAULT NULL COMMENT '上传人ID',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_file_attachment_biz (biz_type, biz_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='通用文件附件表';
+
+-- --------------------------------------------------------
+-- 5. 创建 ai_agent_config 表及系统默认 Agent
+-- --------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS ai_agent_config (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  account_id BIGINT DEFAULT NULL COMMENT '所属用户ID，NULL表示系统默认',
+  agent_key VARCHAR(64) NOT NULL COMMENT 'Agent标识: default/finance/patient/schedule/自定义',
+  name VARCHAR(32) NOT NULL COMMENT '显示名称',
+  icon VARCHAR(8) DEFAULT '🤖' COMMENT '图标emoji',
+  description VARCHAR(256) DEFAULT NULL COMMENT '描述',
+  gradient VARCHAR(256) DEFAULT 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)' COMMENT '主题色CSS渐变',
+  chips JSON DEFAULT NULL COMMENT '快捷指令JSON数组',
+  system_prompt TEXT DEFAULT NULL COMMENT 'Agent专属System Prompt',
+  enabled_tools JSON DEFAULT NULL COMMENT '该Agent可使用的工具列表',
+  sort_order INT DEFAULT 0 COMMENT '排序',
+  is_system_default TINYINT(1) DEFAULT 0 COMMENT '是否为系统预设Agent',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_account_agent (account_id, agent_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI Agent配置表';
+
+-- 先清空系统默认Agent，避免与Flyway迁移重复插入（account_id为NULL时唯一索引不生效）
+DELETE FROM ai_agent_config WHERE is_system_default = 1;
+
+INSERT INTO ai_agent_config (account_id, agent_key, name, icon, description, gradient, chips, system_prompt, enabled_tools, sort_order, is_system_default) VALUES
+(NULL, 'default', '智能助手', '🤖', '通用门诊查询与数据汇总', 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)',
+ '["今日预约", "我的待办", "本月收入", "患者查询", "今日患者", "待收费"]',
+ '你是口腔门诊的智能助手，可以查询患者、预约、收费、病历等数据，用中文简洁回答。',
+ '["query_patients", "query_appointments", "query_finances", "query_medical_records", "query_treatments"]',
+ 0, 1),
+(NULL, 'finance', '经营分析', '📊', '财务、收入与经营数据分析', 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)',
+ '["本月收入", "近7天趋势", "待收费", "加工费", "耗材支出", "高价值客户"]',
+ '你是口腔门诊的财务分析专家。专注于收入趋势、收费结构、支出分析、经营效率。用数据说话，给出可落地的建议。',
+ '["query_finances", "query_treatments", "query_materials"]',
+ 1, 1),
+(NULL, 'patient', '患者管理', '🏥', '患者档案、随访与病历查询', 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+ '["患者查询", "待回访", "流失风险", "转介绍", "待写病历", "今日患者"]',
+ '你是口腔门诊的患者管理专家。专注于患者档案、随访提醒、病历分析、患者满意度。关注患者全生命周期管理。',
+ '["query_patients", "query_medical_records", "query_appointments", "query_treatments"]',
+ 2, 1),
+(NULL, 'schedule', '预约调度', '📅', '预约排班、医生日程与调度', 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)',
+ '["今日预约", "明日预约", "医生排班", "待接诊", "已取消", "预约趋势"]',
+ '你是口腔门诊的预约调度专家。专注于预约管理、医生排班、资源分配、患者到诊率。帮助优化预约流程。',
+ '["query_appointments", "query_treatments"]',
+ 3, 1);
+
+-- --------------------------------------------------------
+-- 6. 创建 ai_model_provider 模型供应商配置表
+-- --------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS ai_model_provider (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  provider_name VARCHAR(64) NOT NULL COMMENT '供应商名称，如 OpenAI、DeepSeek',
+  base_url VARCHAR(256) NOT NULL COMMENT 'API 基础地址',
+  api_key VARCHAR(512) NOT NULL COMMENT 'API 密钥',
+  model_name VARCHAR(64) NOT NULL COMMENT '模型名称',
+  reasoning_effort VARCHAR(16) DEFAULT 'medium' COMMENT '推理力度：low/medium/high',
+  max_output_tokens INT DEFAULT 3000 COMMENT '最大输出 token 数',
+  enabled TINYINT(1) DEFAULT 1 COMMENT '是否启用',
+  api_type VARCHAR(32) DEFAULT 'chat_completions' COMMENT 'API 类型：chat_completions（通用）或 responses（OpenAI 原生）',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI 模型供应商配置表';
+
+-- --------------------------------------------------------
+-- 7. 补全外键约束（保证核心业务数据一致性）
+-- --------------------------------------------------------
+-- 注意：appointment 表的 patient_id 外键已在原始建表语句中存在，此处不再重复添加
+
+ALTER TABLE lab_bill_items ADD CONSTRAINT fk_lab_bill_items_bill FOREIGN KEY (bill_id) REFERENCES lab_bills(id);
+ALTER TABLE material_purchase_items ADD CONSTRAINT fk_material_purchase_items_purchase FOREIGN KEY (purchase_id) REFERENCES material_purchases(id);
+ALTER TABLE material_purchase_items ADD CONSTRAINT fk_material_purchase_items_material FOREIGN KEY (material_id) REFERENCES materials(id);
+
+-- --------------------------------------------------------
+-- 8. 新增复合索引（优化高频查询场景）
+-- --------------------------------------------------------
+
+CREATE INDEX idx_patients_name_phone ON patients (name, phone);
+CREATE INDEX idx_finances_patient_date ON finances (patient_id, date);
+CREATE INDEX idx_medical_records_patient_visit ON medical_records (patient_id, visit_date);
+CREATE INDEX idx_lab_orders_factory_status_date ON lab_orders (factory_id, status, order_date);
+CREATE INDEX idx_materials_category_status_name ON materials (category_id, status, name);

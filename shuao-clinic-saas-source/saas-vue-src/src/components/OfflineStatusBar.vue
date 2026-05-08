@@ -1,20 +1,22 @@
 <template>
-  <div class="offline-status-shell">
-    <div class="offline-status-bar" :class="barClass">
-      <div class="offline-status-main">
-        <span class="offline-status-dot"></span>
-        <span class="offline-status-text">{{ statusText }}</span>
-        <span v-if="detailText" class="offline-status-detail">{{ detailText }}</span>
+  <!-- 仅在线时隐藏，其余状态（离线/同步中/失败/缓存回退）显示右下角小圆点 -->
+  <div
+    v-if="currentMode !== 'online'"
+    class="offline-status-fab"
+    :class="[`is-${currentMode}`, { 'is-pulse': currentMode === 'syncing' }]"
+    :title="fullTitle"
+    @click="handleClick"
+  >
+    <span class="offline-fab-dot"></span>
+
+    <!-- hover 浮层：详细状态 -->
+    <div class="offline-fab-tooltip">
+      <div class="tooltip-row">
+        <span class="tooltip-dot" :class="`dot-${currentMode}`"></span>
+        <span class="tooltip-status">{{ statusText }}</span>
       </div>
-      <el-button
-        v-if="showRetryButton"
-        type="text"
-        size="mini"
-        class="offline-status-action"
-        @click="retrySync"
-      >
-        重试同步
-      </el-button>
+      <div v-if="detailText" class="tooltip-detail">{{ detailText }}</div>
+      <div v-if="showRetryButton" class="tooltip-action">点击圆点重试同步</div>
     </div>
   </div>
 </template>
@@ -54,9 +56,6 @@ export default {
       if (!this.store.isOnline) return 'offline'
       return 'online'
     },
-    barClass() {
-      return `is-${this.currentMode}`
-    },
     statusText() {
       if (this.currentMode === 'cached') return '已回退缓存'
       if (this.currentMode === 'offline') return '当前离线'
@@ -85,13 +84,13 @@ export default {
       if (this.currentMode === 'failed') {
         return this.store.failedCount > 0 ? `${this.store.failedCount} 条同步失败` : (this.store.lastError || '')
       }
-      if (this.store.pendingCount > 0) {
-        return `待同步 ${this.store.pendingCount} 条`
-      }
-      return this.store.lastSyncedAt ? '离线基础层已启用' : '网络正常'
+      return ''
     },
     showRetryButton() {
       return this.store.isOnline && !this.store.syncing && this.store.failedCount > 0
+    },
+    fullTitle() {
+      return `${this.statusText}${this.detailText ? ' · ' + this.detailText : ''}`
     }
   },
   methods: {
@@ -102,88 +101,127 @@ export default {
       const pad = part => String(part).padStart(2, '0')
       return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
     },
-    retrySync() {
-      retryOfflineSync().catch(() => {})
+    handleClick() {
+      if (this.showRetryButton) {
+        retryOfflineSync().catch(() => {})
+      }
     }
   }
 }
 </script>
 
 <style scoped>
-.offline-status-shell {
-  position: sticky;
-  top: 0;
-  z-index: 1200;
+/* === 右下角浮动小圆点 === */
+.offline-status-fab {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 999;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
 }
 
-.offline-status-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 16px;
-  border-bottom: 1px solid transparent;
+.offline-status-fab:hover {
+  transform: scale(1.2);
+}
+
+/* 小圆点颜色 */
+.offline-status-fab.is-online {
+  background: #52c41a;
+}
+
+.offline-status-fab.is-offline {
+  background: #faad14;
+}
+
+.offline-status-fab.is-cached {
+  background: #faad14;
+}
+
+.offline-status-fab.is-syncing {
+  background: #00a6c9;
+}
+
+.offline-status-fab.is-failed {
+  background: #f86359;
+}
+
+/* 同步中脉冲动画 */
+.is-pulse {
+  animation: fab-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes fab-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0, 166, 201, 0.4); }
+  50% { opacity: 0.85; box-shadow: 0 0 0 6px rgba(0, 166, 201, 0); }
+}
+
+/* hover 浮层 */
+.offline-fab-tooltip {
+  position: absolute;
+  right: 0;
+  bottom: 24px;
+  min-width: 220px;
+  max-width: 320px;
+  padding: 10px 14px;
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
   font-size: 12px;
+  line-height: 1.6;
+  color: #3e3e3c;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: all 0.2s ease;
+  white-space: normal;
 }
 
-.offline-status-main {
+.offline-status-fab:hover .offline-fab-tooltip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.tooltip-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-width: 0;
+  gap: 6px;
+  margin-bottom: 4px;
 }
 
-.offline-status-dot {
+.tooltip-dot {
   width: 8px;
   height: 8px;
-  border-radius: 999px;
+  border-radius: 50%;
   flex-shrink: 0;
-  background: currentColor;
 }
 
-.offline-status-text {
-  font-weight: 700;
+.tooltip-dot.dot-online { background: #52c41a; }
+.tooltip-dot.dot-offline { background: #faad14; }
+.tooltip-dot.dot-cached { background: #faad14; }
+.tooltip-dot.dot-syncing { background: #00a6c9; }
+.tooltip-dot.dot-failed { background: #f86359; }
+
+.tooltip-status {
+  font-weight: 600;
+  color: #1d222a;
 }
 
-.offline-status-detail {
-  color: inherit;
-  opacity: 0.86;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.tooltip-detail {
+  color: #636a74;
+  word-break: break-word;
 }
 
-.offline-status-action {
-  padding: 0;
-}
-
-.offline-status-bar.is-online {
-  background: #ecfdf5;
-  color: #166534;
-  border-bottom-color: #bbf7d0;
-}
-
-.offline-status-bar.is-offline {
-  background: #fff7ed;
-  color: #c2410c;
-  border-bottom-color: #fed7aa;
-}
-
-.offline-status-bar.is-cached {
-  background: #fffbeb;
-  color: #b45309;
-  border-bottom-color: #fde68a;
-}
-
-.offline-status-bar.is-syncing {
-  background: #eff6ff;
-  color: #1d4ed8;
-  border-bottom-color: #bfdbfe;
-}
-
-.offline-status-bar.is-failed {
-  background: #fef2f2;
-  color: #b91c1c;
-  border-bottom-color: #fecaca;
+.tooltip-action {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed #e8e8e8;
+  color: #00a6c9;
+  font-weight: 500;
 }
 </style>

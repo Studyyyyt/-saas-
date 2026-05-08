@@ -1,4 +1,5 @@
 const { defineConfig } = require('@vue/cli-service')
+const API_TARGET = process.env.VUE_APP_API_TARGET || 'http://127.0.0.1:8080'
 module.exports = defineConfig({
   transpileDependencies: true,
   pages: {
@@ -12,87 +13,95 @@ module.exports = defineConfig({
     port: 7070,
     proxy: {
       '/loginController': {
-        target: 'http://127.0.0.1:8080',
+        target: API_TARGET,
         changeOrigin: true
       },
       '/accounts': {
-        target: 'http://127.0.0.1:8080',
+        target: API_TARGET,
         changeOrigin: true
       },
       '/appointments': {
-        target: 'http://127.0.0.1:8080',
+        target: API_TARGET,
         changeOrigin: true
       },
       '/patients': {
-        target: 'http://127.0.0.1:8080',
+        target: API_TARGET,
         changeOrigin: true
       },
       '/treatments': {
-        target: 'http://127.0.0.1:8080',
+        target: API_TARGET,
         changeOrigin: true
       },
       '/finances': {
-        target: 'http://127.0.0.1:8080',
+        target: API_TARGET,
         changeOrigin: true
       },
       '/doctors': {
-        target: 'http://127.0.0.1:8080',
+        target: API_TARGET,
         changeOrigin: true
       },
       '/Inventory': {
-        target: 'http://127.0.0.1:8080',
+        target: API_TARGET,
         changeOrigin: true
       },
       '/treatment-catalog': {
-        target: 'http://127.0.0.1:8080',
+        target: API_TARGET,
         changeOrigin: true
       },
       '/insurance': {
-        target: 'http://127.0.0.1:8080',
+        target: API_TARGET,
         changeOrigin: true
       },
       '/business-analysis': {
-        target: 'http://127.0.0.1:8080',
+        target: API_TARGET,
         changeOrigin: true
       },
       '/admin-report-portal': {
-        target: 'http://127.0.0.1:8080',
+        target: API_TARGET,
         changeOrigin: true
       },
       '/medical-records': {
-        target: 'http://127.0.0.1:8080',
+        target: API_TARGET,
         changeOrigin: true
       },
       '/lab-factories': {
-        target: 'http://127.0.0.1:8080',
+        target: API_TARGET,
         changeOrigin: true
       },
       '/lab-orders': {
-        target: 'http://127.0.0.1:8080',
+        target: API_TARGET,
         changeOrigin: true
       },
       '/lab-bills': {
-        target: 'http://127.0.0.1:8080',
+        target: API_TARGET,
         changeOrigin: true
       },
       '/lab-statistics': {
-        target: 'http://127.0.0.1:8080',
+        target: API_TARGET,
         changeOrigin: true
       },
       '/material-categories': {
-        target: 'http://127.0.0.1:8080',
+        target: API_TARGET,
         changeOrigin: true
       },
       '/materials': {
-        target: 'http://127.0.0.1:8080',
+        target: API_TARGET,
         changeOrigin: true
       },
       '/material-purchases': {
-        target: 'http://127.0.0.1:8080',
+        target: API_TARGET,
         changeOrigin: true
       },
       '/material-statistics': {
-        target: 'http://127.0.0.1:8080',
+        target: API_TARGET,
+        changeOrigin: true
+      },
+      '/api': {
+        target: API_TARGET,
+        changeOrigin: true
+      },
+      '/ai-agent-configs': {
+        target: API_TARGET,
         changeOrigin: true
       }
     }
