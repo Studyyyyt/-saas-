@@ -1,0 +1,98 @@
+# Docker 开发模式配置
+# 特性：修改前后端代码后自动热更新，无需重新编译镜像
+# 用法：
+#   cd docker
+#   docker compose -f docker-compose.dev.yml up -d
+#
+# 只有修改 Dockerfile、docker-compose 文件或新增依赖时才需要重新 build：
+#   docker compose -f docker-compose.dev.yml up -d --build
+
+services:
+  mysql:
+    image: mysql:9.6
+    container_name: clinic-mysql-dev
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: clinic_root_pass
+      MYSQL_DATABASE: clinic_system
+      MYSQL_USER: clinic_user
+      MYSQL_PASSWORD: clinic_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+      - ./database_init.sql:/docker-entrypoint-initdb.d/database_init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-clinic_root_pass}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    networks:
+      - clinic-network
+
+  backend:
+    image: maven:3.9-eclipse-temurin-17
+    container_name: clinic-backend-dev
+    working_dir: /app
+    command: >
+      sh -c "mvn spring-boot:run -DskipTests"
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/clinic_system?autoReconnect=true&useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8
+      DB_USER: ${DB_USER:-clinic_user}
+      DB_PASSWORD: ${DB_PASSWORD:-clinic_pass}
+      OPENAI_ENABLED: ${OPENAI_ENABLED:-false}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      WECHAT_DELIVERY_MODE: ${WECHAT_DELIVERY_MODE:-mock}
+      WECHAT_APP_ID: ${WECHAT_APP_ID:-}
+      WECHAT_APP_SECRET: ${WECHAT_APP_SECRET:-}
+      WECHAT_NOTICE_BASE_URL: ${WECHAT_NOTICE_BASE_URL:-https://example.com}
+      WECHAT_BIND_BASE_URL: ${WECHAT_BIND_BASE_URL:-https://example.com}
+      SECURITY_PATIENT_ADMIN_SECONDARY_PASSWORD: ${SECURITY_PATIENT_ADMIN_SECONDARY_PASSWORD:-246810}
+      JAVA_OPTS: ${JAVA_OPTS:--XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom}
+    ports:
+      - "8080:8080"
+    volumes:
+      # 挂载本地源码，实现热更新
+      - ../saas-springboot-src:/app
+      # 挂载本地 Maven 缓存，避免重复下载依赖
+      - ~/.m2:/root/.m2
+      # 患者影像上传文件挂载
+      - ./patient-uploads:/root/.local/uploads/patient-images
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - clinic-network
+
+  frontend:
+    image: node:18
+    container_name: clinic-frontend-dev
+    working_dir: /app
+    command: >
+      sh -c "npm install && npm run serve"
+    environment:
+      # 开发服务器绑定到所有接口，允许宿主机访问
+      HOST: 0.0.0.0
+      # Docker 容器内访问后端使用宿主机端口映射
+      VUE_APP_API_TARGET: http://host.docker.internal:8080
+    ports:
+      - "7070:7070"
+    volumes:
+      # 挂载本地源码
+      - ../saas-vue-src:/app
+      # 使用 named volume 持久化 node_modules，避免每次重启容器都重新安装
+      - frontend-node-modules:/app/node_modules
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - clinic-network
+
+networks:
+  clinic-network:
+    driver: bridge
+
+volumes:
+  frontend-node-modules:
