@@ -12,6 +12,10 @@
             <div class="mini-num">{{ highIntentPendingCount }}</div>
             <div class="mini-label">7天内高意向待跟进</div>
           </div>
+          <div class="mini-stat info clickable" @click="applyTodayFollowupFilter">
+            <div class="mini-num">{{ todayFollowupCount }}</div>
+            <div class="mini-label">今日需跟进</div>
+          </div>
           <el-button v-if="canCreate" type="primary" icon="el-icon-circle-plus-outline" @click="openCreateDialog">记录咨询</el-button>
           <el-button v-if="canExport" plain icon="el-icon-download" @click="exportExcel">导出 Excel</el-button>
         </div>
@@ -87,10 +91,14 @@
 
     <el-card class="table-card" shadow="never">
       <el-table
+        ref="consultationTable"
         :data="rows"
         stripe
+        border
+        size="mini"
         v-loading="loading"
-        :header-cell-style="{ backgroundColor: '#f8fafc', color: '#475569', fontWeight: '600' }"
+        class="consultation-table"
+        :header-cell-style="tableHeaderStyle"
       >
         <el-table-column prop="consultation_time" label="咨询时间" min-width="165" />
         <el-table-column prop="consultation_channel" label="渠道" min-width="120" />
@@ -120,6 +128,34 @@
               <span v-if="scope.row.deal_at" class="deal-text">¥{{ formatMoney(scope.row.total_deal_amount) }}</span>
               <span v-if="scope.row.deal_at" class="deal-sub">{{ scope.row.deal_at }}</span>
             </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="预计金额" min-width="110" align="right">
+          <template slot-scope="scope">
+            <span v-if="scope.row.estimated_amount">¥{{ formatMoney(scope.row.estimated_amount) }}</span>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="下次跟进" min-width="160">
+          <template slot-scope="scope">
+            <span v-if="scope.row.next_followup_time" :class="isOverdue(scope.row.next_followup_time) ? 'overdue-text' : ''">
+              {{ scope.row.next_followup_time }}
+            </span>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="跟进次数" width="90" align="center">
+          <template slot-scope="scope">
+            <el-tag v-if="scope.row.followup_count > 0" size="mini" type="info">{{ scope.row.followup_count }}次</el-tag>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="AI评分" width="90" align="center">
+          <template slot-scope="scope">
+            <el-tag v-if="scope.row.ai_analysis_score" size="mini" :type="aiScoreTagType(scope.row.ai_analysis_score)">
+              {{ scope.row.ai_analysis_score }}
+            </el-tag>
+            <span v-else>-</span>
           </template>
         </el-table-column>
         <el-table-column prop="created_by_name" label="录入人" min-width="120" />
@@ -204,6 +240,7 @@ export default {
       pageSize: 20,
       totalItems: 0,
       highIntentPendingCount: 0,
+      todayFollowupCount: 0,
       dialogVisible: false,
       dialogMode: 'create',
       activeRecord: {},
@@ -239,6 +276,7 @@ export default {
     this.applyRouteQuickFilter()
     this.loadCreators()
     this.loadQuickPendingCount()
+    this.loadTodayFollowupCount()
     this.loadList()
     onConsultationSaved(this.handleExternalSaved)
   },
@@ -248,11 +286,17 @@ export default {
   methods: {
     handleExternalSaved() {
       this.loadQuickPendingCount()
+      this.loadTodayFollowupCount()
       this.loadList()
     },
     applyRouteQuickFilter() {
-      if (this.$route && this.$route.query && this.$route.query.quickHighIntent === '1') {
-        this.applyQuickHighIntentFilter()
+      if (this.$route && this.$route.query) {
+        if (this.$route.query.quickHighIntent === '1') {
+          this.applyQuickHighIntentFilter()
+        }
+        if (this.$route.query.todayFollowup === '1') {
+          this.applyTodayFollowupFilter()
+        }
       }
     },
     formatMoney(value) {
@@ -268,6 +312,25 @@ export default {
       if (value === '已成交') return 'success'
       if (value === '已预约到店') return 'success'
       if (value === '待跟进') return 'warning'
+      return 'info'
+    },
+    tableHeaderStyle() {
+      return {
+        backgroundColor: '#f5f7fb',
+        color: '#4b5563',
+        fontWeight: '600',
+        fontSize: '12px',
+        padding: '8px 0'
+      }
+    },
+    isOverdue(dateStr) {
+      if (!dateStr) return false
+      return new Date(dateStr) < new Date()
+    },
+    aiScoreTagType(score) {
+      const num = Number(score || 0)
+      if (num >= 80) return 'danger'
+      if (num >= 50) return 'warning'
       return 'info'
     },
     canEditRecord(row) {
@@ -341,6 +404,37 @@ export default {
       }).catch(() => {
         this.highIntentPendingCount = 0
       })
+    },
+    loadTodayFollowupCount() {
+      const now = new Date()
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0)
+      const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59)
+      axios.get('/consultations/search', {
+        params: {
+          page: 1,
+          size: 1,
+          handlingResult: '待跟进',
+          startTime: this.formatDateTime(start),
+          endTime: this.formatDateTime(end),
+          rangePreset: 'custom'
+        }
+      }).then(response => {
+        const data = response.data && response.data.data ? response.data.data : {}
+        this.todayFollowupCount = Number(data.total || 0)
+      }).catch(() => {
+        this.todayFollowupCount = 0
+      })
+    },
+    applyTodayFollowupFilter() {
+      const now = new Date()
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0)
+      const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59)
+      this.filters.handlingResult = '待跟进'
+      this.filters.rangePreset = 'custom'
+      this.filters.range = [this.formatDateTime(start), this.formatDateTime(end)]
+      this.currentPage = 1
+      this.$router.replace({ path: this.$route.path, query: { todayFollowup: '1' } }).catch(() => {})
+      this.loadList()
     },
     loadList() {
       this.loading = true
@@ -419,7 +513,7 @@ export default {
         })
         const data = response.data && response.data.data ? response.data.data : {}
         const rows = Array.isArray(data.list) ? data.list : []
-        const headers = ['咨询时间', '渠道', '姓名/昵称', '联系方式', '主诉项目', '意向强度', '处理结果', '是否成交', '累计成交金额', '录入人']
+        const headers = ['咨询时间', '渠道', '姓名/昵称', '联系方式', '主诉项目', '意向强度', '处理结果', '是否成交', '累计成交金额', '预计金额', '下次跟进', '跟进次数', 'AI评分', '录入人']
         const body = rows.map(item => [
           item.consultation_time || '',
           item.consultation_channel || '',
@@ -430,6 +524,10 @@ export default {
           item.handling_result || '',
           item.deal_at ? '已成交' : '未成交',
           this.formatMoney(item.total_deal_amount),
+          this.formatMoney(item.estimated_amount),
+          item.next_followup_time || '',
+          item.followup_count || 0,
+          item.ai_analysis_score || '',
           item.created_by_name || ''
         ])
         const worksheet = XLSX.utils.aoa_to_sheet([headers, ...body])
@@ -471,6 +569,10 @@ export default {
 
 .mini-stat.warn {
   background: #fff7ed;
+}
+
+.mini-stat.info {
+  background: #eff6ff;
 }
 
 .mini-num {
@@ -556,8 +658,26 @@ export default {
   gap: 4px;
 }
 
+.consultation-table {
+  width: 100%;
+}
+
+.consultation-table.el-table--border {
+  border-color: #ebeef5;
+}
+
+.consultation-table.el-table--border th,
+.consultation-table.el-table--border td {
+  border-color: #ebeef5;
+}
+
 .deal-text {
   color: #0f766e;
+  font-weight: 600;
+}
+
+.overdue-text {
+  color: #dc2626;
   font-weight: 600;
 }
 

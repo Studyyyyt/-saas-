@@ -16,6 +16,10 @@ module.exports = defineConfig({
         target: API_TARGET,
         changeOrigin: true
       },
+      '/consultations': {
+        target: API_TARGET,
+        changeOrigin: true
+      },
       '/accounts': {
         target: API_TARGET,
         changeOrigin: true
@@ -149,6 +153,50 @@ module.exports = defineConfig({
         changeOrigin: true
       },
       '/consent-template': {
+        target: API_TARGET,
+        changeOrigin: true
+      },
+      '/advertising-spending': {
+        target: API_TARGET,
+        changeOrigin: true
+      },
+      '/purchase': {
+        target: API_TARGET,
+        changeOrigin: true
+      },
+      '/patient-portal': {
+        target: API_TARGET,
+        changeOrigin: true
+      },
+      '/staff-portal': {
+        target: API_TARGET,
+        changeOrigin: true
+      },
+      '/patient-insights': {
+        target: API_TARGET,
+        changeOrigin: true
+      },
+      '/file-transfer': {
+        target: API_TARGET,
+        changeOrigin: true
+      },
+      '/medical-record-operations': {
+        target: API_TARGET,
+        changeOrigin: true
+      },
+      '/doctor-home-reminders': {
+        target: API_TARGET,
+        changeOrigin: true
+      },
+      '/patient-groups': {
+        target: API_TARGET,
+        changeOrigin: true
+      },
+      '/role-menu-permissions': {
+        target: API_TARGET,
+        changeOrigin: true
+      },
+      '/treatment_plans': {
         target: API_TARGET,
         changeOrigin: true
       },

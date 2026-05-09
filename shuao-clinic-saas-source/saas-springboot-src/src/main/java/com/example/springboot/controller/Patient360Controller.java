@@ -33,6 +33,7 @@ public class Patient360Controller {
     @Autowired private PatientConsentService patientConsentService;
     @Autowired private PatientInsightSummaryService patientInsightSummaryService;
     @Autowired private PatientReferralRecordService patientReferralRecordService;
+    @Autowired private ConsultationRecordService consultationRecordService;
 
     /**
      * 完整的患者360视图（向后兼容，一次性返回所有数据）
@@ -52,6 +53,7 @@ public class Patient360Controller {
         List<PatientImage> images = imageService.selectByPatientId(patientId);
         List<Appointment> appointments = appointmentService.selectPatientAppointments(patientId);
         List<PatientConsent> consents = patientConsentService.selectByPatientId(patientId);
+        List<ConsultationRecord> consultations = consultationRecordService.selectByPatientId(patientId);
         PatientInsightSummary patientInsight = patientInsightSummaryService == null ? null : patientInsightSummaryService.getOrRefresh(patientId);
         PatientReferralRecord referralRecord = patientReferralRecordService == null ? null : patientReferralRecordService.selectByPatientId(patientId);
 
@@ -110,6 +112,7 @@ public class Patient360Controller {
         result.put("treatments", treatments);
         result.put("images", images);
         result.put("consents", consents);
+        result.put("consultations", consultations);
         result.put("wechatBound", wechatBound);
         result.put("wechatBindStatusLabel", wechatBound ? "已绑定微信" : "未绑定微信");
         result.put("wechatBindUrl", wechatBound ? "" : patientPortalBindUrl);

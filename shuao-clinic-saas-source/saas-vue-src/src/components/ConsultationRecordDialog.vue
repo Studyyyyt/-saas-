@@ -46,7 +46,7 @@
       </div>
     </el-alert>
 
-    <el-form :model="form" label-width="110px" class="consultation-form">
+    <el-form :model="form" label-width="130px" class="consultation-form">
       <el-form-item label="咨询时间">
         <el-date-picker
           v-model="form.consultation_time"
@@ -115,6 +115,24 @@
           >{{ item }}</el-button>
         </div>
       </el-form-item>
+      <el-form-item label="录入人">
+        <el-autocomplete
+          v-model="form.created_by_name"
+          style="width:100%"
+          :fetch-suggestions="searchAccountsForAutocomplete"
+          placeholder="可手动输入姓名，或输入关键字从列表选择"
+          :disabled="isReadOnly"
+          @select="handleAccountSelect"
+          value-key="name"
+          clearable
+        >
+          <template slot-scope="{ item }">
+            <span>{{ item.name }}</span>
+            <span style="color:#999; font-size:12px; margin-left:8px">{{ item.role || '' }}</span>
+          </template>
+        </el-autocomplete>
+        <div class="field-tip">手动输入将只保存姓名；从列表选择可同步关联到系统账号。</div>
+      </el-form-item>
       <el-form-item label="关联患者" :required="form.handling_result === '已成交'">
         <el-select
           v-model="form.patient_id"
@@ -136,8 +154,13 @@
             :value="item.id"
           />
         </el-select>
+        <div v-if="patientSearchEmpty && !isReadOnly" class="field-tip field-tip--action">
+          未找到匹配患者，
+          <el-button type="text" size="mini" @click="goCreatePatient">立即创建患者档案</el-button>
+          后返回关联
+        </div>
         <div class="field-tip">
-          {{ form.handling_result === '已成交' ? '已成交必须关联患者档案。' : '可选：用于把咨询转化沉淀到具体患者。' }}
+          {{ form.handling_result === '已成交' ? '已成交必须关联患者档案，用于统计累计消费金额。' : '关联后该咨询记录会同步到患者档案的「咨询记录」Tab 中。' }}
         </div>
       </el-form-item>
       <el-form-item label="咨询人姓名/昵称">
@@ -152,6 +175,28 @@
           @blur="handlePhoneBlur"
         />
       </el-form-item>
+      <el-form-item label="预计消费金额">
+        <el-input-number
+          v-model="form.estimated_amount"
+          :min="0"
+          :precision="2"
+          :controls="false"
+          style="width:100%"
+          placeholder="预估客户可能消费的金额"
+          :disabled="isReadOnly"
+        />
+      </el-form-item>
+      <el-form-item label="客户顾虑">
+        <el-input
+          v-model="form.customer_concerns"
+          type="textarea"
+          :rows="2"
+          maxlength="500"
+          show-word-limit
+          placeholder="记录客户的顾虑点、对比的竞品机构、价格敏感度、决策周期等"
+          :disabled="isReadOnly"
+        />
+      </el-form-item>
       <el-form-item label="备注">
         <el-input
           v-model="form.remarks"
@@ -163,6 +208,93 @@
           :disabled="isReadOnly"
         />
       </el-form-item>
+
+      <!-- 跟进历史区域 -->
+      <div v-if="mode !== 'create'" class="followup-section">
+        <el-divider>跟进历史</el-divider>
+        <el-timeline v-if="followups.length">
+          <el-timeline-item
+            v-for="item in followups"
+            :key="item.id"
+            :timestamp="item.followup_time"
+            placement="top"
+          >
+            <el-card :body-style="{ padding: '10px 14px' }" shadow="never" class="followup-card">
+              <div class="followup-content">{{ item.content }}</div>
+              <div v-if="item.next_followup_time" class="followup-meta">
+                下次计划：{{ item.next_followup_time }}
+              </div>
+              <div class="followup-meta">
+                跟进人：{{ item.created_by_name || '-' }}
+              </div>
+            </el-card>
+          </el-timeline-item>
+        </el-timeline>
+        <el-empty v-else-if="!followupLoading" description="暂无跟进记录" />
+        <div v-if="!isReadOnly" class="followup-add">
+          <el-input
+            v-model="newFollowup.content"
+            type="textarea"
+            :rows="2"
+            maxlength="1000"
+            show-word-limit
+            placeholder="输入本次跟进内容"
+          />
+          <div class="followup-add-row">
+            <el-date-picker
+              v-model="newFollowup.next_followup_time"
+              type="datetime"
+              value-format="yyyy-MM-dd HH:mm:ss"
+              format="yyyy-MM-dd HH:mm"
+              placeholder="下次计划跟进时间"
+              size="small"
+              style="flex:1"
+            />
+            <el-button size="small" type="primary" :loading="followupLoading" @click="addFollowup">
+              添加跟进
+            </el-button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 快速录入时的跟进内容（创建模式） -->
+      <div v-if="mode === 'create' && !isReadOnly" class="followup-section">
+        <el-divider>首次跟进</el-divider>
+        <el-input
+          v-model="newFollowup.content"
+          type="textarea"
+          :rows="2"
+          maxlength="1000"
+          show-word-limit
+          placeholder="保存时自动创建一条跟进记录（可选）"
+        />
+        <div class="followup-add-row" style="margin-top:8px">
+          <el-date-picker
+            v-model="newFollowup.next_followup_time"
+            type="datetime"
+            value-format="yyyy-MM-dd HH:mm:ss"
+            format="yyyy-MM-dd HH:mm"
+            placeholder="下次计划跟进时间"
+            size="small"
+            style="flex:1"
+          />
+        </div>
+      </div>
+
+      <!-- AI 分析区域 -->
+      <div v-if="!isReadOnly" class="ai-section">
+        <el-divider>AI 智能分析</el-divider>
+        <div class="ai-actions">
+          <el-button type="primary" plain size="small" icon="el-icon-magic-stick" :loading="aiAnalyzing" @click="runAiAnalysis">
+            AI 分析客户意向
+          </el-button>
+          <span v-if="aiResult.summary" class="ai-result-text">{{ aiResult.summary }}</span>
+        </div>
+        <el-alert v-if="aiResult.score !== null" :type="aiScoreType" :closable="false" class="ai-score-alert">
+          <div>AI意向评分：<strong>{{ aiResult.score }}</strong>/100</div>
+          <div>建议：{{ aiResult.suggestedNextFollowup }}</div>
+        </el-alert>
+      </div>
     </el-form>
 
     <span slot="footer" class="dialog-footer">
@@ -196,8 +328,14 @@ function createEmptyForm() {
     contact_name: '',
     contact_phone: '',
     remarks: '',
+    estimated_amount: null,
+    customer_concerns: '',
+    ai_analysis_summary: '',
+    ai_analysis_score: null,
     arrived_at: '',
-    deal_at: ''
+    deal_at: '',
+    created_by: null,
+    created_by_name: ''
   }
 }
 
@@ -245,15 +383,30 @@ export default {
       saving: false,
       patientLoading: false,
       patientOptions: [],
+      patientSearchEmpty: false,
+      accountLoading: false,
+      accountOptions: [],
+      lastSelectedAccount: null,
       consultationChannelOptions: CONSULTATION_CHANNEL_OPTIONS,
       chiefProjectOptions: CHIEF_PROJECT_OPTIONS,
       intentOptions: INTENT_LEVEL_OPTIONS,
-      handlingResultOptions: HANDLING_RESULT_OPTIONS
+      handlingResultOptions: HANDLING_RESULT_OPTIONS,
+      followups: [],
+      followupLoading: false,
+      newFollowup: { content: '', next_followup_time: '' },
+      aiAnalyzing: false,
+      aiResult: { summary: '', score: null, suggestedNextFollowup: '' }
     }
   },
   computed: {
     isReadOnly() {
       return this.mode === 'detail'
+    },
+    aiScoreType() {
+      const score = Number(this.aiResult.score || 0)
+      if (score >= 80) return 'danger'
+      if (score >= 50) return 'warning'
+      return 'info'
     },
     dialogTitle() {
       if (this.mode === 'detail') return '咨询记录详情'
@@ -310,6 +463,15 @@ export default {
           this.initForm()
         }
       }
+    },
+    'form.created_by_name'(newVal) {
+      if (this.form.created_by && this.lastSelectedAccount) {
+        const selectedName = String(this.lastSelectedAccount.name || '').trim()
+        if (String(newVal || '').trim() !== selectedName) {
+          this.form.created_by = null
+          this.lastSelectedAccount = null
+        }
+      }
     }
   },
   methods: {
@@ -318,10 +480,28 @@ export default {
       if (this.mode === 'create') {
         const now = new Date()
         const format = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:00`
-        this.form = Object.assign(base, { consultation_time: format })
+        const preselectedId = this.record && this.record.patient_id ? Number(this.record.patient_id) : null
+        const rawUser = this.currentUser || {}
+        const currentUserId = Number(rawUser.id || rawUser.accountId || rawUser.userId || null)
+        const currentUserName = String(rawUser.name || rawUser.username || '').trim()
+        const createInit = { consultation_time: format, patient_id: preselectedId, created_by_name: currentUserName }
+        this.lastSelectedAccount = null
+        if (Number.isFinite(currentUserId) && currentUserId > 0) {
+          createInit.created_by = currentUserId
+          this.lastSelectedAccount = { id: currentUserId, name: currentUserName }
+        }
+        this.form = Object.assign(base, createInit)
         this.referralForm = createEmptyReferralState()
         this.phonePromptFlags = null
         this.patientOptions = []
+        this.patientSearchEmpty = false
+        this.accountOptions = []
+        this.followups = []
+        this.newFollowup = { content: '', next_followup_time: '' }
+        this.aiResult = { summary: '', score: null, suggestedNextFollowup: '' }
+        if (preselectedId && preselectedId > 0) {
+          this.ensureCurrentPatientOption(this.record)
+        }
         return
       }
       const source = this.record || {}
@@ -336,9 +516,22 @@ export default {
         contact_name: source.contact_name || '',
         contact_phone: source.contact_phone || '',
         remarks: source.remarks || '',
+        estimated_amount: source.estimated_amount || null,
+        customer_concerns: source.customer_concerns || '',
+        ai_analysis_summary: source.ai_analysis_summary || '',
+        ai_analysis_score: source.ai_analysis_score || null,
         arrived_at: source.arrived_at || '',
-        deal_at: source.deal_at || ''
+        deal_at: source.deal_at || '',
+        created_by: source.created_by || null,
+        created_by_name: source.created_by_name || ''
       })
+      this.accountOptions = []
+      this.lastSelectedAccount = null
+      if (source.created_by) {
+        const accountItem = { id: source.created_by, name: source.created_by_name || '' }
+        this.accountOptions = [accountItem]
+        this.lastSelectedAccount = { ...accountItem }
+      }
       this.referralForm = Object.assign(createEmptyReferralState(), {
         referrer_type: source.referrer_type || '',
         referrer_patient_id: source.referrer_patient_id || null,
@@ -349,7 +542,13 @@ export default {
       })
       this.phonePromptFlags = null
       this.patientOptions = []
+      this.patientSearchEmpty = false
+      this.newFollowup = { content: '', next_followup_time: '' }
+      this.aiResult = { summary: '', score: null, suggestedNextFollowup: '' }
       this.ensureCurrentPatientOption(source)
+      if (this.mode !== 'create' && this.form.id) {
+        this.loadFollowups()
+      }
     },
     handleChannelChange(value) {
       if (value !== '转介绍' && !this.isReadOnly) {
@@ -414,18 +613,50 @@ export default {
         return
       }
       this.patientLoading = true
+      this.patientSearchEmpty = false
       try {
         const response = await axios.get('/patients/search', { params: { keyword, page: 1, size: 20 } })
         const data = response.data && response.data.data ? response.data.data : {}
         const list = Array.isArray(data.list) ? data.list : []
         this.patientOptions = list
+        this.patientSearchEmpty = keyword.length > 0 && list.length === 0
         if (current) {
           this.ensureCurrentPatientOption(current)
         }
       } catch (error) {
         this.patientOptions = current ? [current] : []
+        this.patientSearchEmpty = false
       } finally {
         this.patientLoading = false
+      }
+    },
+    goCreatePatient() {
+      const name = String(this.form.contact_name || '').trim()
+      const phone = String(this.form.contact_phone || '').trim()
+      const query = {}
+      if (name) query.name = name
+      if (phone && /^\d{11}$/.test(phone)) query.phone = phone
+      this.$router.push({ path: '/Patient', query })
+      this.innerVisible = false
+    },
+    searchAccountsForAutocomplete(queryString, cb) {
+      if (!queryString) { cb([]); return }
+      axios.get('/accounts/selectByname', { params: { name: queryString, page: 1, size: 20 } })
+        .then(response => {
+          const data = response.data && response.data.data ? response.data.data : {}
+          const list = Array.isArray(data.list) ? data.list : []
+          cb(list.map(item => ({ ...item, value: item.name })))
+        })
+        .catch(() => cb([]))
+    },
+    handleAccountSelect(item) {
+      if (item && item.id) {
+        this.form.created_by = Number(item.id)
+        this.form.created_by_name = String(item.name || '').trim()
+        this.lastSelectedAccount = { ...item }
+      } else {
+        this.form.created_by = null
+        this.lastSelectedAccount = null
       }
     },
     handlePatientChange(value) {
@@ -467,8 +698,11 @@ export default {
       return ''
     },
     buildPayload() {
-      const currentUserId = Number(this.currentUser && this.currentUser.id)
-      const currentUserName = String((this.currentUser && this.currentUser.name) || '').trim()
+      const rawUser = this.currentUser || {}
+      const currentUserId = Number(
+        rawUser.id || rawUser.accountId || rawUser.userId || null
+      )
+      const currentUserName = String(rawUser.name || rawUser.username || '').trim()
       const referralPayload = this.form.consultation_channel === '转介绍' ? this.referralForm : createEmptyReferralState()
       const payload = {
         id: this.form.id,
@@ -486,14 +720,22 @@ export default {
         handling_result: this.form.handling_result,
         contact_name: String(this.form.contact_name || '').trim(),
         contact_phone: String(this.form.contact_phone || '').trim(),
-        remarks: String(this.form.remarks || '').trim()
+        remarks: String(this.form.remarks || '').trim(),
+        estimated_amount: this.form.estimated_amount || null,
+        customer_concerns: String(this.form.customer_concerns || '').trim(),
+        ai_analysis_summary: String(this.form.ai_analysis_summary || '').trim(),
+        ai_analysis_score: this.form.ai_analysis_score || null
       }
       if (this.mode === 'edit') {
         payload.updated_by = Number.isFinite(currentUserId) && currentUserId > 0 ? currentUserId : null
-      } else {
-        payload.created_by = Number.isFinite(currentUserId) && currentUserId > 0 ? currentUserId : null
-        payload.created_by_name = currentUserName
       }
+      const selectedCreatedBy = Number(this.form.created_by || 0)
+      if (selectedCreatedBy > 0) {
+        payload.created_by = selectedCreatedBy
+      } else {
+        payload.created_by = null
+      }
+      payload.created_by_name = String(this.form.created_by_name || '').trim() || currentUserName
       return payload
     },
     submit() {
@@ -514,6 +756,12 @@ export default {
         const data = response.data.data || {}
         const record = data.record || response.data.data || {}
         const weekCount = Number(data.weekCount || 0)
+
+        // 如果有新增跟进内容，自动创建跟进记录
+        if (this.mode === 'create' && this.newFollowup.content) {
+          this.autoCreateFollowup(record.id)
+        }
+
         emitConsultationSaved({ record, mode: this.mode })
         this.$emit('saved', { record, response: data, mode: this.mode })
         this.innerVisible = false
@@ -526,10 +774,17 @@ export default {
           this.$message.success('咨询记录已更新')
         }
       }).catch(error => {
-        const message = error && error.response && error.response.data && error.response.data.msg
-          ? error.response.data.msg
-          : '保存失败'
-        this.$message.error(message)
+        const data = error && error.response && error.response.data ? error.response.data : null
+        const status = error && error.response ? error.response.status : ''
+        let message = data && data.msg ? data.msg : null
+        if (!message && data) {
+          try {
+            message = status + ': ' + JSON.stringify(data)
+          } catch (e) {
+            message = status + ': ' + String(data)
+          }
+        }
+        this.$message.error(message || '保存失败')
       }).finally(() => {
         this.saving = false
       })
@@ -554,7 +809,105 @@ export default {
       this.phonePromptFlags = null
       this.referralForm = createEmptyReferralState()
       this.patientOptions = []
+      this.patientSearchEmpty = false
+      this.accountOptions = []
+      this.lastSelectedAccount = null
+      this.followups = []
+      this.newFollowup = { content: '', next_followup_time: '' }
+      this.aiResult = { summary: '', score: null, suggestedNextFollowup: '' }
       this.$emit('close')
+    },
+    async loadFollowups() {
+      if (!this.form.id) return
+      this.followupLoading = true
+      try {
+        const response = await axios.get(`/consultations/${this.form.id}/followups`)
+        const data = response.data && response.data.data ? response.data.data : []
+        this.followups = Array.isArray(data) ? data : []
+      } catch (error) {
+        this.followups = []
+      } finally {
+        this.followupLoading = false
+      }
+    },
+    async addFollowup() {
+      const content = String(this.newFollowup.content || '').trim()
+      if (!content) {
+        this.$message.warning('请输入跟进内容')
+        return
+      }
+      const rawUser = this.currentUser || {}
+      const currentUserId = Number(rawUser.id || rawUser.accountId || rawUser.userId || null)
+      const currentUserName = String(rawUser.name || rawUser.username || '').trim()
+      this.followupLoading = true
+      try {
+        const response = await axios.post('/consultations/followups/add', {
+          consultation_id: this.form.id,
+          content: content,
+          next_followup_time: this.newFollowup.next_followup_time || null,
+          created_by: currentUserId,
+          created_by_name: currentUserName
+        })
+        if (response.data && response.data.code === '200') {
+          this.$message.success('跟进记录已添加')
+          this.newFollowup = { content: '', next_followup_time: '' }
+          this.loadFollowups()
+        } else {
+          this.$message.error((response.data && response.data.msg) || '添加失败')
+        }
+      } catch (error) {
+        const msg = error && error.response && error.response.data && error.response.data.msg
+        this.$message.error(msg || '添加跟进失败')
+      } finally {
+        this.followupLoading = false
+      }
+    },
+    async autoCreateFollowup(consultationId) {
+      const content = String(this.newFollowup.content || '').trim()
+      if (!content || !consultationId) return
+      const rawUser = this.currentUser || {}
+      const currentUserId = Number(rawUser.id || rawUser.accountId || rawUser.userId || null)
+      const currentUserName = String(rawUser.name || rawUser.username || '').trim()
+      try {
+        await axios.post('/consultations/followups/add', {
+          consultation_id: consultationId,
+          content: content,
+          next_followup_time: this.newFollowup.next_followup_time || null,
+          created_by: currentUserId,
+          created_by_name: currentUserName
+        })
+      } catch (error) {
+        console.error('自动创建跟进记录失败', error)
+      }
+    },
+    async runAiAnalysis() {
+      this.aiAnalyzing = true
+      try {
+        const response = await axios.post('/consultations/aiAnalyze', {
+          consultationId: this.form.id,
+          contactName: this.form.contact_name,
+          chiefProject: this.form.chief_project,
+          intentLevel: this.form.intent_level,
+          remarks: this.form.remarks,
+          customerConcerns: this.form.customer_concerns
+        })
+        if (response.data && response.data.code === '200') {
+          this.aiResult = {
+            summary: response.data.data.summary || '',
+            score: response.data.data.intentScore || null,
+            suggestedNextFollowup: response.data.data.suggestedNextFollowup || ''
+          }
+          this.form.ai_analysis_summary = this.aiResult.summary
+          this.form.ai_analysis_score = this.aiResult.score
+        } else {
+          this.$message.error((response.data && response.data.msg) || 'AI分析失败')
+        }
+      } catch (error) {
+        const msg = error && error.response && error.response.data && error.response.data.msg
+        this.$message.error(msg || 'AI分析请求失败')
+      } finally {
+        this.aiAnalyzing = false
+      }
     },
     hasReferralPayload() {
       return !!(
@@ -645,9 +998,73 @@ export default {
   line-height: 1.5;
 }
 
+.field-tip--action {
+  color: #e6a23c;
+}
+
+.followup-section {
+  margin-top: 8px;
+}
+
+.followup-card {
+  background: #f8fafc;
+  border-radius: 10px;
+}
+
+.followup-content {
+  color: #0f172a;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.followup-meta {
+  margin-top: 6px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.followup-add {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.followup-add-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.ai-section {
+  margin-top: 8px;
+}
+
+.ai-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ai-result-text {
+  color: #475569;
+  font-size: 13px;
+}
+
+.ai-score-alert {
+  margin-top: 10px;
+}
+
 @media (max-width: 768px) {
   .system-meta-card {
     grid-template-columns: 1fr;
+  }
+
+  .followup-add-row {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 </style>

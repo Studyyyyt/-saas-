@@ -14,7 +14,12 @@ public interface ConsultationRecordMapper {
             SELECT cr.*,
                    p.name AS patient_name,
                    p.phone AS patient_phone,
-                   p.customer_source AS patient_customer_source
+                   p.customer_source AS patient_customer_source,
+                   (SELECT cf.next_followup_time
+                    FROM consultation_followups cf
+                    WHERE cf.consultation_id = cr.id
+                    ORDER BY cf.followup_time DESC, cf.id DESC
+                    LIMIT 1) AS next_followup_time
             FROM consultation_records cr
             LEFT JOIN patients p ON p.id = cr.patient_id
             WHERE cr.id = #{id}
@@ -26,7 +31,12 @@ public interface ConsultationRecordMapper {
             "SELECT cr.*,",
             "       p.name AS patient_name,",
             "       p.phone AS patient_phone,",
-            "       p.customer_source AS patient_customer_source",
+            "       p.customer_source AS patient_customer_source,",
+            "       (SELECT cf.next_followup_time",
+            "        FROM consultation_followups cf",
+            "        WHERE cf.consultation_id = cr.id",
+            "        ORDER BY cf.followup_time DESC, cf.id DESC",
+            "        LIMIT 1) AS next_followup_time",
             "FROM consultation_records cr",
             "LEFT JOIN patients p ON p.id = cr.patient_id",
             "WHERE 1=1",
@@ -76,7 +86,12 @@ public interface ConsultationRecordMapper {
             SELECT cr.*,
                    p.name AS patient_name,
                    p.phone AS patient_phone,
-                   p.customer_source AS patient_customer_source
+                   p.customer_source AS patient_customer_source,
+                   (SELECT cf.next_followup_time
+                    FROM consultation_followups cf
+                    WHERE cf.consultation_id = cr.id
+                    ORDER BY cf.followup_time DESC, cf.id DESC
+                    LIMIT 1) AS next_followup_time
             FROM consultation_records cr
             LEFT JOIN patients p ON p.id = cr.patient_id
             WHERE cr.patient_id = #{patientId}
@@ -89,7 +104,12 @@ public interface ConsultationRecordMapper {
             "SELECT cr.*,",
             "       p.name AS patient_name,",
             "       p.phone AS patient_phone,",
-            "       p.customer_source AS patient_customer_source",
+            "       p.customer_source AS patient_customer_source,",
+            "       (SELECT cf.next_followup_time",
+            "        FROM consultation_followups cf",
+            "        WHERE cf.consultation_id = cr.id",
+            "        ORDER BY cf.followup_time DESC, cf.id DESC",
+            "        LIMIT 1) AS next_followup_time",
             "FROM consultation_records cr",
             "LEFT JOIN patients p ON p.id = cr.patient_id",
             "WHERE 1=1",
@@ -143,6 +163,10 @@ public interface ConsultationRecordMapper {
                 contact_name,
                 contact_phone,
                 remarks,
+                estimated_amount,
+                customer_concerns,
+                ai_analysis_summary,
+                ai_analysis_score,
                 arrived_at,
                 deal_at,
                 created_by,
@@ -164,6 +188,10 @@ public interface ConsultationRecordMapper {
                 #{contact_name},
                 #{contact_phone},
                 #{remarks},
+                #{estimated_amount},
+                #{customer_concerns},
+                #{ai_analysis_summary},
+                #{ai_analysis_score},
                 #{arrived_at},
                 #{deal_at},
                 #{created_by},
@@ -191,8 +219,14 @@ public interface ConsultationRecordMapper {
                 contact_name = #{contact_name},
                 contact_phone = #{contact_phone},
                 remarks = #{remarks},
+                estimated_amount = #{estimated_amount},
+                customer_concerns = #{customer_concerns},
+                ai_analysis_summary = #{ai_analysis_summary},
+                ai_analysis_score = #{ai_analysis_score},
                 arrived_at = #{arrived_at},
                 deal_at = #{deal_at},
+                created_by = #{created_by},
+                created_by_name = #{created_by_name},
                 updated_by = #{updated_by}
             WHERE id = #{id}
             """)
@@ -243,7 +277,12 @@ public interface ConsultationRecordMapper {
             SELECT cr.*,
                    p.name AS patient_name,
                    p.phone AS patient_phone,
-                   p.customer_source AS patient_customer_source
+                   p.customer_source AS patient_customer_source,
+                   (SELECT cf.next_followup_time
+                    FROM consultation_followups cf
+                    WHERE cf.consultation_id = cr.id
+                    ORDER BY cf.followup_time DESC, cf.id DESC
+                    LIMIT 1) AS next_followup_time
             FROM consultation_records cr
             LEFT JOIN patients p ON p.id = cr.patient_id
             WHERE cr.patient_id = #{patientId}
@@ -259,7 +298,12 @@ public interface ConsultationRecordMapper {
             SELECT cr.*,
                    p.name AS patient_name,
                    p.phone AS patient_phone,
-                   p.customer_source AS patient_customer_source
+                   p.customer_source AS patient_customer_source,
+                   (SELECT cf.next_followup_time
+                    FROM consultation_followups cf
+                    WHERE cf.consultation_id = cr.id
+                    ORDER BY cf.followup_time DESC, cf.id DESC
+                    LIMIT 1) AS next_followup_time
             FROM consultation_records cr
             LEFT JOIN patients p ON p.id = cr.patient_id
             WHERE cr.contact_phone = #{phone}

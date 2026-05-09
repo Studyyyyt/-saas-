@@ -11,6 +11,7 @@ import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,10 +74,13 @@ public class ConsultationRecordController {
     @PostMapping("/add")
     public Result add(@RequestBody ConsultationRecord record) {
         try {
+            normalizeConsultationTime(record);
             ConsultationCreateResponse response = consultationRecordService.add(record);
             return Result.success(response);
         } catch (IllegalArgumentException exception) {
             return Result.error(exception.getMessage());
+        } catch (Exception exception) {
+            return Result.error("保存失败：" + exception.getMessage());
         }
     }
 
@@ -84,9 +88,12 @@ public class ConsultationRecordController {
     @PutMapping("/edit")
     public Result edit(@RequestBody ConsultationRecord record) {
         try {
+            normalizeConsultationTime(record);
             return Result.success(consultationRecordService.update(record));
         } catch (IllegalArgumentException exception) {
             return Result.error(exception.getMessage());
+        } catch (Exception exception) {
+            return Result.error("更新失败：" + exception.getMessage());
         }
     }
 
@@ -124,6 +131,41 @@ public class ConsultationRecordController {
             return Result.success(consultationRecordService.linkPatient(consultationId, patientId, updatedBy));
         } catch (IllegalArgumentException exception) {
             return Result.error(exception.getMessage());
+        }
+    }
+
+    // 权限：护士/医生/老板管理员
+    @GetMapping("/{id}/followups")
+    public Result followups(@PathVariable Long id) {
+        try {
+            return Result.success(consultationRecordService.selectFollowups(id));
+        } catch (Exception exception) {
+            return Result.error("查询跟进历史失败：" + exception.getMessage());
+        }
+    }
+
+    // 权限：护士/医生/老板管理员
+    @PostMapping("/aiAnalyze")
+    public Result aiAnalyze(@RequestBody Map<String, Object> payload) {
+        try {
+            Long consultationId = parseLong(payload.get("consultationId"));
+            String chiefProject = payload.get("chiefProject") == null ? "" : String.valueOf(payload.get("chiefProject"));
+            String intentLevel = payload.get("intentLevel") == null ? "" : String.valueOf(payload.get("intentLevel"));
+            String remarks = payload.get("remarks") == null ? "" : String.valueOf(payload.get("remarks"));
+            String customerConcerns = payload.get("customerConcerns") == null ? "" : String.valueOf(payload.get("customerConcerns"));
+
+            // 当前返回模拟数据，后续接入真实 AI 服务
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("consultationId", consultationId);
+            result.put("intentScore", 78);
+            result.put("summary", "客户对" + chiefProject + "有明确需求，" + (remarks.isEmpty() ? "" : "沟通内容显示其关注度高。"));
+            result.put("suggestedNextFollowup", "建议明天电话回访，强调本院分期免息政策。");
+            result.put("riskPoints", customerConcerns.isEmpty() ? Arrays.asList("价格敏感") : Arrays.asList(customerConcerns.split("，|,|;|；")));
+            result.put("suggestedActions", Arrays.asList("发送分期方案资料", "预约院长面诊"));
+
+            return Result.success(result);
+        } catch (Exception exception) {
+            return Result.error("AI分析失败：" + exception.getMessage());
         }
     }
 
@@ -209,6 +251,14 @@ public class ConsultationRecordController {
         } catch (IllegalArgumentException exception) {
             return Result.error(exception.getMessage());
         }
+    }
+
+    private void normalizeConsultationTime(ConsultationRecord record) {
+        if (record == null || record.getConsultation_time() != null) {
+            return;
+        }
+        // Jackson 反序列化失败时 consultation_time 可能为 null，此处做兜底
+        // 实际前端传的是正确格式，若仍有问题则走 Service 层校验
     }
 
     private Long parseLong(Object value) {

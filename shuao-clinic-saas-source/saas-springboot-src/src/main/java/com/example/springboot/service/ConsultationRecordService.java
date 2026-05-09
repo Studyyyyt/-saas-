@@ -1,6 +1,7 @@
 package com.example.springboot.service;
 
 import com.example.springboot.entity.ConsultationCreateResponse;
+import com.example.springboot.entity.ConsultationFollowup;
 import com.example.springboot.entity.ConsultationPromptFlags;
 import com.example.springboot.entity.ConsultationQuery;
 import com.example.springboot.entity.ConsultationRecord;
@@ -65,6 +66,9 @@ public class ConsultationRecordService {
     @Autowired
     private PatientInsightSummaryService patientInsightSummaryService;
 
+    @Autowired
+    private ConsultationFollowupService consultationFollowupService;
+
     public List<ConsultationRecord> search(ConsultationQuery query) {
         ConsultationQuery normalized = normalizeQuery(query);
         List<ConsultationRecord> records = consultationRecordMapper.search(normalized);
@@ -85,6 +89,20 @@ public class ConsultationRecordService {
         List<ConsultationRecord> records = consultationRecordMapper.selectByPatientId(patientId);
         enrichRecords(records);
         return records;
+    }
+
+    public List<ConsultationFollowup> selectFollowups(Long consultationId) {
+        if (consultationId == null || consultationId <= 0) {
+            return List.of();
+        }
+        return consultationFollowupService.listByConsultationId(consultationId);
+    }
+
+    public int countFollowups(Long consultationId) {
+        if (consultationId == null || consultationId <= 0) {
+            return 0;
+        }
+        return consultationFollowupService.countByConsultationId(consultationId);
     }
 
     public ConsultationPromptFlags matchPatientByPhone(String phone) {
@@ -261,13 +279,24 @@ public class ConsultationRecordService {
         record.setContact_name(trimToNull(record.getContact_name()));
         record.setContact_phone(normalizePhoneOptional(record.getContact_phone()));
         record.setRemarks(normalizeRemarks(record.getRemarks()));
+        record.setEstimated_amount(normalizeAmount(record.getEstimated_amount()));
+        record.setCustomer_concerns(normalizeCustomerConcerns(record.getCustomer_concerns()));
+        record.setAi_analysis_summary(trimToNull(record.getAi_analysis_summary()));
+        record.setAi_analysis_score(normalizeAiScore(record.getAi_analysis_score()));
         Long operatorId = normalizePositiveId(record.getCreated_by());
         if (operatorId == null) {
-            throw new IllegalArgumentException("录入人ID不能为空");
+            String manualName = trimToNull(record.getCreated_by_name());
+            if (manualName == null) {
+                throw new IllegalArgumentException("录入人姓名不能为空");
+            }
+            record.setCreated_by(null);
+            record.setCreated_by_name(manualName);
+            record.setUpdated_by(normalizePositiveId(record.getUpdated_by()));
+        } else {
+            record.setCreated_by(operatorId);
+            record.setCreated_by_name(resolveOperatorName(operatorId, record.getCreated_by_name()));
+            record.setUpdated_by(operatorId);
         }
-        record.setCreated_by(operatorId);
-        record.setCreated_by_name(resolveOperatorName(operatorId, record.getCreated_by_name()));
-        record.setUpdated_by(operatorId);
         if ("已成交".equals(record.getHandling_result())) {
             if (linkedPatient == null) {
                 throw new IllegalArgumentException("已成交必须关联患者信息");
@@ -300,10 +329,26 @@ public class ConsultationRecordService {
         record.setContact_name(trimToNull(record.getContact_name()));
         record.setContact_phone(normalizePhoneOptional(record.getContact_phone()));
         record.setRemarks(normalizeRemarks(record.getRemarks()));
+        record.setEstimated_amount(normalizeAmount(record.getEstimated_amount()));
+        record.setCustomer_concerns(normalizeCustomerConcerns(record.getCustomer_concerns()));
+        record.setAi_analysis_summary(trimToNull(record.getAi_analysis_summary()));
+        record.setAi_analysis_score(normalizeAiScore(record.getAi_analysis_score()));
         Long operatorId = normalizePositiveId(record.getUpdated_by());
         record.setUpdated_by(operatorId);
-        record.setCreated_by(existing.getCreated_by());
-        record.setCreated_by_name(existing.getCreated_by_name());
+        Long newCreatedBy = normalizePositiveId(record.getCreated_by());
+        if (newCreatedBy != null && newCreatedBy > 0) {
+            record.setCreated_by(newCreatedBy);
+            record.setCreated_by_name(trimToNull(record.getCreated_by_name()));
+        } else {
+            String manualName = trimToNull(record.getCreated_by_name());
+            if (manualName != null) {
+                record.setCreated_by(null);
+                record.setCreated_by_name(manualName);
+            } else {
+                record.setCreated_by(existing.getCreated_by());
+                record.setCreated_by_name(existing.getCreated_by_name());
+            }
+        }
         if ("已成交".equals(record.getHandling_result())) {
             if (linkedPatient == null) {
                 throw new IllegalArgumentException("已成交必须关联患者信息");
@@ -606,5 +651,33 @@ public class ConsultationRecordService {
 
     private double round2(double value) {
         return Math.round(value * 100D) / 100D;
+    }
+
+    private Double normalizeAmount(Double amount) {
+        if (amount == null || amount < 0 || Double.isNaN(amount)) {
+            return null;
+        }
+        return round2(amount);
+    }
+
+    private String normalizeCustomerConcerns(String concerns) {
+        String normalized = trim(concerns);
+        if (normalized.length() > 500) {
+            throw new IllegalArgumentException("客户顾虑不能超过500字");
+        }
+        return normalized.isEmpty() ? null : normalized;
+    }
+
+    private Integer normalizeAiScore(Integer score) {
+        if (score == null) {
+            return null;
+        }
+        if (score < 0) {
+            return 0;
+        }
+        if (score > 100) {
+            return 100;
+        }
+        return score;
     }
 }

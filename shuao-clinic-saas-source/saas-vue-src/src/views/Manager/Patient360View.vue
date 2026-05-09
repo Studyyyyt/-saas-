@@ -534,6 +534,62 @@
           <div v-if="!data.consents||!data.consents.length" class="empty-tip">暂无知情同意书</div>
         </el-tab-pane>
 
+        <!-- 咨询记录 -->
+        <el-tab-pane label="💬 咨询记录" name="consultations">
+          <div class="tab-toolbar">
+            <el-button type="primary" icon="el-icon-plus" size="small" @click="openAddConsultation">记录咨询</el-button>
+          </div>
+
+          <div v-if="!consultations.length" class="empty-tip">暂无咨询记录</div>
+
+          <div v-else class="consultation-timeline">
+            <div v-for="group in groupedConsultations" :key="group.month" class="consultation-month-group">
+              <div class="consultation-month-header">
+                <span class="consultation-month-label">{{ group.month }}</span>
+                <el-tag size="mini" type="info">{{ group.items.length }} 条</el-tag>
+              </div>
+              <div class="consultation-cards">
+                <div
+                  v-for="item in group.items"
+                  :key="item.id"
+                  class="consultation-card"
+                  @click="viewConsultation(item)"
+                >
+                  <div class="consultation-card-header">
+                    <span class="consultation-card-time">{{ formatDateTime(item.consultation_time) }}</span>
+                    <el-tag :type="intentTagType(item.intent_level)" size="mini">{{ item.intent_level || '无意向' }}</el-tag>
+                  </div>
+                  <div class="consultation-card-body">
+                    <div class="consultation-card-row">
+                      <span class="consultation-card-label">渠道</span>
+                      <span class="consultation-card-value">{{ item.consultation_channel }}</span>
+                    </div>
+                    <div class="consultation-card-row">
+                      <span class="consultation-card-label">主诉</span>
+                      <span class="consultation-card-value">{{ item.chief_project || '-' }}</span>
+                    </div>
+                    <div class="consultation-card-row">
+                      <span class="consultation-card-label">结果</span>
+                      <el-tag :type="handlingResultTagType(item.handling_result)" size="mini">{{ item.handling_result || '-' }}</el-tag>
+                    </div>
+                    <div v-if="item.estimated_amount" class="consultation-card-row">
+                      <span class="consultation-card-label">预计</span>
+                      <span class="consultation-card-value" style="color:#f56c6c;font-weight:600">¥{{ formatMoney(item.estimated_amount) }}</span>
+                    </div>
+                    <div v-if="item.remarks" class="consultation-card-remark">
+                      {{ item.remarks }}
+                    </div>
+                  </div>
+                  <div class="consultation-card-footer">
+                    <span>录入人：{{ item.created_by_name || '-' }}</span>
+                    <span>咨询人：{{ item.contact_name || '-' }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </el-tab-pane>
+
         <!-- 时间线 -->
         <el-tab-pane label="📅 时间线" name="timeline">
           <div v-if="!data.timeline||!data.timeline.length" class="empty-tip">暂无事件记录</div>
@@ -1262,6 +1318,16 @@
         </div>
       </div>
     </el-dialog>
+
+    <!-- 咨询记录弹窗 -->
+    <ConsultationRecordDialog
+      :visible.sync="consultationDialogVisible"
+      :mode="consultationDialogMode"
+      :record="consultationDialogRecord"
+      :current-user="currentUser"
+      @saved="handleConsultationSaved"
+      @close="consultationDialogVisible = false"
+    />
   </div>
 </template>
 
@@ -1271,6 +1337,7 @@ import { streamChat } from '@/utils/aiStreamClient'
 import ReferralSelector from '@/components/ReferralSelector.vue'
 import ToothSelector from '@/components/ToothSelector.vue'
 import TimelineItem from '@/components/design-system/TimelineItem.vue'
+import ConsultationRecordDialog from '@/components/ConsultationRecordDialog.vue'
 import { getAdminSession } from '@/utils/adminSession'
 import { CUSTOMER_SOURCE_OPTIONS } from '@/utils/consultationOptions'
 import { getPatientAge, rememberRecentPatient } from '@/utils/patientList'
@@ -1340,12 +1407,13 @@ function normalizeText(value) {
 
 export default {
   name: 'Patient360View',
-  components: { ToothSelector, ReferralSelector, TimelineItem },
+  components: { ToothSelector, ReferralSelector, TimelineItem, ConsultationRecordDialog },
   data() {
     return {
       patientId: '',
       data: null,
       records: [],
+      consultations: [],
       loading: false,
       activeTab: 'records',
       patientEditDialog: false,
@@ -1408,7 +1476,11 @@ export default {
       aiChatInput: '',
       aiChatMessages: [],
       aiChatStreaming: false,
-      aiChatAbortController: null
+      aiChatAbortController: null,
+      // 咨询记录弹窗
+      consultationDialogVisible: false,
+      consultationDialogMode: 'create',
+      consultationDialogRecord: {}
     }
   },
   computed: {
@@ -1620,6 +1692,23 @@ export default {
         appointment_purpose: this.formatAppointmentPurpose(item.appointment_purpose)
       }))
     },
+    groupedConsultations() {
+      const groups = {}
+      for (const item of this.consultations || []) {
+        const time = item.consultation_time || ''
+        const match = time.match(/^(\d{4})-(\d{2})/)
+        const key = match ? `${match[1]}年${match[2]}月` : '未知时间'
+        if (!groups[key]) groups[key] = []
+        groups[key].push(item)
+      }
+      return Object.entries(groups).sort((a, b) => {
+        const getTime = (k) => {
+          const m = k.match(/(\d{4})年(\d{2})月/)
+          return m ? `${m[1]}${m[2]}` : '000000'
+        }
+        return getTime(b[0]).localeCompare(getTime(a[0]))
+      }).map(([month, items]) => ({ month, items }))
+    }
   },
   watch: {
     '$route.query.id': {
@@ -1653,7 +1742,7 @@ export default {
     this.loadPaymentChannelOptions()
     const id = this.$route.query.id
     const tab = String(this.$route.query.tab || '').trim()
-    if (['records', 'appointments', 'billing', 'images'].includes(tab)) {
+    if (['records', 'appointments', 'billing', 'images', 'consultations'].includes(tab)) {
       this.activeTab = tab
     }
     if (typeof window !== 'undefined') {
@@ -1949,6 +2038,7 @@ export default {
           this.uploadExtra.patientName = this.data.patient.name
         }
         this.records = Array.isArray(this.data && this.data.records) ? this.data.records : []
+        this.consultations = Array.isArray(this.data && this.data.consultations) ? this.data.consultations : []
         this.loadRecords()
       }).catch(() => {
         this.data = null
@@ -3289,6 +3379,31 @@ export default {
     },
     typeColor(type) {
       return { '预约': 'primary', '就诊': 'success', '治疗': 'warning', '随访': 'info', '预警': 'danger', '知情同意': 'primary' }[type] || 'primary'
+    },
+    intentTagType(level) {
+      if (level === '高') return 'danger'
+      if (level === '中') return 'warning'
+      return 'info'
+    },
+    handlingResultTagType(result) {
+      if (result === '已成交') return 'success'
+      if (result === '已预约到店') return 'primary'
+      if (result === '不再跟进') return 'info'
+      return 'warning'
+    },
+    openAddConsultation() {
+      this.consultationDialogMode = 'create'
+      this.consultationDialogRecord = { patient_id: this.patientId, patient_name: this.data && this.data.patient ? this.data.patient.name : '' }
+      this.consultationDialogVisible = true
+    },
+    viewConsultation(row) {
+      if (!row || !row.id) return
+      this.consultationDialogMode = 'detail'
+      this.consultationDialogRecord = row
+      this.consultationDialogVisible = true
+    },
+    handleConsultationSaved() {
+      this.load360()
     }
   }
 }
@@ -4309,6 +4424,98 @@ export default {
 @keyframes typing-bounce {
   0%, 80%, 100% { transform: scale(0); }
   40% { transform: scale(1); }
+}
+
+/* 咨询记录卡片分组 */
+.consultation-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 4px;
+}
+.consultation-month-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.consultation-month-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.consultation-month-label {
+  color: var(--text-primary);
+}
+.consultation-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.consultation-card {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+.consultation-card:hover {
+  box-shadow: var(--shadow-card);
+  border-color: var(--primary-light);
+  transform: translateY(-2px);
+}
+.consultation-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.consultation-card-time {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.consultation-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.consultation-card-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.consultation-card-label {
+  color: var(--text-secondary);
+  min-width: 36px;
+}
+.consultation-card-value {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+.consultation-card-remark {
+  margin-top: 4px;
+  padding: 8px 10px;
+  background: #f8fafc;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #475569;
+  line-height: 1.5;
+}
+.consultation-card-footer {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-secondary);
 }
 
 /* 交互增强：按钮点击反馈 */

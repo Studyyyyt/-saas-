@@ -22,6 +22,10 @@ public class ConsultationRecord {
     private String contact_name;
     private String contact_phone;
     private String remarks;
+    private Double estimated_amount;
+    private String customer_concerns;
+    private String ai_analysis_summary;
+    private Integer ai_analysis_score;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date arrived_at;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
@@ -38,6 +42,8 @@ public class ConsultationRecord {
     private String patient_customer_source;
     private Double total_deal_amount;
     private Boolean has_deal;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date next_followup_time;
 
     public Long getId() {
         return id;
@@ -167,6 +173,38 @@ public class ConsultationRecord {
         this.remarks = remarks;
     }
 
+    public Double getEstimated_amount() {
+        return estimated_amount;
+    }
+
+    public void setEstimated_amount(Double estimated_amount) {
+        this.estimated_amount = estimated_amount;
+    }
+
+    public String getCustomer_concerns() {
+        return customer_concerns;
+    }
+
+    public void setCustomer_concerns(String customer_concerns) {
+        this.customer_concerns = customer_concerns;
+    }
+
+    public String getAi_analysis_summary() {
+        return ai_analysis_summary;
+    }
+
+    public void setAi_analysis_summary(String ai_analysis_summary) {
+        this.ai_analysis_summary = ai_analysis_summary;
+    }
+
+    public Integer getAi_analysis_score() {
+        return ai_analysis_score;
+    }
+
+    public void setAi_analysis_score(Integer ai_analysis_score) {
+        this.ai_analysis_score = ai_analysis_score;
+    }
+
     public Date getArrived_at() {
         return arrived_at;
     }
@@ -261,5 +299,13 @@ public class ConsultationRecord {
 
     public void setHas_deal(Boolean has_deal) {
         this.has_deal = has_deal;
+    }
+
+    public Date getNext_followup_time() {
+        return next_followup_time;
+    }
+
+    public void setNext_followup_time(Date next_followup_time) {
+        this.next_followup_time = next_followup_time;
     }
 }

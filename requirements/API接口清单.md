@@ -576,6 +576,25 @@
 | GET | /consultations/dashboard/hourHeatmap | 时段热力图 |
 | GET | /consultations/dashboard/nursePerformance | 护士业绩分析 |
 | GET | /consultations/dashboard/referralAnalysis | 转介绍分析 |
+| GET | /consultations/{id}/followups | 查询某咨询的跟进历史 |
+| POST | /consultations/aiAnalyze | AI 分析客户意向（Mock） |
+
+### ConsultationFollowupController
+
+| 方法 | 路径 | 功能 | 请求参数 | 响应结构 |
+|------|------|------|----------|----------|
+| GET | /consultations/followups/list | 按咨询ID查询跟进列表 | `consultationId`(必填) | `{ code, data: List<ConsultationFollowup> }` |
+| POST | /consultations/followups/add | 新增跟进记录 | `RequestBody ConsultationFollowup` | `{ code, data: ConsultationFollowup }` |
+| DELETE | /consultations/followups/delete/{id} | 删除跟进记录 | `PathVariable Long id` | `{ code, msg: "删除成功" }` |
+
+> **ConsultationFollowup 字段说明**：
+> - `id`（Long）：跟进记录ID
+> - `consultation_id`（Long）：关联咨询记录ID
+> - `followup_time`（DateTime）：跟进时间
+> - `content`（String）：跟进内容（1-1000字符）
+> - `next_followup_time`（DateTime）：下次计划跟进时间
+> - `created_by`（Long）：跟进人ID
+> - `created_by_name`（String）：跟进人姓名
 
 ### AdvertisingSpendingController
 
@@ -751,4 +770,4 @@
 
 ---
 
-*最后更新：2026-05-08*
+*最后更新：2026-05-09*
