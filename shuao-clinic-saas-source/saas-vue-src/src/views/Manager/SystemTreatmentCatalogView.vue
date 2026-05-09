@@ -3,8 +3,8 @@
     <div class="hero-card">
       <div>
         <div class="page-kicker">系统设置</div>
-        <h2>项目库</h2>
-        <p>维护标准治疗项目、分类树和项目对应的标准操作流程。</p>
+        <h2>治疗项目管理</h2>
+        <p>维护门诊标准治疗项目、分类体系及每项治疗对应的标准操作流程。</p>
       </div>
       <div class="hero-actions">
         <el-upload
@@ -13,10 +13,10 @@
           :show-file-list="false"
           accept=".xlsx,.xls"
         >
-          <el-button type="primary" plain>导入 Excel</el-button>
+          <el-button type="primary" plain round icon="el-icon-upload2">导入 Excel</el-button>
         </el-upload>
-        <el-button plain @click="exportProjects">导出 Excel</el-button>
-        <el-button @click="reloadAll">刷新</el-button>
+        <el-button plain round icon="el-icon-download" @click="exportProjects">导出 Excel</el-button>
+        <el-button round icon="el-icon-refresh" @click="reloadAll">刷新</el-button>
       </div>
     </div>
 
@@ -36,18 +36,19 @@
           :props="{ label: 'name', children: 'children' }"
           @node-click="handleCategoryNodeClick"
         >
-          <div slot-scope="{ data }" class="tree-node">
+          <div slot-scope="{ data }" class="tree-node" :class="{ active: String(activeCategoryId) === String(data.id) }">
             <div class="tree-node__main">
               <span class="tree-node__name">{{ data.name }}</span>
-              <el-tag size="mini" :type="data.status === '启用' ? 'success' : 'info'">{{ data.status }}</el-tag>
+              <el-tag size="mini" :type="data.status === '启用' ? 'success' : 'info'" effect="plain" class="tree-node__tag">{{ data.status }}</el-tag>
             </div>
             <div class="tree-node__actions">
-              <el-button size="mini" type="text" @click.stop="openCategoryDialog(data)">编辑</el-button>
-              <el-button size="mini" type="text" @click.stop="openCategoryDialog({ parent_id: data.id })">子类</el-button>
-              <el-button size="mini" type="text" style="color:#ef4444" @click.stop="deleteCategory(data)">删除</el-button>
+              <el-button size="mini" type="text" icon="el-icon-edit" @click.stop="openCategoryDialog(data)"></el-button>
+              <el-button size="mini" type="text" icon="el-icon-circle-plus" @click.stop="openCategoryDialog({ parent_id: data.id })"></el-button>
+              <el-button size="mini" type="text" icon="el-icon-delete" style="color:#ef4444" @click.stop="deleteCategory(data)"></el-button>
             </div>
           </div>
         </el-tree>
+        <el-empty v-if="!categoryTree.length" description="暂无分类，点击上方「新增」创建" class="category-empty"></el-empty>
         <div class="category-footer">
           <el-button size="mini" @click="clearCategoryFilter">查看全部项目</el-button>
           <span v-if="activeCategoryName" class="category-current">当前：{{ activeCategoryName }}</span>
@@ -78,47 +79,67 @@
 
         <el-card shadow="never" class="query-card">
           <div class="query-row">
-            <el-input v-model="filters.keyword" class="query-input" clearable placeholder="搜索编码 / 名称 / 分类" @keyup.enter.native="loadProjects" />
+            <el-input v-model="filters.keyword" class="query-input" clearable placeholder="搜索编码 / 名称 / 分类" prefix-icon="el-icon-search" @keyup.enter.native="loadProjects" />
             <el-select v-model="filters.status" clearable class="query-select" placeholder="状态">
               <el-option label="在用" value="在用" />
               <el-option label="停用" value="停用" />
             </el-select>
-            <el-button type="primary" @click="loadProjects">查询</el-button>
-            <el-button @click="resetFilters">重置</el-button>
-            <el-button type="success" plain @click="openProjectDialog()">新增项目</el-button>
+            <el-button type="primary" round icon="el-icon-search" @click="loadProjects">查询</el-button>
+            <el-button plain round icon="el-icon-refresh-left" @click="resetFilters">重置</el-button>
+            <el-button type="success" plain round icon="el-icon-plus" @click="openProjectDialog()">新增项目</el-button>
           </div>
         </el-card>
 
         <el-card shadow="never" class="table-card">
           <el-table :data="rows" stripe :header-cell-style="{ backgroundColor: '#f8fafc', color: '#475569', fontWeight: '600' }">
-            <el-table-column prop="project_code" label="项目编码" width="140" />
-            <el-table-column prop="project_name" label="项目名称" min-width="160" />
-            <el-table-column prop="category_path" label="分类" min-width="140">
-              <template slot-scope="scope">{{ scope.row.category_path || '-' }}</template>
-            </el-table-column>
-            <el-table-column label="默认价格" width="110">
-              <template slot-scope="scope">¥{{ moneyText(scope.row.default_price) }}</template>
-            </el-table-column>
-            <el-table-column prop="estimated_visit_count" label="预计次数" width="90" />
-            <el-table-column prop="estimated_cycle_days" label="预计周期" width="100">
-              <template slot-scope="scope">{{ scope.row.estimated_cycle_days || 0 }}天</template>
-            </el-table-column>
-            <el-table-column label="标准流程" width="120">
-              <template slot-scope="scope">{{ relationCount(scope.row) }}项</template>
-            </el-table-column>
-            <el-table-column prop="status" label="状态" width="90">
+            <el-table-column type="expand" width="40">
               <template slot-scope="scope">
-                <el-tag size="mini" :type="scope.row.status === '在用' ? 'success' : 'info'">{{ scope.row.status }}</el-tag>
+                <div class="project-expand-box">
+                  <div class="project-expand__title">标准操作流程</div>
+                  <el-steps v-if="scope.row.operation_relations && scope.row.operation_relations.length" :active="scope.row.operation_relations.length" simple finish-status="success">
+                    <el-step v-for="(rel, idx) in scope.row.operation_relations" :key="idx" :title="rel.operation_name">
+                      <div slot="description" class="step-desc">
+                        <span v-if="rel.operation_category">{{ rel.operation_category }}</span>
+                        <el-tag v-if="rel.need_lab_processing === 1" size="mini" type="danger" effect="plain">外加工</el-tag>
+                      </div>
+                    </el-step>
+                  </el-steps>
+                  <el-empty v-else description="该项目尚未配置标准操作流程"></el-empty>
+                </div>
               </template>
             </el-table-column>
-            <el-table-column prop="sort_order" label="排序" width="80" />
-            <el-table-column label="操作" fixed="right" width="180">
+            <el-table-column prop="project_code" label="项目编码" width="120" />
+            <el-table-column prop="project_name" label="项目名称" min-width="150" />
+            <el-table-column prop="category_path" label="分类" min-width="120">
+              <template slot-scope="scope">{{ scope.row.category_path || '-' }}</template>
+            </el-table-column>
+            <el-table-column label="默认价格" width="100">
+              <template slot-scope="scope">¥{{ moneyText(scope.row.default_price) }}</template>
+            </el-table-column>
+            <el-table-column prop="estimated_visit_count" label="预计次数" width="80" />
+            <el-table-column prop="estimated_cycle_days" label="预计周期" width="90">
+              <template slot-scope="scope">{{ scope.row.estimated_cycle_days || 0 }}天</template>
+            </el-table-column>
+            <el-table-column label="标准流程" width="90">
               <template slot-scope="scope">
-                <el-button size="mini" type="primary" plain @click="openProjectDialog(scope.row)">编辑</el-button>
-                <el-button size="mini" type="danger" plain @click="deleteProject(scope.row)">删除</el-button>
+                <el-tag size="mini" :type="relationCount(scope.row) > 0 ? 'primary' : 'info'" effect="plain">{{ relationCount(scope.row) }}项</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="status" label="状态" width="80">
+              <template slot-scope="scope">
+                <span class="status-dot" :class="scope.row.status === '在用' ? 'active' : 'inactive'"></span>
+                <span class="status-text">{{ scope.row.status }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="sort_order" label="排序" width="70" />
+            <el-table-column label="操作" fixed="right" width="140">
+              <template slot-scope="scope">
+                <el-button size="mini" type="text" icon="el-icon-edit" @click="openProjectDialog(scope.row)">编辑</el-button>
+                <el-button size="mini" type="text" icon="el-icon-delete" style="color:#ef4444" @click="deleteProject(scope.row)">删除</el-button>
               </template>
             </el-table-column>
           </el-table>
+          <el-empty v-if="!rows.length" description="暂无项目数据"></el-empty>
 
           <div class="pagination-row">
             <el-pagination
@@ -657,19 +678,32 @@ export default {
 .project-layout { display:grid; grid-template-columns:320px minmax(0, 1fr); gap:14px; }
 .category-card, .query-card, .table-card, .summary-card { border-radius:18px; }
 .panel-header { display:flex; justify-content:space-between; align-items:center; }
-.tree-node { width:100%; display:flex; justify-content:space-between; gap:12px; align-items:center; padding:8px 0; }
-.tree-node__main { display:flex; gap:10px; align-items:center; }
-.tree-node__name { color:#0f172a; font-weight:600; }
-.tree-node__actions { display:flex; gap:8px; }
-.category-footer { display:flex; justify-content:space-between; align-items:center; gap:10px; padding-top:12px; }
+.tree-node { width:100%; display:flex; justify-content:space-between; gap:12px; align-items:center; padding:8px 10px; border-radius:10px; transition:background .2s ease; cursor:pointer; }
+.tree-node:hover, .tree-node.active { background:#f1f5f9; }
+.tree-node:hover .tree-node__actions { opacity:1; visibility:visible; }
+.tree-node__main { display:flex; gap:8px; align-items:center; flex:1; min-width:0; }
+.tree-node__name { color:#0f172a; font-weight:600; font-size:14px; }
+.tree-node__tag { border-radius:6px; }
+.tree-node__actions { display:flex; gap:4px; opacity:0; visibility:hidden; transition:all .2s ease; }
+.category-footer { display:flex; justify-content:space-between; align-items:center; gap:10px; padding-top:12px; margin-top:8px; border-top:1px solid #e2e8f0; }
 .category-current { color:#64748b; font-size:12px; }
+.category-empty { padding:24px 0; }
 .project-main { display:flex; flex-direction:column; gap:14px; min-width:0; }
 .summary-row { margin:0 !important; }
+.summary-card { background:#fff; box-shadow:0 4px 16px rgba(31,71,136,.06); transition:all .25s cubic-bezier(.4,0,.2,1); }
+.summary-card:hover { box-shadow:0 8px 24px rgba(31,71,136,.1); transform:translateY(-2px); }
 .summary-label { color:#94a3b8; font-size:13px; }
 .summary-value { margin-top:8px; font-size:28px; font-weight:700; color:#0f172a; }
 .query-row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
 .query-input { width:280px; }
 .query-select { width:160px; }
+.status-dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:6px; }
+.status-dot.active { background:#34c759; }
+.status-dot.inactive { background:#94a3b8; }
+.status-text { font-size:12px; color:#475569; }
+.project-expand-box { padding:16px; background:#f8fafc; border-radius:12px; }
+.project-expand__title { font-size:14px; font-weight:600; color:#0f172a; margin-bottom:12px; }
+.step-desc { font-size:11px; color:#64748b; display:flex; align-items:center; gap:4px; margin-top:4px; }
 .pagination-row { display:flex; justify-content:flex-end; padding-top:16px; }
 .relation-panel { margin-top:8px; padding:14px; border-radius:16px; background:#f8fafc; border:1px solid #e2e8f0; }
 .relation-panel__head { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:12px; }

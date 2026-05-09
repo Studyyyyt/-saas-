@@ -248,8 +248,8 @@ export default {
       menuItems: [
         { label: '首页概览', path: '/home' },
         { label: '患者列表', path: '/Patient' },
-        { label: '病历工作台', path: '/MedicalRecord' },
-        { label: '预约工作台', path: '/Appointment' },
+        { label: '今日工作', path: '/MedicalRecord' },
+        { label: '预约视图', path: '/Appointment' },
         { label: '回访管理', path: '/Followup' },
         {
           group: 'consultation',
@@ -429,9 +429,13 @@ export default {
       }
     },
     // 拖拽排序
+    menuOrderKey() {
+      const userId = this.user && this.user.id ? String(this.user.id) : 'guest'
+      return `${MENU_ORDER_KEY}_${userId}`
+    },
     getSavedOrder() {
       try {
-        const raw = localStorage.getItem(MENU_ORDER_KEY)
+        const raw = localStorage.getItem(this.menuOrderKey())
         return raw ? JSON.parse(raw) : null
       } catch {
         return null
@@ -439,7 +443,7 @@ export default {
     },
     saveOrder(order) {
       try {
-        localStorage.setItem(MENU_ORDER_KEY, JSON.stringify(order))
+        localStorage.setItem(this.menuOrderKey(), JSON.stringify(order))
       } catch {
         // ignore
       }
@@ -450,7 +454,7 @@ export default {
       e.dataTransfer.setData('text/plain', String(index))
       // 设置拖拽时的半透明预览图效果
       if (e.dataTransfer.setDragImage) {
-        const rect = e.target.getBoundingClientRect
+        const rect = e.target.getBoundingClientRect()
         e.dataTransfer.setDragImage(e.target, e.clientX - rect.left, e.clientY - rect.top)
       }
     },
@@ -473,17 +477,23 @@ export default {
         return
       }
 
-      // 获取当前顺序的 keys
-      const currentOrder = this.orderedVisibleMenuItems.map(
+      // 获取当前核心菜单顺序的 keys
+      const coreKeys = this.coreMenuItems.map(
         item => item.path || item.group || item.label
       )
 
-      // 移动元素
-      const [moved] = currentOrder.splice(sourceIndex, 1)
-      currentOrder.splice(targetIndex, 0, moved)
+      // 在核心菜单范围内移动
+      const [moved] = coreKeys.splice(sourceIndex, 1)
+      coreKeys.splice(targetIndex, 0, moved)
+
+      // 与更多菜单合并成完整顺序
+      const moreKeys = this.moreMenuItems.map(
+        item => item.path || item.group || item.label
+      )
+      const fullOrder = [...coreKeys, ...moreKeys]
 
       // 保存
-      this.saveOrder(currentOrder)
+      this.saveOrder(fullOrder)
 
       // 强制刷新
       this.$forceUpdate()

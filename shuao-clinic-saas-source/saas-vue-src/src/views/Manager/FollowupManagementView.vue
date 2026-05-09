@@ -57,6 +57,23 @@
             :value="doctor.id"
           ></el-option>
         </el-select>
+        <el-radio-group v-model="dateQuickFilter" size="small" @change="handleDateQuickChange">
+          <el-radio-button label="today">今天</el-radio-button>
+          <el-radio-button label="tomorrow">明天</el-radio-button>
+          <el-radio-button label="week">本周</el-radio-button>
+          <el-radio-button label="month">本月</el-radio-button>
+          <el-radio-button label="all">全部</el-radio-button>
+        </el-radio-group>
+        <el-date-picker
+          v-model="dateRange"
+          type="daterange"
+          value-format="yyyy-MM-dd"
+          range-separator="至"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+          style="width: 220px"
+          @change="applyFilters"
+        />
         <el-button icon="el-icon-refresh" @click="loadAll">刷新</el-button>
         <el-button type="primary" plain icon="el-icon-circle-plus-outline" @click="openAddDialog">新增回访</el-button>
       </div>
@@ -84,6 +101,9 @@
           <template slot-scope="scope">{{ scope.row.doctor_name || '-' }}</template>
         </el-table-column>
         <el-table-column prop="followup_type" label="回访方式" width="100" />
+        <el-table-column prop="followup_project" label="回访项目" min-width="140" show-overflow-tooltip>
+          <template slot-scope="scope">{{ scope.row.followup_project || '-' }}</template>
+        </el-table-column>
         <el-table-column label="回访结果" min-width="220" show-overflow-tooltip>
           <template slot-scope="scope">
             <span :class="{ 'result-empty': !followupResultText(scope.row) }">
@@ -102,7 +122,7 @@
               plain
               @click="openEditDialog(scope.row)"
             >{{ isFollowupCompleted(scope.row) ? '编辑结果' : '填写结果' }}</el-button>
-            <el-button size="mini" type="success" plain @click="goPatient360(scope.row)">患者360</el-button>
+            <el-button size="mini" type="success" plain @click="goPatient360(scope.row)">患者详情</el-button>
             <el-button size="mini" type="danger" plain @click="handleDelete(scope.row)">删除</el-button>
           </template>
         </el-table-column>
@@ -174,6 +194,16 @@
             <el-option label="线上" value="线上"></el-option>
           </el-select>
         </el-form-item>
+        <el-form-item label="回访项目">
+          <el-select v-model="form.followup_project" placeholder="请选择回访项目" clearable style="width:100%">
+            <el-option label="术后关怀" value="术后关怀"></el-option>
+            <el-option label="正畸复诊提醒" value="正畸复诊提醒"></el-option>
+            <el-option label="种植术后随访" value="种植术后随访"></el-option>
+            <el-option label="满意度调查" value="满意度调查"></el-option>
+            <el-option label="欠费催缴" value="欠费催缴"></el-option>
+            <el-option label="其他" value="其他"></el-option>
+          </el-select>
+        </el-form-item>
         <el-form-item label="回访结果">
           <el-input
             v-model="form.summary"
@@ -214,6 +244,7 @@ function createEmptyForm() {
     doctor_name: '',
     followup_date: '',
     followup_type: '电话',
+    followup_project: '',
     summary: '',
     next_followup_date: ''
   }
@@ -230,6 +261,8 @@ export default {
       keyword: '',
       statusFilter: 'ALL',
       doctorFilter: 'ALL',
+      dateQuickFilter: 'all',
+      dateRange: null,
       currentPage: 1,
       pageSize: 10,
       dialogVisible: false,
@@ -287,6 +320,7 @@ export default {
     this.initializeDoctorFilter()
     this.loadDoctors()
     this.loadAll()
+    this.handleRouteQuery()
   },
   beforeDestroy() {
     if (this.patientSuggestionBlurTimer) {
@@ -319,6 +353,7 @@ export default {
         patient_phone: String((item && item.patient_phone) || '').trim(),
         doctor_name: String((item && item.doctor_name) || '').trim(),
         followup_type: String((item && item.followup_type) || '电话').trim() || '电话',
+        followup_project: String((item && item.followup_project) || '').trim(),
         summary: String((item && item.summary) || '').trim()
       }
     },
@@ -415,12 +450,21 @@ export default {
     },
     applyFilters() {
       const keyword = String(this.keyword || '').trim().toLowerCase()
+      const today = this.dateKey(new Date())
+      const now = new Date()
+      const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      const weekStart = new Date(todayDate)
+      weekStart.setDate(todayDate.getDate() - todayDate.getDay() + (todayDate.getDay() === 0 ? -6 : 1))
+      const weekEnd = new Date(weekStart)
+      weekEnd.setDate(weekStart.getDate() + 6)
+      const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
       this.filteredRows = (this.rows || []).filter(item => {
         const patientName = String(item.patient_name || '').toLowerCase()
         const patientPhone = String(item.patient_phone || '').toLowerCase()
         const doctorId = Number(item.doctor_account_id)
         const doctorName = String(item.doctor_name || '').trim()
         const selectedDoctor = this.currentDoctorById(this.doctorFilter)
+        const itemDate = this.dateKey(item.followup_date)
         const matchesKeyword = !keyword || patientName.includes(keyword) || patientPhone.includes(keyword)
         const matchesStatus = this.statusFilter === 'ALL'
           || (this.statusFilter === 'PENDING' && !this.isFollowupCompleted(item))
@@ -429,7 +473,21 @@ export default {
           || Number(this.doctorFilter) === doctorId
           || (!!selectedDoctor && !!doctorName && selectedDoctor.name === doctorName)
           || (this.isDoctor && !!this.currentDoctorName && doctorName === this.currentDoctorName)
-        return matchesKeyword && matchesStatus && matchesDoctor
+        let matchesDate = true
+        if (this.dateRange && this.dateRange.length === 2) {
+          matchesDate = !!itemDate && itemDate >= this.dateRange[0] && itemDate <= this.dateRange[1]
+        } else if (this.dateQuickFilter === 'today') {
+          matchesDate = itemDate === today
+        } else if (this.dateQuickFilter === 'tomorrow') {
+          const tomorrow = new Date(todayDate)
+          tomorrow.setDate(todayDate.getDate() + 1)
+          matchesDate = itemDate === this.dateKey(tomorrow)
+        } else if (this.dateQuickFilter === 'week') {
+          matchesDate = !!itemDate && itemDate >= this.dateKey(weekStart) && itemDate <= this.dateKey(weekEnd)
+        } else if (this.dateQuickFilter === 'month') {
+          matchesDate = !!itemDate && itemDate.startsWith(monthPrefix)
+        }
+        return matchesKeyword && matchesStatus && matchesDoctor && matchesDate
       })
       this.currentPage = 1
     },
@@ -439,6 +497,29 @@ export default {
     },
     handleCurrentChange(page) {
       this.currentPage = page
+    },
+    handleDateQuickChange() {
+      this.dateRange = null
+      this.applyFilters()
+    },
+    handleRouteQuery() {
+      const query = this.$route.query
+      if (query.action === 'add') {
+        this.currentUser = getAdminSession() || {}
+        this.isEditing = false
+        this.form = this.buildEmptyForm()
+        if (query.patientId) {
+          this.form.patient_id = Number(query.patientId)
+          this.form.patient_name = String(query.patientName || '')
+        }
+        if (this.currentDoctorId > 0) {
+          this.form.doctor_account_id = this.currentDoctorId
+          this.form.doctor_name = this.currentDoctorName
+        }
+        // 清除 query 避免刷新重复触发
+        this.$router.replace({ path: this.$route.path, query: {} })
+        this.dialogVisible = true
+      }
     },
     loadPatients(keyword = '') {
       axios.get('/patients/search', {
@@ -510,6 +591,7 @@ export default {
         doctor_name: row.doctor_name || '',
         followup_date: this.normalizeDateTimeInput(row.followup_date),
         followup_type: row.followup_type || '电话',
+        followup_project: row.followup_project || '',
         summary: row.summary || '',
         next_followup_date: this.normalizeDateTimeInput(row.next_followup_date)
       }
@@ -546,6 +628,7 @@ export default {
         doctor_name: this.form.doctor_name,
         followup_date: this.form.followup_date,
         followup_type: this.form.followup_type,
+        followup_project: this.form.followup_project,
         summary: this.form.summary,
         next_followup_date: this.form.next_followup_date
       }

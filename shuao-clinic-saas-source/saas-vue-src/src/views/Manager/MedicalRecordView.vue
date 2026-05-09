@@ -5,7 +5,7 @@
         <!-- 页面标题栏 -->
         <div class="page-header">
           <div class="page-header__main">
-            <div class="page-kicker">病历工作台</div>
+            <div class="page-kicker">今日工作</div>
             <h2 class="page-title">{{ dialogTitle }}</h2>
             <p class="page-subtitle">{{ currentPatientSummary }}</p>
           </div>
@@ -108,13 +108,85 @@
               </div>
               <div class="section-body">
                 <el-form-item prop="chief_complaint" label="主诉" label-width="80px">
-                  <el-input v-model="form.chief_complaint" type="textarea" :rows="2" placeholder="请输入主诉" />
+                  <div class="phrase-input-wrap">
+                    <el-popover append-to-body ref="phrasePopover-chief_complaint" placement="bottom-start" width="300" trigger="manual" v-model="phrasePopoverVisible['chief_complaint']">
+                      <div class="phrase-popover" @mouseenter="$set(phrasePopoverHover, 'chief_complaint', true)" @mouseleave="$set(phrasePopoverHover, 'chief_complaint', false)">
+                        <div class="phrase-popover__title">常用短语 — 主诉</div>
+                        <div v-for="(items, category) in groupedPhrases('chief_complaint')" :key="category" class="phrase-popover__group">
+                          <div class="phrase-popover__category">{{ category }}</div>
+                          <div class="phrase-popover__list">
+                            <div v-for="item in items" :key="item.id" class="phrase-item">
+                              <el-button size="mini" type="text" @click="insertPhrase('chief_complaint', item.content)">{{ item.content }}</el-button>
+                              <el-button size="mini" type="text" style="color:#ef4444" @click="deletePhrase(item.id, 'chief_complaint')"><i class="el-icon-delete" /></el-button>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="phrase-popover__empty" v-if="!phraseData['chief_complaint'] || !phraseData['chief_complaint'].length">暂无词条，请在下方添加</div>
+                        <div class="phrase-popover__add">
+                          <el-input v-model="phraseNewCategory['chief_complaint']" size="mini" placeholder="分类（如根管治疗）" />
+                          <div style="display:flex;gap:6px;margin-top:6px;">
+                            <el-input v-model="phraseNewContent['chief_complaint']" size="mini" placeholder="添加新词条" style="flex:1" />
+                            <el-button size="mini" type="primary" @click="addPhrase('chief_complaint')">添加</el-button>
+                          </div>
+                        </div>
+                      </div>
+                      <el-input slot="reference" v-model="form.chief_complaint" type="textarea" :rows="2" placeholder="请输入主诉" @focus="handlePhraseFocus('chief_complaint')" @blur="(e) => handlePhraseBlur('chief_complaint', e)" />
+                    </el-popover>
+                  </div>
                 </el-form-item>
                 <el-form-item label="现病史" label-width="80px">
-                  <el-input v-model="form.present_illness_history" type="textarea" :rows="2" placeholder="请输入现病史" />
+                  <div class="phrase-input-wrap">
+                    <el-popover append-to-body ref="phrasePopover-present_illness_history" placement="bottom-start" width="300" trigger="manual" v-model="phrasePopoverVisible['present_illness_history']">
+                      <div class="phrase-popover" @mouseenter="$set(phrasePopoverHover, 'present_illness_history', true)" @mouseleave="$set(phrasePopoverHover, 'present_illness_history', false)">
+                        <div class="phrase-popover__title">常用短语 — 现病史</div>
+                        <div v-for="(items, category) in groupedPhrases('present_illness_history')" :key="category" class="phrase-popover__group">
+                          <div class="phrase-popover__category">{{ category }}</div>
+                          <div class="phrase-popover__list">
+                            <div v-for="item in items" :key="item.id" class="phrase-item">
+                              <el-button size="mini" type="text" @click="insertPhrase('present_illness_history', item.content)">{{ item.content }}</el-button>
+                              <el-button size="mini" type="text" style="color:#ef4444" @click="deletePhrase(item.id, 'present_illness_history')"><i class="el-icon-delete" /></el-button>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="phrase-popover__empty" v-if="!phraseData['present_illness_history'] || !phraseData['present_illness_history'].length">暂无词条，请在下方添加</div>
+                        <div class="phrase-popover__add">
+                          <el-input v-model="phraseNewCategory['present_illness_history']" size="mini" placeholder="分类（如根管治疗）" />
+                          <div style="display:flex;gap:6px;margin-top:6px;">
+                            <el-input v-model="phraseNewContent['present_illness_history']" size="mini" placeholder="添加新词条" style="flex:1" />
+                            <el-button size="mini" type="primary" @click="addPhrase('present_illness_history')">添加</el-button>
+                          </div>
+                        </div>
+                      </div>
+                      <el-input slot="reference" v-model="form.present_illness_history" type="textarea" :rows="2" placeholder="请输入现病史" @focus="handlePhraseFocus('present_illness_history')" @blur="(e) => handlePhraseBlur('present_illness_history', e)" />
+                    </el-popover>
+                  </div>
                 </el-form-item>
                 <el-form-item label="既往史" label-width="80px">
-                  <el-input v-model="form.past_history" type="textarea" :rows="2" placeholder="请输入既往史" />
+                  <div class="phrase-input-wrap">
+                    <el-popover append-to-body ref="phrasePopover-past_history" placement="bottom-start" width="300" trigger="manual" v-model="phrasePopoverVisible['past_history']">
+                      <div class="phrase-popover" @mouseenter="$set(phrasePopoverHover, 'past_history', true)" @mouseleave="$set(phrasePopoverHover, 'past_history', false)">
+                        <div class="phrase-popover__title">常用短语 — 既往史</div>
+                        <div v-for="(items, category) in groupedPhrases('past_history')" :key="category" class="phrase-popover__group">
+                          <div class="phrase-popover__category">{{ category }}</div>
+                          <div class="phrase-popover__list">
+                            <div v-for="item in items" :key="item.id" class="phrase-item">
+                              <el-button size="mini" type="text" @click="insertPhrase('past_history', item.content)">{{ item.content }}</el-button>
+                              <el-button size="mini" type="text" style="color:#ef4444" @click="deletePhrase(item.id, 'past_history')"><i class="el-icon-delete" /></el-button>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="phrase-popover__empty" v-if="!phraseData['past_history'] || !phraseData['past_history'].length">暂无词条，请在下方添加</div>
+                        <div class="phrase-popover__add">
+                          <el-input v-model="phraseNewCategory['past_history']" size="mini" placeholder="分类（如根管治疗）" />
+                          <div style="display:flex;gap:6px;margin-top:6px;">
+                            <el-input v-model="phraseNewContent['past_history']" size="mini" placeholder="添加新词条" style="flex:1" />
+                            <el-button size="mini" type="primary" @click="addPhrase('past_history')">添加</el-button>
+                          </div>
+                        </div>
+                      </div>
+                      <el-input slot="reference" v-model="form.past_history" type="textarea" :rows="2" placeholder="请输入既往史" @focus="handlePhraseFocus('past_history')" @blur="(e) => handlePhraseBlur('past_history', e)" />
+                    </el-popover>
+                  </div>
                 </el-form-item>
                 <el-row :gutter="20">
                   <el-col :xs="24" :sm="12">
@@ -148,114 +220,68 @@
               </div>
               <div class="section-body">
                 <el-form-item label="检查" label-width="80px">
-                  <el-input v-model="form.examination" type="textarea" :rows="3" placeholder="请输入检查内容" />
+                  <div class="phrase-input-wrap">
+                    <el-popover append-to-body ref="phrasePopover-examination" placement="bottom-start" width="300" trigger="manual" v-model="phrasePopoverVisible['examination']">
+                      <div class="phrase-popover" @mouseenter="$set(phrasePopoverHover, 'examination', true)" @mouseleave="$set(phrasePopoverHover, 'examination', false)">
+                        <div class="phrase-popover__title">常用短语 — 检查</div>
+                        <div v-for="(items, category) in groupedPhrases('examination')" :key="category" class="phrase-popover__group">
+                          <div class="phrase-popover__category">{{ category }}</div>
+                          <div class="phrase-popover__list">
+                            <div v-for="item in items" :key="item.id" class="phrase-item">
+                              <el-button size="mini" type="text" @click="insertPhrase('examination', item.content)">{{ item.content }}</el-button>
+                              <el-button size="mini" type="text" style="color:#ef4444" @click="deletePhrase(item.id, 'examination')"><i class="el-icon-delete" /></el-button>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="phrase-popover__empty" v-if="!phraseData['examination'] || !phraseData['examination'].length">暂无词条，请在下方添加</div>
+                        <div class="phrase-popover__add">
+                          <el-input v-model="phraseNewCategory['examination']" size="mini" placeholder="分类（如根管治疗）" />
+                          <div style="display:flex;gap:6px;margin-top:6px;">
+                            <el-input v-model="phraseNewContent['examination']" size="mini" placeholder="添加新词条" style="flex:1" />
+                            <el-button size="mini" type="primary" @click="addPhrase('examination')">添加</el-button>
+                          </div>
+                        </div>
+                      </div>
+                      <el-input slot="reference" v-model="form.examination" type="textarea" :rows="3" placeholder="请输入检查内容" @focus="handlePhraseFocus('examination')" @blur="(e) => handlePhraseBlur('examination', e)" />
+                    </el-popover>
+                  </div>
                 </el-form-item>
                 <el-form-item label="辅助检查" label-width="80px">
                   <el-input v-model="form.auxiliary_examination" type="textarea" :rows="2" placeholder="请输入辅助检查内容" />
                 </el-form-item>
                 <el-form-item prop="diagnosis" label="诊断" label-width="80px">
-                  <el-input v-model="form.diagnosis" type="textarea" :rows="2" placeholder="请输入诊断结论" />
+                  <div class="phrase-input-wrap">
+                    <el-popover append-to-body ref="phrasePopover-diagnosis" placement="bottom-start" width="300" trigger="manual" v-model="phrasePopoverVisible['diagnosis']">
+                      <div class="phrase-popover" @mouseenter="$set(phrasePopoverHover, 'diagnosis', true)" @mouseleave="$set(phrasePopoverHover, 'diagnosis', false)">
+                        <div class="phrase-popover__title">常用短语 — 诊断</div>
+                        <div v-for="(items, category) in groupedPhrases('diagnosis')" :key="category" class="phrase-popover__group">
+                          <div class="phrase-popover__category">{{ category }}</div>
+                          <div class="phrase-popover__list">
+                            <div v-for="item in items" :key="item.id" class="phrase-item">
+                              <el-button size="mini" type="text" @click="insertPhrase('diagnosis', item.content)">{{ item.content }}</el-button>
+                              <el-button size="mini" type="text" style="color:#ef4444" @click="deletePhrase(item.id, 'diagnosis')"><i class="el-icon-delete" /></el-button>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="phrase-popover__empty" v-if="!phraseData['diagnosis'] || !phraseData['diagnosis'].length">暂无词条，请在下方添加</div>
+                        <div class="phrase-popover__add">
+                          <el-input v-model="phraseNewCategory['diagnosis']" size="mini" placeholder="分类（如根管治疗）" />
+                          <div style="display:flex;gap:6px;margin-top:6px;">
+                            <el-input v-model="phraseNewContent['diagnosis']" size="mini" placeholder="添加新词条" style="flex:1" />
+                            <el-button size="mini" type="primary" @click="addPhrase('diagnosis')">添加</el-button>
+                          </div>
+                        </div>
+                      </div>
+                      <el-input slot="reference" v-model="form.diagnosis" type="textarea" :rows="2" placeholder="请输入诊断结论" @focus="handlePhraseFocus('diagnosis')" @blur="(e) => handlePhraseBlur('diagnosis', e)" />
+                    </el-popover>
+                  </div>
                 </el-form-item>
 
                 <!-- 牙位选择 -->
                 <el-form-item label="牙位" label-width="80px">
                   <ToothSelector v-model="form.tooth_positions" />
-                  <div class="sheet-field-hint">开启牙位同步时，会优先使用"本次操作"里的牙位集合。</div>
+                  <div class="sheet-field-hint">请直接勾选或输入牙位。</div>
                 </el-form-item>
-              </div>
-            </el-card>
-
-            <!-- 本次操作区块 -->
-            <el-card class="section-card apple-page-enter-delay-4" shadow="never">
-              <div class="section-header">
-                <div class="section-header__main">
-                  <div class="section-header__bar"></div>
-                  <i class="el-icon-s-tools section-header__icon"></i>
-                  <span class="section-header__title">本次操作</span>
-                  <el-tag v-if="form.operation_items && form.operation_items.length" size="mini" type="primary" style="margin-left: 8px;">{{ form.operation_items.length }} 条</el-tag>
-                </div>
-                <el-button size="mini" type="primary" plain round @click="aiAssist('operation')">
-                  <i class="el-icon-magic-stick"></i> AI 辅助
-                </el-button>
-              </div>
-              <div class="section-body">
-                <div class="operation-panel">
-                  <div class="operation-panel__head">
-                    <div>
-                      <div class="operation-panel__title">结构化操作</div>
-                      <div class="operation-panel__tip">本次操作必须从操作字典库选择；保存病历前至少需要添加一条有效操作。</div>
-                    </div>
-                    <el-button size="mini" plain round @click="appendManualOperation" :disabled="!operationOptions.length">新增空白操作</el-button>
-                  </div>
-
-                  <el-row :gutter="12" class="project-suggestion-row">
-                    <el-col :span="10">
-                      <el-select
-                        v-model="selectedQuickOperationId"
-                        clearable
-                        filterable
-                        placeholder="从操作字典库选择后立即添加"
-                        style="width:100%"
-                        @change="handleQuickOperationSelect">
-                        <el-option v-for="operation in operationOptions" :key="operation.id" :label="operationOptionLabel(operation)" :value="operation.id" />
-                      </el-select>
-                    </el-col>
-                    <el-col :span="14">
-                      <div class="operation-suggestion-empty">
-                        操作来源已切换为操作字典库；如需补充收费归属，可在下方为每条操作单独关联项目。
-                      </div>
-                    </el-col>
-                  </el-row>
-
-                  <div v-if="form.operation_items.length" class="operation-list">
-                    <div v-for="(item, index) in form.operation_items" :key="item.local_key" class="operation-item">
-                      <div class="operation-item__head">
-                        <span>操作 {{ index + 1 }}</span>
-                        <div class="operation-item__actions">
-                          <el-tag v-if="item.need_lab_processing === 1" size="mini" type="danger">待登记加工</el-tag>
-                          <el-button size="mini" type="text" style="color:#ef4444" @click="removeOperationItem(index)">删除</el-button>
-                        </div>
-                      </div>
-                      <el-row :gutter="12">
-                        <el-col :span="8">
-                          <el-form-item label="关联项目" label-width="82px">
-                            <el-select v-model="item.project_id" clearable filterable placeholder="可选" style="width:100%" @change="handleOperationProjectChange(item)">
-                              <el-option v-for="project in projectOptions" :key="project.id" :label="project.project_name" :value="project.id" />
-                            </el-select>
-                          </el-form-item>
-                        </el-col>
-                        <el-col :span="8">
-                          <el-form-item label="操作字典" label-width="82px" required>
-                            <el-select v-model="item.operation_id" clearable filterable placeholder="必填：选择操作字典项" style="width:100%" @change="handleOperationChange(item)">
-                              <el-option v-for="operation in operationOptions" :key="operation.id" :label="operationOptionLabel(operation)" :value="operation.id" />
-                            </el-select>
-                          </el-form-item>
-                        </el-col>
-                        <el-col :span="8">
-                          <el-form-item label="备注" label-width="82px">
-                            <el-input v-model="item.remark" placeholder="可选" round />
-                          </el-form-item>
-                        </el-col>
-                      </el-row>
-                      <el-form-item v-if="item.need_lab_processing === 1" label="加工厂" label-width="82px">
-                        <el-select
-                          v-model="item.factory_id"
-                          clearable
-                          filterable
-                          style="width:100%"
-                          placeholder="可选，后续加工单自动带出"
-                          @change="handleOperationFactoryChange(item)"
-                        >
-                          <el-option v-for="factory in labFactoryOptions" :key="factory.id" :label="factory.name" :value="factory.id" />
-                        </el-select>
-                      </el-form-item>
-                      <el-form-item label="牙位" label-width="82px">
-                        <ToothSelector v-model="item.tooth_positions" @input="handleOperationToothChange" />
-                      </el-form-item>
-                    </div>
-                  </div>
-                  <div v-else class="operation-empty">未勾选任何操作时，病历仍可按原方式保存。</div>
-                </div>
               </div>
             </el-card>
 
@@ -273,12 +299,35 @@
               </div>
               <div class="section-body">
                 <el-form-item label="治疗方案" label-width="80px">
-                  <el-input v-model="form.treatment_plan" type="textarea" :rows="2" placeholder="请输入治疗方案" />
+                  <div class="phrase-input-wrap">
+                    <el-popover append-to-body ref="phrasePopover-treatment_plan" placement="bottom-start" width="300" trigger="manual" v-model="phrasePopoverVisible['treatment_plan']">
+                      <div class="phrase-popover" @mouseenter="$set(phrasePopoverHover, 'treatment_plan', true)" @mouseleave="$set(phrasePopoverHover, 'treatment_plan', false)">
+                        <div class="phrase-popover__title">常用短语 — 治疗方案</div>
+                        <div v-for="(items, category) in groupedPhrases('treatment_plan')" :key="category" class="phrase-popover__group">
+                          <div class="phrase-popover__category">{{ category }}</div>
+                          <div class="phrase-popover__list">
+                            <div v-for="item in items" :key="item.id" class="phrase-item">
+                              <el-button size="mini" type="text" @click="insertPhrase('treatment_plan', item.content)">{{ item.content }}</el-button>
+                              <el-button size="mini" type="text" style="color:#ef4444" @click="deletePhrase(item.id, 'treatment_plan')"><i class="el-icon-delete" /></el-button>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="phrase-popover__empty" v-if="!phraseData['treatment_plan'] || !phraseData['treatment_plan'].length">暂无词条，请在下方添加</div>
+                        <div class="phrase-popover__add">
+                          <el-input v-model="phraseNewCategory['treatment_plan']" size="mini" placeholder="分类（如根管治疗）" />
+                          <div style="display:flex;gap:6px;margin-top:6px;">
+                            <el-input v-model="phraseNewContent['treatment_plan']" size="mini" placeholder="添加新词条" style="flex:1" />
+                            <el-button size="mini" type="primary" @click="addPhrase('treatment_plan')">添加</el-button>
+                          </div>
+                        </div>
+                      </div>
+                      <el-input slot="reference" v-model="form.treatment_plan" type="textarea" :rows="2" placeholder="请输入治疗方案" @focus="handlePhraseFocus('treatment_plan')" @blur="(e) => handlePhraseBlur('treatment_plan', e)" />
+                    </el-popover>
+                  </div>
                 </el-form-item>
                 <el-form-item label="治疗文稿" label-width="80px">
                   <div class="treatment-draft-toolbar">
-                    <span class="treatment-draft-hint">勾选操作后自动生成初稿，医生可继续润色。</span>
-                    <el-button size="mini" type="text" @click="regenerateTreatmentDraft" :disabled="!form.operation_items.length">重新生成</el-button>
+                    <span class="treatment-draft-hint">请直接填写治疗文稿内容。</span>
                   </div>
                   <el-input v-model="form.treatment" type="textarea" :rows="3" placeholder="治疗文稿" @input="handleTreatmentInput" />
                 </el-form-item>
@@ -296,7 +345,31 @@
               </div>
               <div class="section-body">
                 <el-form-item label="医嘱" label-width="80px">
-                  <el-input v-model="form.medical_advice" type="textarea" :rows="2" placeholder="请输入医嘱" />
+                  <div class="phrase-input-wrap">
+                    <el-popover append-to-body ref="phrasePopover-medical_advice" placement="bottom-start" width="300" trigger="manual" v-model="phrasePopoverVisible['medical_advice']">
+                      <div class="phrase-popover" @mouseenter="$set(phrasePopoverHover, 'medical_advice', true)" @mouseleave="$set(phrasePopoverHover, 'medical_advice', false)">
+                        <div class="phrase-popover__title">常用短语 — 医嘱</div>
+                        <div v-for="(items, category) in groupedPhrases('medical_advice')" :key="category" class="phrase-popover__group">
+                          <div class="phrase-popover__category">{{ category }}</div>
+                          <div class="phrase-popover__list">
+                            <div v-for="item in items" :key="item.id" class="phrase-item">
+                              <el-button size="mini" type="text" @click="insertPhrase('medical_advice', item.content)">{{ item.content }}</el-button>
+                              <el-button size="mini" type="text" style="color:#ef4444" @click="deletePhrase(item.id, 'medical_advice')"><i class="el-icon-delete" /></el-button>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="phrase-popover__empty" v-if="!phraseData['medical_advice'] || !phraseData['medical_advice'].length">暂无词条，请在下方添加</div>
+                        <div class="phrase-popover__add">
+                          <el-input v-model="phraseNewCategory['medical_advice']" size="mini" placeholder="分类（如根管治疗）" />
+                          <div style="display:flex;gap:6px;margin-top:6px;">
+                            <el-input v-model="phraseNewContent['medical_advice']" size="mini" placeholder="添加新词条" style="flex:1" />
+                            <el-button size="mini" type="primary" @click="addPhrase('medical_advice')">添加</el-button>
+                          </div>
+                        </div>
+                      </div>
+                      <el-input slot="reference" v-model="form.medical_advice" type="textarea" :rows="2" placeholder="请输入医嘱" @focus="handlePhraseFocus('medical_advice')" @blur="(e) => handlePhraseBlur('medical_advice', e)" />
+                    </el-popover>
+                  </div>
                 </el-form-item>
                 <el-form-item label="处方" label-width="80px">
                   <el-input v-model="form.prescription" type="textarea" :rows="2" placeholder="请输入处方内容" />
@@ -373,7 +446,31 @@
                   </div>
                 </el-form-item>
                 <el-form-item label="病历备注" label-width="80px">
-                  <el-input v-model="form.notes" type="textarea" :rows="3" placeholder="记录特殊病例要点、随访注意事项、患者特殊需求等，后续可由 AI 提取分析" />
+                  <div class="phrase-input-wrap">
+                    <el-popover append-to-body ref="phrasePopover-notes" placement="bottom-start" width="300" trigger="manual" v-model="phrasePopoverVisible['notes']">
+                      <div class="phrase-popover" @mouseenter="$set(phrasePopoverHover, 'notes', true)" @mouseleave="$set(phrasePopoverHover, 'notes', false)">
+                        <div class="phrase-popover__title">常用短语 — 病历备注</div>
+                        <div v-for="(items, category) in groupedPhrases('notes')" :key="category" class="phrase-popover__group">
+                          <div class="phrase-popover__category">{{ category }}</div>
+                          <div class="phrase-popover__list">
+                            <div v-for="item in items" :key="item.id" class="phrase-item">
+                              <el-button size="mini" type="text" @click="insertPhrase('notes', item.content)">{{ item.content }}</el-button>
+                              <el-button size="mini" type="text" style="color:#ef4444" @click="deletePhrase(item.id, 'notes')"><i class="el-icon-delete" /></el-button>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="phrase-popover__empty" v-if="!phraseData['notes'] || !phraseData['notes'].length">暂无词条，请在下方添加</div>
+                        <div class="phrase-popover__add">
+                          <el-input v-model="phraseNewCategory['notes']" size="mini" placeholder="分类（如根管治疗）" />
+                          <div style="display:flex;gap:6px;margin-top:6px;">
+                            <el-input v-model="phraseNewContent['notes']" size="mini" placeholder="添加新词条" style="flex:1" />
+                            <el-button size="mini" type="primary" @click="addPhrase('notes')">添加</el-button>
+                          </div>
+                        </div>
+                      </div>
+                      <el-input slot="reference" v-model="form.notes" type="textarea" :rows="3" placeholder="记录特殊病例要点、随访注意事项、患者特殊需求等，后续可由 AI 提取分析" @focus="handlePhraseFocus('notes')" @blur="(e) => handlePhraseBlur('notes', e)" />
+                    </el-popover>
+                  </div>
                 </el-form-item>
               </div>
             </el-card>
@@ -492,297 +589,233 @@
       </el-dialog>
     </template>
 
+    <!-- 列表视图：病历工作台 -->
     <template v-else>
-      <!-- 列表页 PageHeader -->
+      <!-- 页面头部 -->
       <div class="page-header">
         <div class="page-header__main">
-          <div class="page-kicker">病历管理</div>
-          <h2 class="page-title">病历列表</h2>
-          <p class="page-subtitle">统一查看病历叙述、结构化操作和待登记加工提示。</p>
-        </div>
-        <div class="page-header__stats">
-          <div class="mini-stat">
-            <div class="mini-num">{{ total }}</div>
-            <div class="mini-label">病历总数</div>
-          </div>
-          <div class="mini-stat accent">
-            <div class="mini-num">{{ pendingLabTotal }}</div>
-            <div class="mini-label">待登记加工</div>
-          </div>
+          <div class="page-kicker">今日工作</div>
+          <h2 class="page-title">今日工作概览</h2>
+          <p class="page-subtitle">跟踪今日就诊流程、待办事项与历史病历速查。</p>
         </div>
       </div>
 
-      <!-- AI 助手快速入口 -->
-      <el-card class="ai-list-panel" shadow="never">
-        <div class="ai-list-panel__main">
-          <div class="ai-list-panel__icon"><i class="el-icon-cpu"></i></div>
-          <div class="ai-list-panel__meta">
-            <div class="ai-list-panel__title">AI 病历助手</div>
-            <div class="ai-list-panel__desc">智能分析病历数据、辅助诊断建议、批量生成治疗方案</div>
+      <!-- 概览统计卡片 -->
+      <div class="stats-row">
+        <div class="stat-card" @click="switchTab('today')">
+          <div class="stat-icon" style="background: var(--apple-orange-light); color: var(--apple-orange);"><i class="el-icon-edit-outline" /></div>
+          <div class="stat-body">
+            <div class="stat-num">{{ todayPendingCount }}</div>
+            <div class="stat-label">今日待写</div>
           </div>
         </div>
-        <div class="ai-list-panel__actions">
-          <el-button size="small" type="primary" plain round @click="aiAssist('summary')"><i class="el-icon-data-analysis"></i> 病历数据分析</el-button>
-          <el-button size="small" type="primary" plain round @click="aiAssist('diagnosis')"><i class="el-icon-first-aid-kit"></i> 智能诊断建议</el-button>
-          <el-button size="small" type="primary" plain round @click="aiAssist('treatment')"><i class="el-icon-s-claim"></i> 批量生成方案</el-button>
+        <div class="stat-card" @click="switchTab('history'); filterDraft()">
+          <div class="stat-icon" style="background: var(--apple-orange-light); color: var(--apple-orange);"><i class="el-icon-document-copy" /></div>
+          <div class="stat-body">
+            <div class="stat-num">{{ draftCount }}</div>
+            <div class="stat-label">暂存待完善</div>
+          </div>
         </div>
-      </el-card>
+        <div class="stat-card" @click="goToLabOrders">
+          <div class="stat-icon" style="background: var(--apple-red-light); color: var(--apple-red);"><i class="el-icon-s-order" /></div>
+          <div class="stat-body">
+            <div class="stat-num">{{ pendingLabTotal }}</div>
+            <div class="stat-label">待登记加工</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background: var(--apple-green-light); color: var(--apple-green);"><i class="el-icon-circle-check" /></div>
+          <div class="stat-body">
+            <div class="stat-num">{{ weekCompletedCount }}</div>
+            <div class="stat-label">本周完成</div>
+          </div>
+        </div>
+      </div>
 
       <!-- 查询条件 -->
       <el-card class="query-card" shadow="never">
         <div class="query-row">
           <el-input v-model="searchName" placeholder="按患者姓名搜索" class="query-input" clearable round @clear="loadAll" />
+          <el-radio-group v-model="dateFilter" size="small" @change="handleDateFilterChange">
+            <el-radio-button label="today">今日</el-radio-button>
+            <el-radio-button label="week">本周</el-radio-button>
+            <el-radio-button label="month">本月</el-radio-button>
+            <el-radio-button label="all">全部</el-radio-button>
+          </el-radio-group>
           <el-button type="primary" round icon="el-icon-search" @click="search">搜索</el-button>
-          <el-button round icon="el-icon-refresh" @click="loadAll">重置</el-button>
+          <el-button round icon="el-icon-refresh" @click="resetFilters">重置</el-button>
           <el-button type="success" round icon="el-icon-plus" @click="openAdd">新增病历</el-button>
         </div>
       </el-card>
 
-      <!-- 卡片式列表 -->
-      <div class="card-list">
-        <el-card
-          v-for="row in tableData"
-          :key="row.id"
-          class="record-card"
-          shadow="never"
-          :body-style="{ padding: '20px' }"
-        >
-          <div class="record-card__header">
-            <div class="record-card__patient">
-              <div class="patient-avatar">
-                <i class="el-icon-user-solid" />
-              </div>
-              <div class="patient-info">
-                <div class="patient-name">
-                  {{ row.patient_name || '-' }}
-                  <el-tag
-                    v-if="row._offline"
-                    size="mini"
-                    :type="row._offline.failed ? 'danger' : 'warning'"
-                    effect="plain"
-                    style="margin-left:6px;"
-                  >
-                    {{ row._offline.label }}
-                  </el-tag>
+      <!-- 主内容区：双 Tab -->
+      <el-tabs v-model="activeListTab" class="workbench-tabs" type="border-card">
+        <!-- Tab 1：今日工作流 -->
+        <el-tab-pane label="今日工作流" name="today">
+          <div class="tab-toolbar">
+            <span class="tab-tip">展示今日预约患者及病历书写状态</span>
+          </div>
+          <el-table
+            v-if="todayFlowData.length"
+            :data="todayFlowData"
+            size="small"
+            stripe
+            border
+            class="workbench-table"
+          >
+            <el-table-column label="患者" width="140">
+              <template slot-scope="s">
+                <div class="flow-patient">
+                  <el-avatar :size="28" icon="el-icon-user-solid" class="flow-avatar" />
+                  <span class="flow-name">{{ s.row.patient_name || '-' }}</span>
                 </div>
-                <div class="patient-phone">{{ row.patient_phone || '暂无手机号' }}</div>
-              </div>
-            </div>
-            <div class="record-card__meta">
-              <el-tag size="mini" effect="plain">{{ row.record_type || '初诊' }}</el-tag>
-              <el-tag size="mini" :type="recordStatusTagType(row.record_status)">{{ recordStatusLabel(row.record_status) }}</el-tag>
-            </div>
-          </div>
-
-          <div class="record-card__body">
-            <div class="record-card__row">
-              <span class="record-card__label">就诊时间</span>
-              <span class="record-card__value">{{ formatDateTime(row.visit_date) }}</span>
-            </div>
-            <div class="record-card__row">
-              <span class="record-card__label">接诊医生</span>
-              <span class="record-card__value">{{ row.doctor_name || '-' }}</span>
-            </div>
-            <div class="record-card__row">
-              <span class="record-card__label">主诉</span>
-              <span class="record-card__value record-card__value--ellipsis">{{ row.chief_complaint || '-' }}</span>
-            </div>
-            <div class="record-card__row">
-              <span class="record-card__label">诊断</span>
-              <div class="record-card__tags">
-                <el-tag
-                  v-for="(tag, idx) in getDiagnosisTags(row.diagnosis)"
-                  :key="idx"
-                  size="mini"
-                  effect="plain"
-                  type="info"
-                >
-                  {{ tag }}
-                </el-tag>
-                <span v-if="!getDiagnosisTags(row.diagnosis).length" class="record-card__value">-</span>
-              </div>
-            </div>
-            <div class="record-card__row">
-              <span class="record-card__label">待登记加工</span>
-              <span class="record-card__value">
-                <el-badge v-if="Number(row.pending_lab_count || 0) > 0" :value="row.pending_lab_count" :max="99" type="danger" />
+              </template>
+            </el-table-column>
+            <el-table-column label="预约时间" width="100">
+              <template slot-scope="s">{{ s.row.appointment_time || '-' }}</template>
+            </el-table-column>
+            <el-table-column label="预约项目" min-width="140">
+              <template slot-scope="s">
+                <span class="text-ellipsis">{{ s.row.appointment_purpose || '-' }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="接诊状态" width="110">
+              <template slot-scope="s">
+                <el-tag :type="clinicStatusType(s.row.clinicStatus)" size="mini">{{ s.row.clinicStatus || '已预约' }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="挂号时间" width="100">
+              <template slot-scope="s">{{ s.row.checkInTime ? formatTime(s.row.checkInTime) : '-' }}</template>
+            </el-table-column>
+            <el-table-column label="等待时长" width="100">
+              <template slot-scope="s">
+                <span v-if="s.row.clinicStatus === '等待中' || s.row.clinicStatus === '已挂号'" class="wait-time">{{ computeWaitDuration(s.row.checkInTime) }}</span>
                 <span v-else>-</span>
-              </span>
-            </div>
-            <div v-if="row.notes" class="record-card__row">
-              <span class="record-card__label">备注</span>
-              <span class="record-card__value record-card__value--ellipsis" :title="row.notes">{{ row.notes }}</span>
-            </div>
+              </template>
+            </el-table-column>
+            <el-table-column label="排队" width="70" align="center">
+              <template slot-scope="s">
+                <el-badge v-if="s.row.queueNumber" :value="s.row.queueNumber" class="queue-badge" />
+                <span v-else>-</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="病历状态" width="100">
+              <template slot-scope="s">
+                <el-tag v-if="s.row.recordStatus === 'none'" size="mini" type="info">未写</el-tag>
+                <el-tag v-else-if="s.row.recordStatus === 'draft'" size="mini" type="warning">暂存</el-tag>
+                <el-tag v-else size="mini" type="success">已保存</el-tag>
+                <el-badge v-if="s.row.pending_lab_count > 0" is-dot type="danger" style="margin-left:4px;" />
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="280" fixed="right">
+              <template slot-scope="s">
+                <el-dropdown size="mini" split-button type="primary" plain trigger="click" @command="(cmd) => updateClinicStatus(s.row, cmd)">
+                  {{ s.row.clinicStatus || '已预约' }}
+                  <el-dropdown-menu slot="dropdown">
+                    <el-dropdown-item command="已预约">已预约</el-dropdown-item>
+                    <el-dropdown-item command="已挂号">已挂号</el-dropdown-item>
+                    <el-dropdown-item command="等待中">等待中</el-dropdown-item>
+                    <el-dropdown-item command="就诊中">就诊中</el-dropdown-item>
+                    <el-dropdown-item command="已完成">已完成</el-dropdown-item>
+                  </el-dropdown-menu>
+                </el-dropdown>
+                <el-button v-if="s.row.recordStatus === 'none'" size="mini" type="warning" plain round @click="openAddFollowupForPatient(s.row)">新增回访</el-button>
+                <el-button v-else size="mini" type="primary" plain round @click="openEditByRecord(s.row)">编辑</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+          <el-empty v-else description="今日暂无预约，可点击上方「新增病历」直接书写" />
+        </el-tab-pane>
+
+        <!-- Tab 2：历史速查 -->
+        <el-tab-pane label="历史速查" name="history">
+          <div class="tab-toolbar">
+            <span class="tab-tip">按时间倒序浏览历史病历，支持展开查看详情</span>
           </div>
-
-          <div class="record-card__footer">
-            <el-button
-              v-if="Number(row.pending_lab_count || 0) > 0"
-              size="mini"
-              type="warning"
-              plain
-              round
-              @click="openLabOrderForRecord(row)"
-            >
-              登记加工
-            </el-button>
-            <el-button size="mini" type="primary" plain round @click="openEdit(row)">编辑</el-button>
-            <el-button size="mini" type="danger" plain round @click="handleDelete(row.id)">删除</el-button>
-          </div>
-        </el-card>
-      </div>
-
-      <!-- 空状态 -->
-      <el-empty v-if="!tableData.length" description="暂无病历数据" />
-
-      <!-- 分页 -->
-      <div class="pagination-row">
-        <el-pagination
-          background
-          layout="total, prev, pager, next"
-          :total="total"
-          :page-size="size"
-          :current-page="page"
-          @current-change="handlePageChange"
-        />
-      </div>
-    </template>
-
-    <!-- 列表视图 -->
-    <template v-else>
-      <!-- 页面头部 -->
-      <div class="page-header">
-        <div class="page-header__main">
-          <div class="page-kicker">病历管理</div>
-          <h2 class="page-title">病历列表</h2>
-          <p class="page-subtitle">统一查看病历叙述、结构化操作和待登记加工提示。</p>
-        </div>
-        <div class="page-header__stats">
-          <div class="mini-stat">
-            <div class="mini-num">{{ total }}</div>
-            <div class="mini-label">病历总数</div>
-          </div>
-          <div class="mini-stat accent">
-            <div class="mini-num">{{ pendingLabTotal }}</div>
-            <div class="mini-label">待登记加工</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 查询条件 -->
-      <el-card class="query-card" shadow="never">
-        <div class="query-row">
-          <el-input v-model="searchName" placeholder="按患者姓名搜索" class="query-input" clearable @clear="loadAll" />
-          <el-button type="primary" icon="el-icon-search" round @click="search">搜索</el-button>
-          <el-button icon="el-icon-refresh" round @click="loadAll">重置</el-button>
-          <el-button type="success" icon="el-icon-plus" round @click="openAdd">新增病历</el-button>
-        </div>
-      </el-card>
-
-      <!-- 卡片式列表 -->
-      <div v-if="tableData.length" class="card-list">
-        <el-card
-          v-for="record in tableData"
-          :key="record.id"
-          class="record-card"
-          shadow="never"
-          :body-style="{ padding: '0' }"
-        >
-          <div class="record-card__body">
-            <div class="record-card__main">
-              <div class="record-card__head">
-                <div class="record-card__patient">
-                  <el-avatar :size="40" icon="el-icon-user-solid" class="record-card__avatar" />
-                  <div class="record-card__name-wrap">
-                    <span class="record-card__name">{{ record.patient_name || '-' }}</span>
-                    <el-tag
-                      v-if="record._offline"
-                      size="mini"
-                      :type="record._offline.failed ? 'danger' : 'warning'"
-                      effect="plain"
-                      style="margin-left:6px;"
-                    >
-                      {{ record._offline.label }}
-                    </el-tag>
+          <el-table
+            v-if="filteredTableData.length"
+            :data="filteredTableData"
+            size="small"
+            stripe
+            border
+            class="workbench-table"
+          >
+            <el-table-column type="expand" width="40">
+              <template slot-scope="s">
+                <div class="record-expand-box">
+                  <div class="record-expand-grid">
+                    <div class="record-expand-item"><span>就诊日期</span><strong>{{ formatDate(s.row.visit_date) || '-' }}</strong></div>
+                    <div class="record-expand-item"><span>接诊医生</span><strong>{{ s.row.doctor_name || '-' }}</strong></div>
+                    <div class="record-expand-item"><span>牙位</span><strong>{{ s.row.tooth_positions || '-' }}</strong></div>
+                  </div>
+                  <div class="record-expand-section">
+                    <div class="record-expand-label">检查</div>
+                    <div class="record-expand-value">{{ s.row.examination || '无' }}</div>
+                  </div>
+                  <div class="record-expand-section">
+                    <div class="record-expand-label">诊断</div>
+                    <div class="record-expand-value">{{ s.row.diagnosis || '无' }}</div>
+                  </div>
+                  <div class="record-expand-section">
+                    <div class="record-expand-label">治疗方案</div>
+                    <div class="record-expand-value">{{ s.row.treatment_plan || '无' }}</div>
+                  </div>
+                  <div class="record-expand-section">
+                    <div class="record-expand-label">处置方案</div>
+                    <div class="record-expand-value">{{ s.row.treatment || '无' }}</div>
+                  </div>
+                  <div class="record-expand-section">
+                    <div class="record-expand-label">处方</div>
+                    <div class="record-expand-value">{{ s.row.prescription || '无' }}</div>
+                  </div>
+                  <div class="record-expand-section">
+                    <div class="record-expand-label">备注</div>
+                    <div class="record-expand-value">{{ s.row.notes || '无' }}</div>
                   </div>
                 </div>
-                <div class="record-card__tags">
-                  <el-tag size="mini" effect="plain">{{ record.record_type || '初诊' }}</el-tag>
-                  <el-tag size="mini" :type="recordStatusTagType(record.record_status)">
-                    {{ recordStatusLabel(record.record_status) }}
-                  </el-tag>
-                </div>
-              </div>
-              <div class="record-card__info">
-                <div class="info-item">
-                  <span class="info-label">接诊医生</span>
-                  <span class="info-value">{{ record.doctor_name || '-' }}</span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">就诊时间</span>
-                  <span class="info-value">{{ formatDateTime(record.visit_date) }}</span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">主诉</span>
-                  <span class="info-value text-ellipsis">{{ record.chief_complaint || '-' }}</span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">诊断</span>
-                  <span class="info-value text-ellipsis">{{ record.diagnosis || '-' }}</span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">治疗方案</span>
-                  <span class="info-value text-ellipsis">{{ record.treatment_plan || '-' }}</span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">操作汇总</span>
-                  <span class="info-value text-ellipsis">{{ record.operation_summary || '-' }}</span>
-                </div>
-                <div v-if="record.notes" class="info-item">
-                  <span class="info-label">备注</span>
-                  <span class="info-value text-ellipsis" :title="record.notes">{{ record.notes }}</span>
-                </div>
-              </div>
-            </div>
-            <div class="record-card__side">
-              <div v-if="Number(record.pending_lab_count || 0) > 0" class="lab-badge">
-                <el-badge :value="record.pending_lab_count" :max="99" type="danger">
-                  <span class="lab-badge__text">待登记加工</span>
-                </el-badge>
-              </div>
-              <div class="record-card__actions">
-                <el-button
-                  v-if="Number(record.pending_lab_count || 0) > 0"
-                  size="mini"
-                  type="warning"
-                  plain
-                  round
-                  @click="openLabOrderForRecord(record)"
-                >
-                  登记加工
-                </el-button>
-                <el-button size="mini" type="primary" plain round @click="openEdit(record)">编辑</el-button>
-                <el-button size="mini" type="danger" plain round @click="handleDelete(record.id)">删除</el-button>
-              </div>
-            </div>
+              </template>
+            </el-table-column>
+            <el-table-column prop="visit_date" label="就诊日期" width="110">
+              <template slot-scope="s">{{ formatDate(s.row.visit_date) }}</template>
+            </el-table-column>
+            <el-table-column prop="patient_name" label="患者" width="100" />
+            <el-table-column prop="record_type" label="类型" width="70">
+              <template slot-scope="s">{{ s.row.record_type || '初诊' }}</template>
+            </el-table-column>
+            <el-table-column prop="doctor_name" label="医生" width="90" />
+            <el-table-column prop="chief_complaint" label="主诉" min-width="140">
+              <template slot-scope="s"><div class="record-cell-text">{{ s.row.chief_complaint || '-' }}</div></template>
+            </el-table-column>
+            <el-table-column prop="diagnosis" label="诊断" min-width="140">
+              <template slot-scope="s"><div class="record-cell-text">{{ s.row.diagnosis || '-' }}</div></template>
+            </el-table-column>
+            <el-table-column label="状态" width="80">
+              <template slot-scope="s">
+                <el-tag size="mini" :type="recordStatusTagType(s.row.record_status)">
+                  {{ recordStatusLabel(s.row.record_status) }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="180" fixed="right">
+              <template slot-scope="s">
+                <el-button size="mini" type="primary" plain round @click="openEdit(s.row)">编辑</el-button>
+                <el-button size="mini" type="danger" plain round @click="handleDelete(s.row.id)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+          <el-empty v-else description="暂无病历数据" />
+          <div v-if="filteredTotal > 0" class="pagination-row">
+            <el-pagination
+              background
+              layout="total, prev, pager, next"
+              :total="filteredTotal"
+              :page-size="size"
+              :current-page="page"
+              @current-change="handlePageChange"
+            />
           </div>
-        </el-card>
-      </div>
-
-      <!-- 空状态 -->
-      <el-empty v-else description="暂无病历数据" />
-
-      <!-- 分页 -->
-      <div v-if="total > 0" class="pagination-row">
-        <el-pagination
-          background
-          layout="total, prev, pager, next"
-          :total="total"
-          :page-size="size"
-          :current-page="page"
-          @current-change="handlePageChange"
-        />
-      </div>
+        </el-tab-pane>
+      </el-tabs>
     </template>
   </div>
 </template>
@@ -833,16 +866,15 @@ export default {
       size: 10,
       searchName: '',
       editorVisible: false,
+      editorFromQuery: false,
       dialogTitle: '新增病历',
       form: {},
       doctors: [],
       projectOptions: [],
-      operationOptions: [],
       labFactoryOptions: [],
       medicalRecordTemplateOptions: [],
       projectDetailCache: {},
       selectedProjectId: '',
-      selectedQuickOperationId: '',
       selectedTemplateId: null,
       currentUser: getAdminSession() || {},
       lastAutoTreatmentDraft: '',
@@ -868,7 +900,16 @@ export default {
         patient_name: [{ required: true, message: '请填写患者姓名', trigger: 'blur' }],
         doctor_account_id: [{ required: true, message: '请选择接诊医生', trigger: 'change' }],
         visit_date: [{ required: true, message: '请选择就诊时间', trigger: 'change' }]
-      }
+      },
+      activeListTab: 'today',
+      dateFilter: 'today',
+      scheduleEntries: [],
+      todayFlowData: [],
+      phraseData: {},
+      phraseNewContent: {},
+      phraseNewCategory: {},
+      phrasePopoverHover: {},
+      phrasePopoverVisible: {}
     }
   },
   computed: {
@@ -958,25 +999,132 @@ export default {
     },
     visiblePatientImages() {
       return (this.patientImages || []).slice(0, 10)
+    },
+    filteredTableData() {
+      let data = this.tableData || []
+      if (this.searchName) {
+        const keyword = String(this.searchName).trim().toLowerCase()
+        data = data.filter(item =>
+          String(item.patient_name || '').toLowerCase().includes(keyword) ||
+          String(item.chief_complaint || '').toLowerCase().includes(keyword) ||
+          String(item.diagnosis || '').toLowerCase().includes(keyword)
+        )
+      }
+      if (this.dateFilter && this.dateFilter !== 'all') {
+        const now = new Date()
+        let start = null
+        let end = null
+        if (this.dateFilter === 'today') {
+          start = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+          end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
+        } else if (this.dateFilter === 'week') {
+          const day = now.getDay() || 7
+          start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day + 1)
+          end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
+        } else if (this.dateFilter === 'month') {
+          start = new Date(now.getFullYear(), now.getMonth(), 1)
+          end = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+        }
+        if (start && end) {
+          data = data.filter(item => {
+            const d = item.visit_date ? new Date(item.visit_date) : null
+            return d && d >= start && d < end
+          })
+        }
+      }
+      return data
+    },
+    filteredTotal() {
+      return this.filteredTableData.length
+    },
+    todayPendingCount() {
+      return this.todayFlowData.filter(row => row.recordStatus === 'none').length
+    },
+    draftCount() {
+      return (this.tableData || []).filter(item => String(item.record_status || '') === 'draft').length
+    },
+    weekCompletedCount() {
+      const now = new Date()
+      const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (now.getDay() || 7) + 1)
+      weekStart.setHours(0, 0, 0, 0)
+      return (this.tableData || []).filter(item => {
+        const d = item.visit_date ? new Date(item.visit_date) : null
+        return d && d >= weekStart && String(item.record_status || '') === 'final'
+      }).length
     }
   },
   created() {
     this.loadDoctors()
     this.loadProjectOptions()
-    this.loadOperationOptions()
     this.loadLabFactoryOptions()
     this.loadMedicalRecordTemplateOptions()
     this.loadAll()
+    this.loadScheduleEntries()
     this.form = this.buildEmptyForm()
     this.imageUploadExtra.imageDate = this.currentDateValue()
+    this.handleRouteQuery()
+  },
+  updated() {
+    this.enableRowResize()
   },
   methods: {
+    enableRowResize() {
+      this.$nextTick(() => {
+        const tables = this.$el.querySelectorAll('.workbench-table')
+        tables.forEach(table => {
+          const tbody = table.querySelector('.el-table__body-wrapper tbody')
+          if (!tbody || tbody.dataset.rowResizeBound) return
+          tbody.dataset.rowResizeBound = 'true'
+          tbody.addEventListener('mousedown', e => {
+            const row = e.target.closest('.el-table__row')
+            if (!row) return
+            const rect = row.getBoundingClientRect()
+            if (e.clientY >= rect.bottom - 6) {
+              e.preventDefault()
+              const startY = e.clientY
+              const startHeight = row.offsetHeight
+              const onMove = ev => {
+                const newHeight = Math.max(30, startHeight + (ev.clientY - startY))
+                row.style.height = newHeight + 'px'
+              }
+              const onUp = () => {
+                document.removeEventListener('mousemove', onMove)
+                document.removeEventListener('mouseup', onUp)
+              }
+              document.addEventListener('mousemove', onMove)
+              document.addEventListener('mouseup', onUp)
+            }
+          })
+        })
+      })
+    },
     readCurrentUser() {
       return getAdminSession() || {}
     },
     loadAll() {
       this.page = this.page || 1
       const params = { page: this.page, size: this.size }
+      const currentDoctorId = this.resolveDefaultDoctorAccountId()
+      if (currentDoctorId) {
+        params.doctorAccountId = currentDoctorId
+      }
+      if (this.dateFilter && this.dateFilter !== 'all') {
+        const now = new Date()
+        if (this.dateFilter === 'today') {
+          params.startDate = this.formatDate(now)
+          params.endDate = this.formatDate(now)
+        } else if (this.dateFilter === 'week') {
+          const day = now.getDay() || 7
+          const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day + 1)
+          params.startDate = this.formatDate(weekStart)
+          params.endDate = this.formatDate(now)
+        } else if (this.dateFilter === 'month') {
+          const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+          const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+          params.startDate = this.formatDate(monthStart)
+          params.endDate = this.formatDate(monthEnd)
+        }
+      }
       fetchCachedResource({
         cacheKey: 'page:medical-records:list',
         scope: 'medicalRecordsList',
@@ -988,10 +1136,12 @@ export default {
         const data = result && result.data ? result.data : {}
         this.tableData = Array.isArray(data.list) ? data.list : []
         this.total = Number(data.total || 0)
+        this.buildTodayFlowData()
       }).catch(error => {
         console.error('Error fetching medical records:', error)
         this.tableData = []
         this.total = 0
+        this.buildTodayFlowData()
       })
     },
     search() {
@@ -1215,18 +1365,88 @@ export default {
         this.projectOptions = []
       }
     },
-    async loadOperationOptions() {
+    async loadPhrases(fieldType) {
+      if (this.phraseData[fieldType]) return
       try {
         const result = await fetchCachedResource({
-          cacheKey: 'ref:treatment-operations-enabled',
+          cacheKey: `ref:medical-record-phrases-${fieldType}`,
           scope: '',
-          url: '/treatment-operations/selectEnabled',
-          loader: () => axios.get('/treatment-operations/selectEnabled')
+          url: `/medical-record-phrases/selectByFieldType?fieldType=${fieldType}`,
+          loader: () => axios.get(`/medical-record-phrases/selectByFieldType?fieldType=${fieldType}`)
         })
-        this.operationOptions = Array.isArray(result && result.data) ? result.data : []
+        this.$set(this.phraseData, fieldType, Array.isArray(result && result.data) ? result.data : [])
       } catch (error) {
-        this.operationOptions = []
+        this.$set(this.phraseData, fieldType, [])
       }
+    },
+    handlePhraseFocus(fieldType) {
+      this.loadPhrases(fieldType)
+      this.$set(this.phrasePopoverVisible, fieldType, true)
+    },
+    handlePhraseBlur(fieldType, event) {
+      const relatedTarget = event && event.relatedTarget
+      if (relatedTarget) {
+        const popoverRef = this.$refs[`phrasePopover-${fieldType}`]
+        const popperEl = popoverRef && popoverRef.popperElm
+        if (popperEl && popperEl.contains(relatedTarget)) {
+          return
+        }
+      }
+      setTimeout(() => {
+        if (!this.phrasePopoverHover[fieldType]) {
+          this.$set(this.phrasePopoverVisible, fieldType, false)
+        }
+      }, 300)
+    },
+    insertPhrase(field, content) {
+      const current = String(this.form[field] || '')
+      this.form[field] = current ? current + '\n' + content : content
+    },
+    async addPhrase(fieldType) {
+      const content = String(this.phraseNewContent[fieldType] || '').trim()
+      if (!content) {
+        this.$message.warning('词条内容不能为空')
+        return
+      }
+      try {
+        await axios.post('/medical-record-phrases/add', {
+          field_type: fieldType,
+          content: content,
+          category: String(this.phraseNewCategory[fieldType] || '').trim() || '常用',
+          sort_order: 0,
+          status: 1
+        })
+        this.$set(this.phraseNewContent, fieldType, '')
+        this.$set(this.phraseNewCategory, fieldType, '')
+        this.$set(this.phraseData, fieldType, null)
+        await this.loadPhrases(fieldType)
+        this.$message.success('添加成功')
+      } catch (error) {
+        this.$message.error('添加失败')
+      }
+    },
+    async deletePhrase(id, fieldType) {
+      try {
+        await this.$confirm('确认删除该常用短语吗？', '提示', { type: 'warning' })
+        await axios.delete(`/medical-record-phrases/delete/${id}`)
+        this.$set(this.phraseData, fieldType, null)
+        await this.loadPhrases(fieldType)
+        this.$message.success('删除成功')
+      } catch (error) {
+        if (error !== 'cancel') {
+          this.$message.error('删除失败')
+        }
+      }
+    },
+    groupedPhrases(fieldType) {
+      const list = this.phraseData[fieldType] || []
+      const groups = {}
+      list.forEach(item => {
+        const category = item.category || '常用'
+        if (!groups[category]) groups[category] = []
+        groups[category].push(item)
+      })
+      return groups
     },
     async loadLabFactoryOptions() {
       try {
@@ -1244,10 +1464,6 @@ export default {
     projectOptionLabel(item) {
       const price = Number(item && item.default_price || 0)
       return `${item.project_name || '未命名项目'}（¥${price.toFixed(2)}）`
-    },
-    operationOptionLabel(item) {
-      const category = item && item.operation_category ? ` / ${item.operation_category}` : ''
-      return `${item.operation_name || '未命名操作'}${category}`
     },
     async loadProjectDetail(projectId) {
       const key = String(projectId || '')
@@ -1271,14 +1487,14 @@ export default {
     isSuggestedOperationSelected(relation) {
       return (this.form.operation_items || []).some(item =>
         String(item.project_id || '') === String(this.selectedProjectId || '')
-        && String(item.operation_id || '') === String(relation.operation_id || '')
+        && String(item.operation_name || '').trim() === String(relation.operation_name || '').trim()
       )
     },
     toggleSuggestedOperation(relation) {
       if (!relation) return
       const currentIndex = (this.form.operation_items || []).findIndex(item =>
         String(item.project_id || '') === String(this.selectedProjectId || '')
-        && String(item.operation_id || '') === String(relation.operation_id || '')
+        && String(item.operation_name || '').trim() === String(relation.operation_name || '').trim()
       )
       if (currentIndex >= 0) {
         this.removeOperationItem(currentIndex)
@@ -1288,32 +1504,12 @@ export default {
       const nextItem = defaultOperationItem()
       nextItem.project_id = project ? project.id : ''
       nextItem.project_name = project ? project.project_name : ''
-      nextItem.operation_id = relation.operation_id
-      nextItem.operation_name = relation.operation_name
+      nextItem.operation_name = relation.operation_name || ''
       nextItem.need_lab_processing = relation.need_lab_processing === 1 ? 1 : 0
       nextItem.default_processing_days = Number(relation.default_processing_days || 0)
       if (!Array.isArray(this.form.operation_items)) {
         this.$set(this.form, 'operation_items', [])
       }
-      this.form.operation_items.push(nextItem)
-      this.refreshTreatmentDraft()
-    },
-    handleQuickOperationSelect(operationId) {
-      if (!operationId) return
-      this.appendOperationById(operationId)
-      this.selectedQuickOperationId = ''
-    },
-    appendOperationById(operationId) {
-      const operation = (this.operationOptions || []).find(item => String(item.id) === String(operationId || ''))
-      if (!operation) return
-      if (!Array.isArray(this.form.operation_items)) {
-        this.$set(this.form, 'operation_items', [])
-      }
-      const nextItem = defaultOperationItem()
-      nextItem.operation_id = operation.id
-      nextItem.operation_name = operation.operation_name || ''
-      nextItem.need_lab_processing = operation.need_lab_processing === 1 ? 1 : 0
-      nextItem.default_processing_days = Number(operation.default_processing_days || 0)
       this.form.operation_items.push(nextItem)
       this.refreshTreatmentDraft()
     },
@@ -1336,17 +1532,6 @@ export default {
     handleOperationFactoryChange(item) {
       const factory = (this.labFactoryOptions || []).find(factoryItem => String(factoryItem.id) === String(item.factory_id || ''))
       item.factory_name = factory ? factory.name : ''
-    },
-    handleOperationChange(item) {
-      const operation = (this.operationOptions || []).find(operationItem => String(operationItem.id) === String(item.operation_id || ''))
-      item.operation_name = operation ? operation.operation_name : ''
-      item.need_lab_processing = operation && operation.need_lab_processing === 1 ? 1 : 0
-      item.default_processing_days = operation ? Number(operation.default_processing_days || 0) : 0
-      if (item.need_lab_processing !== 1) {
-        item.factory_id = ''
-        item.factory_name = ''
-      }
-      this.refreshTreatmentDraft()
     },
     handleOperationToothChange() {
       this.refreshTreatmentDraft()
@@ -1371,27 +1556,26 @@ export default {
     },
     normalizeOperationItems(items, includeRuntimeFields = false) {
       return (Array.isArray(items) ? items : []).map(item => {
-        const operation = (this.operationOptions || []).find(operationItem => String(operationItem.id) === String(item.operation_id || ''))
         const project = (this.projectOptions || []).find(projectItem => String(projectItem.id) === String(item.project_id || ''))
         const factory = (this.labFactoryOptions || []).find(factoryItem => String(factoryItem.id) === String(item.factory_id || ''))
-        const needLabProcessing = operation && operation.need_lab_processing === 1 ? 1 : (item.need_lab_processing === 1 ? 1 : 0)
+        const needLabProcessing = item.need_lab_processing === 1 ? 1 : 0
         const normalized = {
           project_id: item.project_id || null,
           project_name: item.project_name || (project && project.project_name) || '',
           operation_id: item.operation_id || null,
-          operation_name: item.operation_name || (operation && operation.operation_name) || '',
+          operation_name: String(item.operation_name || '').trim(),
           factory_id: needLabProcessing === 1 ? (item.factory_id || null) : null,
           factory_name: needLabProcessing === 1 ? (item.factory_name || (factory && factory.name) || '') : '',
           tooth_positions: item.tooth_positions || '',
           remark: item.remark || '',
           need_lab_processing: needLabProcessing,
-          default_processing_days: operation ? Number(operation.default_processing_days || 0) : Number(item.default_processing_days || 0)
+          default_processing_days: Number(item.default_processing_days || 0)
         }
         if (includeRuntimeFields) {
           normalized.id = item.id || null
         }
         return normalized
-      }).filter(item => item.operation_id && item.operation_name)
+      }).filter(item => item.operation_name)
     },
     resolveRecordToothPositions() {
       if (!this.editorFlags.autoSyncToothPositions) {
@@ -1454,6 +1638,29 @@ export default {
       await this.loadPatientImages()
       this.$nextTick(() => this.$refs.formRef && this.$refs.formRef.clearValidate())
     },
+    handleRouteQuery() {
+      const query = this.$route.query || {}
+      if (query.patientId) {
+        this.form = this.buildEmptyForm()
+        this.form.patient_id = query.patientId
+        this.form.patient_name = query.patientName || ''
+        this.dialogTitle = '新增病历'
+        this.selectedProjectId = ''
+        this.selectedQuickOperationId = ''
+        this.selectedTemplateId = null
+        this.lastAutoTreatmentDraft = ''
+        this.treatmentDraftLocked = false
+        this.editorFlags.autoSyncToothPositions = true
+        this.patientImages = []
+        this.editorFromQuery = true
+        this.editorVisible = true
+        this.$nextTick(() => this.$refs.formRef && this.$refs.formRef.clearValidate())
+      } else if (query.recordId) {
+        const row = { id: query.recordId }
+        this.editorFromQuery = true
+        this.openEdit(row)
+      }
+    },
     closeEditor() {
       this.editorVisible = false
       this.previewVisible = false
@@ -1462,6 +1669,10 @@ export default {
       this.selectedTemplateId = null
       this.templateKeyword = ''
       this.form = this.buildEmptyForm()
+      if (this.editorFromQuery) {
+        this.editorFromQuery = false
+        this.$router.back()
+      }
     },
     async openLabOrderForRecord(row) {
       const res = await axios.get('/medical-records/selectById', { params: { id: row.id } })
@@ -1726,6 +1937,189 @@ export default {
     },
     handleCollapseChange(val) {
       this.activeCollapse = val
+    },
+    loadScheduleEntries() {
+      fetchCachedResource({
+        cacheKey: 'page:appointments:schedule',
+        scope: '',
+        url: '/appointments/scheduleEntries',
+        loader: () => axios.get('/appointments/scheduleEntries')
+      }).then(result => {
+        this.scheduleEntries = Array.isArray(result && result.data) ? result.data : []
+        this.buildTodayFlowData()
+      }).catch(() => {
+        this.scheduleEntries = []
+        this.buildTodayFlowData()
+      })
+    },
+    buildTodayFlowData() {
+      const todayStr = this.formatDate(new Date())
+      const todayEntries = (this.scheduleEntries || []).filter(item => {
+        return this.formatDate(item.appointment_date) === todayStr
+      })
+      const recordMap = {}
+      ;(this.tableData || []).forEach(record => {
+        const key = String(record.patient_id || '') + '_' + this.formatDate(record.visit_date)
+        if (!recordMap[key] || new Date(record.visit_date) > new Date(recordMap[key].visit_date)) {
+          recordMap[key] = record
+        }
+      })
+      const flow = todayEntries.map(entry => {
+        const key = String(entry.patient_id || '') + '_' + todayStr
+        const record = recordMap[key]
+        return {
+          patient_id: entry.patient_id,
+          patient_name: entry.patient_name,
+          appointment_time: entry.appointment_time,
+          appointment_purpose: entry.appointment_purpose,
+          clinicStatus: entry.clinic_status || '已预约',
+          checkInTime: entry.check_in_time || null,
+          recordStatus: record ? (record.record_status || 'final') : 'none',
+          tooth_positions: record ? (record.tooth_positions || '') : '',
+          operation_summary: record ? (record.operation_summary || '') : '',
+          pending_lab_count: record ? Number(record.pending_lab_count || 0) : 0,
+          record_id: record ? record.id : null,
+          entry_id: entry.id
+        }
+      })
+      flow.sort((a, b) => {
+        const tA = String(a.appointment_time || '99:99')
+        const tB = String(b.appointment_time || '99:99')
+        return tA.localeCompare(tB)
+      })
+      const extraRecords = (this.tableData || []).filter(record => {
+        if (this.formatDate(record.visit_date) !== todayStr) return false
+        const key = String(record.patient_id || '') + '_' + todayStr
+        return !todayEntries.some(e => String(e.patient_id || '') + '_' + todayStr === key)
+      }).map(record => ({
+        patient_id: record.patient_id,
+        patient_name: record.patient_name,
+        appointment_time: '',
+        appointment_purpose: '非预约就诊',
+        clinicStatus: '已挂号',
+        checkInTime: record.visit_date || null,
+        recordStatus: record.record_status || 'final',
+        tooth_positions: record.tooth_positions || '',
+        operation_summary: record.operation_summary || '',
+        pending_lab_count: Number(record.pending_lab_count || 0),
+        record_id: record.id,
+        entry_id: null
+      }))
+      const allRows = [...flow, ...extraRecords]
+      // 计算等待中患者的排队序号（按挂号时间先后）
+      const waitingList = allRows
+        .filter(r => r.clinicStatus === '等待中' || r.clinicStatus === '已挂号')
+        .sort((a, b) => new Date(a.checkInTime || '2099-01-01') - new Date(b.checkInTime || '2099-01-01'))
+      const queueMap = new Map()
+      waitingList.forEach((item, idx) => {
+        queueMap.set(item.entry_id + '_' + item.patient_id, idx + 1)
+      })
+      allRows.forEach(r => {
+        if (r.clinicStatus === '等待中' || r.clinicStatus === '已挂号') {
+          r.queueNumber = queueMap.get(r.entry_id + '_' + r.patient_id) || null
+        } else {
+          r.queueNumber = null
+        }
+      })
+      this.todayFlowData = allRows
+    },
+    switchTab(tab) {
+      this.activeListTab = tab
+    },
+    filterDraft() {
+      this.dateFilter = 'all'
+      this.loadAll()
+    },
+    goToLabOrders() {
+      this.$router.push({ path: '/lab-orders', query: { pendingLab: '1' } }).catch(() => {})
+    },
+    resetFilters() {
+      this.searchName = ''
+      this.dateFilter = 'today'
+      this.page = 1
+      this.loadAll()
+    },
+    handleDateFilterChange() {
+      this.page = 1
+      this.loadAll()
+    },
+    openAddFollowupForPatient(row) {
+      this.$router.push({ path: '/Followup', query: { action: 'add', patientId: row.patient_id, patientName: row.patient_name } })
+    },
+    clinicStatusType(status) {
+      const map = { '已预约': 'info', '已挂号': 'warning', '等待中': 'danger', '就诊中': 'success', '已完成': '' }
+      return map[status] || 'info'
+    },
+    formatTime(value) {
+      if (!value) return ''
+      const d = new Date(value)
+      if (Number.isNaN(d.getTime())) return String(value).slice(11, 16)
+      const h = String(d.getHours()).padStart(2, '0')
+      const m = String(d.getMinutes()).padStart(2, '0')
+      return `${h}:${m}`
+    },
+    computeWaitDuration(checkInTime) {
+      if (!checkInTime) return '-'
+      const start = new Date(checkInTime)
+      const now = new Date()
+      const diff = Math.max(0, Math.floor((now - start) / 60000))
+      if (diff < 60) return `${diff}分钟`
+      const h = Math.floor(diff / 60)
+      const m = diff % 60
+      return `${h}小时${m}分钟`
+    },
+    updateClinicStatus(row, newStatus) {
+      if (!row.entry_id) {
+        this.$message.warning('非预约患者暂不支持状态变更')
+        return
+      }
+      const payload = { clinic_status: newStatus }
+      axios.put(`/appointments/updateClinicStatus/${row.entry_id}`, payload).then(res => {
+        if (res.data.code === '200') {
+          this.$message.success('状态更新成功')
+          this.loadScheduleEntries()
+        } else {
+          this.$message.error(res.data.msg || '状态更新失败')
+        }
+      }).catch(err => {
+        this.$message.error((err.response && err.response.data && err.response.data.msg) || '状态更新失败')
+      })
+    },
+    openAddForPatient(row) {
+      this.currentUser = this.readCurrentUser()
+      this.form = this.buildEmptyForm()
+      if (row.patient_id) this.form.patient_id = row.patient_id
+      if (row.patient_name) this.form.patient_name = row.patient_name
+      this.dialogTitle = '新增病历'
+      this.selectedProjectId = ''
+      this.selectedQuickOperationId = ''
+      this.selectedTemplateId = null
+      this.lastAutoTreatmentDraft = ''
+      this.treatmentDraftLocked = false
+      this.editorFlags.autoSyncToothPositions = true
+      this.editorVisible = true
+      this.patientImages = []
+      this.activeCollapse = ['basic', 'complaint', 'examination', 'operation', 'treatment', 'advice']
+      this.syncImageUploadExtra()
+      this.$nextTick(() => this.$refs.formRef && this.$refs.formRef.clearValidate())
+    },
+    openEditByRecord(row) {
+      if (!row.record_id) return
+      const record = (this.tableData || []).find(item => Number(item.id) === Number(row.record_id))
+      if (record) {
+        this.openEdit(record)
+      }
+    },
+    openLabOrderForFlowRow(row) {
+      if (!row.record_id) return
+      const record = (this.tableData || []).find(item => Number(item.id) === Number(row.record_id))
+      if (record) {
+        this.openLabOrderForRecord(record)
+      }
+    },
+    openPatient360(patientId) {
+      if (!patientId) return
+      this.$router.push({ path: '/patient360', query: { id: patientId } }).catch(() => {})
     },
     aiAssist(type) {
       const messages = {
@@ -2864,6 +3258,82 @@ export default {
   flex-wrap: wrap;
 }
 
+/* 词条选择器 */
+.phrase-input-wrap {
+  width: 100%;
+}
+.phrase-input-wrap .el-textarea,
+.phrase-input-wrap .el-input {
+  width: 100%;
+}
+.phrase-popover {
+  max-height: 260px;
+  overflow-y: auto;
+}
+.phrase-popover__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--apple-text-primary);
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--apple-border);
+}
+.phrase-popover__group {
+  margin-bottom: 10px;
+}
+.phrase-popover__category {
+  font-size: 11px;
+  color: var(--apple-text-secondary);
+  margin-bottom: 4px;
+}
+.phrase-popover__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.phrase-popover__list .el-button {
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: var(--apple-bg-primary);
+  border: 1px solid var(--apple-border);
+  color: var(--apple-text-primary);
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: normal;
+  text-align: left;
+  margin-left: 0;
+}
+.phrase-popover__list .el-button:hover {
+  background: var(--apple-blue-light);
+  border-color: rgba(0, 113, 227, 0.2);
+  color: var(--apple-blue);
+}
+.phrase-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+.phrase-item .el-button {
+  padding: 4px 6px;
+}
+.phrase-popover__empty {
+  font-size: 12px;
+  color: var(--apple-text-secondary);
+  text-align: center;
+  padding: 12px 0;
+}
+.phrase-popover__add {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--apple-border);
+}
+.phrase-popover__add .el-input {
+  flex: 1;
+}
+
 /* 响应式 */
 @media (max-width: 992px) {
   .editor-layout {
@@ -2885,6 +3355,164 @@ export default {
   }
   .section-header .el-button span {
     display: none;
+  }
+}
+
+/* 工作台统计卡片 */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--apple-bg-secondary);
+  border-radius: 16px;
+  padding: 18px 20px;
+  box-shadow: var(--apple-shadow);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.stat-card:hover {
+  box-shadow: var(--apple-shadow-hover);
+  transform: translateY(-2px);
+}
+.stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.stat-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.stat-num {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--apple-text-primary);
+  letter-spacing: -0.5px;
+}
+.stat-label {
+  font-size: 13px;
+  color: var(--apple-text-secondary);
+}
+
+/* 工作台 Tab */
+.workbench-tabs {
+  background: var(--apple-bg-secondary);
+  border-radius: 16px;
+  box-shadow: var(--apple-shadow);
+  border: none;
+}
+.workbench-tabs ::v-deep .el-tabs__header {
+  border-radius: 16px 16px 0 0;
+  background: var(--apple-bg-secondary);
+}
+.workbench-tabs ::v-deep .el-tabs__content {
+  padding: 16px;
+}
+.tab-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.tab-tip {
+  font-size: 13px;
+  color: var(--apple-text-secondary);
+}
+
+/* 工作台表格 */
+.workbench-table {
+  border-radius: 12px;
+  overflow: hidden;
+}
+.flow-patient {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.flow-avatar {
+  background: var(--apple-gray);
+  color: var(--apple-text-secondary);
+}
+.flow-name {
+  font-weight: 600;
+  color: var(--apple-text-primary);
+}
+
+/* 展开行样式（复用 Patient360） */
+.record-expand-box {
+  padding: 12px 16px;
+  background: var(--apple-bg-primary);
+  border-radius: 12px;
+}
+.record-expand-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.record-expand-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.record-expand-item span {
+  font-size: 12px;
+  color: var(--apple-text-secondary);
+}
+.record-expand-item strong {
+  font-size: 13px;
+  color: var(--apple-text-primary);
+  font-weight: 500;
+}
+.record-expand-section {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--apple-border);
+}
+.record-expand-label {
+  font-size: 12px;
+  color: var(--apple-text-secondary);
+  margin-bottom: 4px;
+}
+.record-expand-value {
+  font-size: 13px;
+  color: var(--apple-text-primary);
+  line-height: 1.7;
+}
+.record-cell-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* 响应式 */
+@media (max-width: 992px) {
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 768px) {
+  .stats-row {
+    grid-template-columns: 1fr;
+  }
+  .query-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .query-row .el-button {
+    width: 100%;
   }
 }
 </style>

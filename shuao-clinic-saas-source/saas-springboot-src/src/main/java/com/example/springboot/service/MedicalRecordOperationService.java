@@ -262,15 +262,21 @@ public class MedicalRecordOperationService {
                                                     MedicalRecordOperation source,
                                                     Long operatorId,
                                                     String operatorName) {
-        if (source == null || source.getOperation_id() == null || source.getOperation_id() <= 0) {
+        if (source == null) {
+            return null;
+        }
+        // 支持自由文本操作名称（不强制绑定操作字典）
+        boolean hasOperationId = source.getOperation_id() != null && source.getOperation_id() > 0;
+        boolean hasOperationName = StringUtils.hasText(source.getOperation_name());
+        if (!hasOperationId && !hasOperationName) {
             return null;
         }
         MedicalRecordOperation item = new MedicalRecordOperation();
         item.setMedical_record_id(medicalRecordId);
         item.setProject_id(source.getProject_id() != null && source.getProject_id() > 0 ? source.getProject_id() : null);
         item.setProject_name(resolveProjectName(source));
-        item.setOperation_id(source.getOperation_id());
-        TreatmentOperation operation = treatmentOperationService.selectById(source.getOperation_id());
+        item.setOperation_id(hasOperationId ? source.getOperation_id() : null);
+        TreatmentOperation operation = hasOperationId ? treatmentOperationService.selectById(source.getOperation_id()) : null;
         item.setOperation_name(resolveOperationName(source, operation));
         applyFactorySnapshot(item, source, operation);
         item.setTooth_positions(trimToNull(source.getTooth_positions()));
@@ -320,14 +326,13 @@ public class MedicalRecordOperationService {
     }
 
     private String resolveOperationName(MedicalRecordOperation source, TreatmentOperation operation) {
-        if (source == null || source.getOperation_id() == null || source.getOperation_id() <= 0) {
+        if (source == null) {
             return null;
         }
         if (operation != null && StringUtils.hasText(operation.getOperation_name())) {
             return operation.getOperation_name().trim();
         }
-        String fallback = trimToNull(source.getOperation_name());
-        return fallback != null ? fallback : "历史操作#" + source.getOperation_id();
+        return trimToNull(source.getOperation_name());
     }
 
     private void applyFactorySnapshot(MedicalRecordOperation target,
@@ -336,12 +341,15 @@ public class MedicalRecordOperationService {
         if (target == null || source == null) {
             return;
         }
-        boolean needLabProcessing = operation != null && operation.getNeed_lab_processing() != null && operation.getNeed_lab_processing() == 1;
+        boolean needLabProcessing = (operation != null && operation.getNeed_lab_processing() != null && operation.getNeed_lab_processing() == 1)
+                || (source.getNeed_lab_processing() != null && source.getNeed_lab_processing() == 1);
         if (!needLabProcessing) {
             target.setFactory_id(null);
             target.setFactory_name(null);
+            target.setNeed_lab_processing(0);
             return;
         }
+        target.setNeed_lab_processing(1);
         Long factoryId = source.getFactory_id() != null && source.getFactory_id() > 0 ? source.getFactory_id() : null;
         if (factoryId == null) {
             target.setFactory_id(null);

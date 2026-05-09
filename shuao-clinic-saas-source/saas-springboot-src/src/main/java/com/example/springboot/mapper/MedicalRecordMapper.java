@@ -10,6 +10,17 @@ public interface MedicalRecordMapper {
     @Select("SELECT * FROM medical_records ORDER BY visit_date DESC")
     List<MedicalRecord> selectAll();
 
+    @Select("<script>SELECT * FROM medical_records WHERE 1=1 " +
+            "<if test='doctorAccountId != null'> AND doctor_account_id = #{doctorAccountId} </if>" +
+            "<if test='recordStatus != null and recordStatus != \"\"'> AND record_status = #{recordStatus} </if>" +
+            "<if test='startDate != null and startDate != \"\"'> AND visit_date &gt;= #{startDate} </if>" +
+            "<if test='endDate != null and endDate != \"\"'> AND visit_date &lt;= #{endDate} </if>" +
+            "ORDER BY visit_date DESC</script>")
+    List<MedicalRecord> selectAllWithFilter(@Param("doctorAccountId") Long doctorAccountId,
+                                             @Param("recordStatus") String recordStatus,
+                                             @Param("startDate") String startDate,
+                                             @Param("endDate") String endDate);
+
     @Select("SELECT * FROM medical_records WHERE patient_id = #{patientId} ORDER BY visit_date DESC")
     List<MedicalRecord> selectByPatientId(@Param("patientId") Long patientId);
 

@@ -108,6 +108,14 @@ module.exports = defineConfig({
         target: API_TARGET,
         changeOrigin: true
       },
+      '/treatment-project-categories': {
+        target: API_TARGET,
+        changeOrigin: true
+      },
+      '/medical-record-phrases': {
+        target: API_TARGET,
+        changeOrigin: true
+      },
       '/treatment-operations': {
         target: API_TARGET,
         changeOrigin: true

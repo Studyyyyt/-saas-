@@ -31,13 +31,13 @@ public interface PatientFollowupMapper {
     @Select("SELECT * FROM patient_followup WHERE patient_id = #{patientId} ORDER BY followup_date DESC")
     List<PatientFollowup> selectByPatientId(@Param("patientId") Long patientId);
 
-    @Insert("INSERT INTO patient_followup (patient_id, doctor_account_id, doctor_name, followup_date, followup_type, summary, next_followup_date) " +
-            "VALUES (#{patient_id}, #{doctor_account_id}, #{doctor_name}, #{followup_date}, #{followup_type}, #{summary}, #{next_followup_date})")
+    @Insert("INSERT INTO patient_followup (patient_id, doctor_account_id, doctor_name, followup_date, followup_type, followup_project, summary, next_followup_date) " +
+            "VALUES (#{patient_id}, #{doctor_account_id}, #{doctor_name}, #{followup_date}, #{followup_type}, #{followup_project}, #{summary}, #{next_followup_date})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     void insert(PatientFollowup followup);
 
     @Update("UPDATE patient_followup SET doctor_account_id = #{doctor_account_id}, doctor_name = #{doctor_name}, " +
-            "followup_date = #{followup_date}, followup_type = #{followup_type}, summary = #{summary}, " +
+            "followup_date = #{followup_date}, followup_type = #{followup_type}, followup_project = #{followup_project}, summary = #{summary}, " +
             "next_followup_date = #{next_followup_date} WHERE id = #{id}")
     void update(PatientFollowup followup);
 

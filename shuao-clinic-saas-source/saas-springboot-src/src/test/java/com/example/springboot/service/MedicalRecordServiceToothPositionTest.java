@@ -71,6 +71,7 @@ class MedicalRecordServiceToothPositionTest {
         MedicalRecord saved;
 
         @Override public List<MedicalRecord> selectAll() { return Collections.emptyList(); }
+        @Override public List<MedicalRecord> selectAllWithFilter(Long doctorAccountId, String recordStatus, String startDate, String endDate) { return Collections.emptyList(); }
         @Override public List<MedicalRecord> selectByPatientId(Long patientId) { return Collections.emptyList(); }
         @Override public List<MedicalRecord> selectByPatientName(String name) { return Collections.emptyList(); }
         @Override public MedicalRecord selectById(Long id) { return null; }

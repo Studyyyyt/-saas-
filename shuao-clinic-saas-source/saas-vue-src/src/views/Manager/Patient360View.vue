@@ -3,7 +3,7 @@
     <!-- 顶栏 -->
     <div class="p360-topbar">
       <el-button icon="el-icon-arrow-left" size="small" @click="$router.back()">返回</el-button>
-      <span class="p360-title">患者360视图</span>
+      <span class="p360-title">患者详情视图</span>
       <el-input v-model="patientId" placeholder="患者ID" style="width:110px" type="number" size="small" />
       <el-button type="primary" icon="el-icon-search" size="small" @click="load360">查看</el-button>
     </div>
@@ -149,15 +149,6 @@
                     <div class="record-expand-item"><span>牙位</span><strong>{{ s.row.tooth_positions || '-' }}</strong></div>
                   </div>
                   <div class="record-expand-section">
-                    <div class="record-expand-label">操作汇总</div>
-                    <div class="record-expand-value">
-                      <el-badge v-if="Number(s.row.pending_lab_count || 0) > 0" is-dot type="danger" class="record-expand-badge">
-                        <span>{{ s.row.operation_summary || '无' }}</span>
-                      </el-badge>
-                      <span v-else>{{ s.row.operation_summary || '无' }}</span>
-                    </div>
-                  </div>
-                  <div class="record-expand-section">
                     <div class="record-expand-label">主诉</div>
                     <div class="record-expand-value">{{ s.row.chief_complaint || '无' }}</div>
                   </div>
@@ -193,36 +184,11 @@
             <el-table-column prop="diagnosis" label="诊断" min-width="180">
               <template slot-scope="s"><div class="record-cell-text">{{ s.row.diagnosis || '-' }}</div></template>
             </el-table-column>
-            <el-table-column prop="operation_summary" label="操作汇总" min-width="180">
-              <template slot-scope="s">
-                <div class="record-cell-text">
-                  <el-badge v-if="Number(s.row.pending_lab_count || 0) > 0" is-dot type="danger" class="record-table-badge">
-                    <span>{{ s.row.operation_summary || '-' }}</span>
-                  </el-badge>
-                  <span v-else>{{ s.row.operation_summary || '-' }}</span>
-                </div>
-              </template>
-            </el-table-column>
             <el-table-column prop="treatment" label="处置方案" min-width="220">
               <template slot-scope="s"><div class="record-cell-text">{{ s.row.treatment || '-' }}</div></template>
             </el-table-column>
-            <el-table-column label="待登记加工" width="110" align="center">
-              <template slot-scope="s">
-                <el-badge v-if="Number(s.row.pending_lab_count || 0) > 0" :value="s.row.pending_lab_count" :max="99" type="danger" />
-                <span v-else>-</span>
-              </template>
-            </el-table-column>
             <el-table-column label="操作" width="220" fixed="right">
               <template slot-scope="s">
-                <el-button
-                  v-if="Number(s.row.pending_lab_count || 0) > 0"
-                  size="mini"
-                  type="warning"
-                  plain
-                  @click="openLabOrderForRecord(s.row)"
-                >
-                  登记加工
-                </el-button>
                 <el-button size="mini" type="primary" @click="openEditRecord(s.row)">编辑</el-button>
                 <el-button size="mini" type="danger" @click="deleteRecord(s.row.id)">删除</el-button>
               </template>
@@ -271,7 +237,13 @@
         <!-- 处置收费 -->
         <el-tab-pane label="💰 处置收费" name="billing">
           <div class="tab-toolbar">
-            <el-button type="success" icon="el-icon-plus" size="small" @click="openAddTreatment">新增处置</el-button>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+              <el-button type="success" icon="el-icon-plus" size="small" @click="openAddTreatment">新增处置</el-button>
+              <el-radio-group v-model="treatmentViewMode" size="small">
+                <el-radio-button label="list">按记录</el-radio-button>
+                <el-radio-button label="tooth">按牙位</el-radio-button>
+              </el-radio-group>
+            </div>
           </div>
           <div class="billing-summary">
             <el-row :gutter="16">
@@ -307,50 +279,136 @@
               </el-col>
             </el-row>
           </div>
-          <el-table :data="data.treatments || []" border stripe size="small" class="full-table">
-            <el-table-column prop="treatment_date" label="治疗日期" width="110" />
-            <el-table-column prop="doctor_name" label="医生" width="90" />
-            <el-table-column prop="appointment_purpose" label="项目" width="120" show-overflow-tooltip />
-            <el-table-column prop="treatment_content" label="治疗详情" min-width="160" show-overflow-tooltip />
-            <el-table-column prop="tooth_positions" label="牙位" width="120" show-overflow-tooltip>
-              <template slot-scope="s">{{ s.row.tooth_positions || '-' }}</template>
-            </el-table-column>
-            <el-table-column prop="treatment_product" label="使用材料" min-width="120" show-overflow-tooltip />
-            <el-table-column prop="treatment_fee" label="费用(元)" width="100">
-              <template slot-scope="s">
-                <span style="color:#E6A23C;font-weight:600;">¥{{ s.row.treatment_fee || '0' }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="status" label="状态" width="90">
-              <template slot-scope="s">
-                <el-tag :type="s.row.status==='完成'?'success':s.row.status==='取消'?'danger':'warning'" size="mini">
-                  {{ s.row.status || '未知' }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="billing_status" label="收费状态" width="110">
-              <template slot-scope="s">
-                <el-tag :type="billingStatusType(s.row.billing_status)" size="mini">{{ s.row.billing_status || '未知' }}</el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="已收" width="100">
-              <template slot-scope="s">¥{{ formatMoney(s.row.charged_amount) }}</template>
-            </el-table-column>
-            <el-table-column label="已退" width="100">
-              <template slot-scope="s">¥{{ formatMoney(s.row.refunded_amount) }}</template>
-            </el-table-column>
-            <el-table-column label="欠费" width="100">
-              <template slot-scope="s">¥{{ formatMoney(s.row.arrears_amount) }}</template>
-            </el-table-column>
-            <el-table-column label="操作" width="230" fixed="right">
-              <template slot-scope="s">
-                <el-button v-if="s.row.can_charge" size="mini" type="success" @click="openChargeDialog(s.row)">{{ batchTreatmentCount(s.row) > 1 ? '汇总收费' : '收费' }}</el-button>
-                <el-button v-if="s.row.can_refund" size="mini" type="danger" plain @click="openRefundDialog(s.row)">退款</el-button>
-                <el-button size="mini" type="danger" plain icon="el-icon-delete" @click="handleDeleteTreatment(s.row.id)">删除</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-          <div v-if="!data.treatments||!data.treatments.length" class="empty-tip">暂无治疗收费记录</div>
+
+          <!-- 按记录查看 -->
+          <template v-if="treatmentViewMode === 'list'">
+            <el-table :data="data.treatments || []" border stripe size="small" class="full-table">
+              <el-table-column prop="treatment_date" label="治疗日期" width="110" />
+              <el-table-column prop="doctor_name" label="医生" width="90" />
+              <el-table-column prop="appointment_purpose" label="项目" width="120" show-overflow-tooltip />
+              <el-table-column prop="treatment_content" label="治疗详情" min-width="160" show-overflow-tooltip />
+              <el-table-column prop="tooth_positions" label="牙位" width="120" show-overflow-tooltip>
+                <template slot-scope="s">{{ s.row.tooth_positions || '-' }}</template>
+              </el-table-column>
+              <el-table-column prop="treatment_product" label="使用材料" min-width="120" show-overflow-tooltip />
+              <el-table-column prop="treatment_fee" label="费用(元)" width="100">
+                <template slot-scope="s">
+                  <span style="color:#E6A23C;font-weight:600;">¥{{ s.row.treatment_fee || '0' }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column prop="status" label="状态" width="90">
+                <template slot-scope="s">
+                  <el-tag :type="s.row.status==='完成'?'success':s.row.status==='取消'?'danger':'warning'" size="mini">
+                    {{ s.row.status || '未知' }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="billing_status" label="收费状态" width="110">
+                <template slot-scope="s">
+                  <el-tag :type="billingStatusType(s.row.billing_status)" size="mini">{{ s.row.billing_status || '未知' }}</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="已收" width="100">
+                <template slot-scope="s">¥{{ formatMoney(s.row.charged_amount) }}</template>
+              </el-table-column>
+              <el-table-column label="已退" width="100">
+                <template slot-scope="s">¥{{ formatMoney(s.row.refunded_amount) }}</template>
+              </el-table-column>
+              <el-table-column label="欠费" width="100">
+                <template slot-scope="s">¥{{ formatMoney(s.row.arrears_amount) }}</template>
+              </el-table-column>
+              <el-table-column label="操作" width="240" fixed="right">
+                <template slot-scope="s">
+                  <el-button v-if="s.row.can_charge" size="mini" type="success" @click="openSingleChargeDialog(s.row)">收费</el-button>
+                  <el-button v-if="s.row.can_charge && batchTreatmentCount(s.row) > 1" size="mini" type="primary" plain @click="openChargeDialog(s.row)">汇总收费</el-button>
+                  <el-button v-if="s.row.can_refund" size="mini" type="danger" plain @click="openRefundDialog(s.row)">退款</el-button>
+                  <el-button size="mini" type="danger" plain icon="el-icon-delete" @click="handleDeleteTreatment(s.row.id)">删除</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+            <div v-if="!data.treatments||!data.treatments.length" class="empty-tip">暂无治疗收费记录</div>
+          </template>
+
+          <!-- 按牙位查看 -->
+          <template v-else>
+            <el-table :data="groupedTreatmentsByTooth" border stripe size="small" class="full-table" row-key="tooth_positions">
+              <el-table-column type="expand" width="50">
+                <template slot-scope="scope">
+                  <div class="tooth-detail-panel">
+                    <div v-for="item in scope.row.items" :key="item.id" class="tooth-detail-row">
+                      <div class="tdr-info">
+                        <span class="tdr-date">{{ item.treatment_date }}</span>
+                        <span class="tdr-project">{{ item.appointment_purpose || '未命名项目' }}</span>
+                        <span class="tdr-doctor">{{ item.doctor_name || '-' }}</span>
+                        <span class="tdr-content" :title="item.treatment_content">{{ item.treatment_content || '-' }}</span>
+                      </div>
+                      <div class="tdr-fee">
+                        <span class="tdr-fee-label">费用</span>
+                        <span class="tdr-fee-val">¥{{ item.treatment_fee || '0' }}</span>
+                      </div>
+                      <div class="tdr-status">
+                        <el-tag :type="item.status==='完成'?'success':item.status==='取消'?'danger':'warning'" size="mini">{{ item.status || '未知' }}</el-tag>
+                        <el-tag :type="billingStatusType(item.billing_status)" size="mini" style="margin-left:4px;">{{ item.billing_status || '未知' }}</el-tag>
+                      </div>
+                      <div class="tdr-actions">
+                        <el-button v-if="item.can_charge" size="mini" type="success" @click="openSingleChargeDialog(item)">收费</el-button>
+                        <el-button v-if="item.can_charge && batchTreatmentCount(item) > 1" size="mini" type="primary" plain @click="openChargeDialog(item)">汇总</el-button>
+                        <el-button v-if="item.can_refund" size="mini" type="danger" plain @click="openRefundDialog(item)">退款</el-button>
+                        <el-button size="mini" type="danger" plain icon="el-icon-delete" @click="handleDeleteTreatment(item.id)">删除</el-button>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column label="牙位" width="120">
+                <template slot-scope="s">
+                  <strong style="font-size:15px;">{{ s.row.tooth_positions }}</strong>
+                  <el-tag v-if="s.row.itemCount > 1" size="mini" type="info" style="margin-left:6px;">{{ s.row.itemCount }}项</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="最新日期" width="110">
+                <template slot-scope="s">{{ s.row.latestDate || '-' }}</template>
+              </el-table-column>
+              <el-table-column label="状态概览" width="120">
+                <template slot-scope="s">
+                  <el-tag v-if="s.row.allCompleted" size="mini" type="success">全部完成</el-tag>
+                  <el-tag v-else-if="s.row.canCharge" size="mini" type="warning">有待收费</el-tag>
+                  <el-tag v-else size="mini">进行中</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="累计费用" width="110">
+                <template slot-scope="s">
+                  <span style="color:#E6A23C;font-weight:600;">¥{{ formatMoney(s.row.totalFee) }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="已收" width="100">
+                <template slot-scope="s">¥{{ formatMoney(s.row.totalCharged) }}</template>
+              </el-table-column>
+              <el-table-column label="已退" width="100">
+                <template slot-scope="s">¥{{ formatMoney(s.row.totalRefunded) }}</template>
+              </el-table-column>
+              <el-table-column label="待收" width="100">
+                <template slot-scope="s">
+                  <span style="color:#F56C6C;font-weight:600;">¥{{ formatMoney(s.row.totalArrears) }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="200" fixed="right">
+                <template slot-scope="s">
+                  <el-button v-if="s.row.canCharge && s.row.items.filter(i=>i.can_charge).length === 1" size="mini" type="success" @click="openSingleChargeDialog(s.row.items.find(i=>i.can_charge))">收费</el-button>
+                  <el-dropdown v-else-if="s.row.canCharge" size="mini" split-button type="success" @command="(cmd) => cmd.action(cmd.row)" trigger="click">
+                    选择收费项
+                    <el-dropdown-menu slot="dropdown">
+                      <el-dropdown-item v-for="item in s.row.items.filter(i=>i.can_charge)" :key="item.id" :command="{action: openSingleChargeDialog, row: item}">
+                        {{ item.appointment_purpose || '未命名' }} ¥{{ item.treatment_fee || '0' }}
+                      </el-dropdown-item>
+                    </el-dropdown-menu>
+                  </el-dropdown>
+                  <el-button v-if="s.row.items.some(i=>batchTreatmentCount(i)>1)" size="mini" type="primary" plain @click="openChargeDialog(s.row.items.find(i=>batchTreatmentCount(i)>1))">汇总收费</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+            <div v-if="!groupedTreatmentsByTooth.length" class="empty-tip">暂无治疗收费记录</div>
+          </template>
         </el-tab-pane>
 
         <!-- 影像管理 -->
@@ -423,6 +481,9 @@
               <template slot-scope="s">{{ s.row.doctor_name || '-' }}</template>
             </el-table-column>
             <el-table-column prop="followup_type" label="方式" width="90" />
+            <el-table-column prop="followup_project" label="回访项目" min-width="120" show-overflow-tooltip>
+              <template slot-scope="s">{{ s.row.followup_project || '-' }}</template>
+            </el-table-column>
             <el-table-column label="状态" width="90">
               <template slot-scope="s">
                 <el-tag :type="followupStatusType(s.row)" size="mini">{{ followupStatusLabel(s.row) }}</el-tag>
@@ -586,7 +647,7 @@
         <el-card class="editor-head-card" shadow="never">
           <div class="editor-head">
             <div>
-              <div class="page-kicker">患者360内病历工作台</div>
+              <div class="page-kicker">患者详情内病历工作台</div>
               <h2>{{ recordDialogTitle }}</h2>
               <p>{{ currentRecordPatientSummary }}</p>
             </div>
@@ -641,7 +702,7 @@
             <div class="panel-head">
               <div>
                 <div class="panel-title">病历模板库</div>
-                <div class="panel-tip">在患者360里直接使用工作台模板，点击后立即回填右侧病历。</div>
+                <div class="panel-tip">在患者详情里直接使用工作台模板，点击后立即回填右侧病历。</div>
               </div>
               <el-tag size="small" effect="plain">{{ medicalRecordTemplateOptions.length }} 个模板</el-tag>
             </div>
@@ -706,7 +767,7 @@
               <div class="panel-head panel-head--sheet">
                 <div>
                   <div class="panel-title">详细病历数据</div>
-                  <div class="panel-tip">工作台直接内嵌在患者360里，保存后会立即回到当前患者病历列表。</div>
+                  <div class="panel-tip">工作台直接内嵌在患者详情里，保存后会立即回到当前患者病历列表。</div>
                 </div>
                 <div class="sheet-head-tags">
                   <el-tag size="small" effect="plain">{{ recordForm.record_type || '初诊' }}</el-tag>
@@ -771,93 +832,6 @@
                 </div>
 
                 <div class="sheet-row">
-                  <div class="sheet-label">本次操作</div>
-                  <div class="sheet-cell">
-                    <div class="operation-panel">
-                      <div class="operation-panel__head">
-                        <div>
-                          <div class="operation-panel__title">结构化操作</div>
-                          <div class="operation-panel__tip">本次操作必须从操作字典库选择；保存病历前至少需要添加一条有效操作。</div>
-                        </div>
-                        <el-button size="mini" plain @click="appendRecordOperation" :disabled="!recordOperationOptions.length">新增空白操作</el-button>
-                      </div>
-
-                      <el-row :gutter="12" class="project-suggestion-row">
-                        <el-col :span="10">
-                          <el-select
-                            v-model="selectedQuickRecordOperationId"
-                            clearable
-                            filterable
-                            placeholder="从操作字典库选择后立即添加"
-                            style="width:100%"
-                            @change="handleQuickRecordOperationSelect">
-                            <el-option
-                              v-for="operation in recordOperationOptions"
-                              :key="operation.id"
-                              :label="recordOperationOptionLabel(operation)"
-                              :value="operation.id" />
-                          </el-select>
-                        </el-col>
-                        <el-col :span="14">
-                          <div class="operation-suggestion-empty">
-                            操作来源已切换为操作字典库；如需补充收费归属，可在下方为每条操作单独关联项目。
-                          </div>
-                        </el-col>
-                      </el-row>
-
-                      <div v-if="recordForm.operation_items && recordForm.operation_items.length" class="operation-list">
-                        <div v-for="(item, index) in recordForm.operation_items" :key="item.local_key" class="operation-item">
-                          <div class="operation-item__head">
-                            <span>操作 {{ index + 1 }}</span>
-                            <div class="operation-item__actions">
-                              <el-tag v-if="item.need_lab_processing === 1" size="mini" type="danger">待登记加工</el-tag>
-                              <el-button size="mini" type="text" style="color:#ef4444" @click="removeRecordOperation(index)">删除</el-button>
-                            </div>
-                          </div>
-                          <el-row :gutter="12">
-                            <el-col :span="8">
-                              <el-form-item label="关联项目" label-width="82px">
-                                <el-select v-model="item.project_id" clearable filterable placeholder="可选" style="width:100%" @change="handleRecordOperationProjectChange(item)">
-                                  <el-option v-for="project in treatmentProjectOptions" :key="project.id" :label="project.project_name" :value="project.id" />
-                                </el-select>
-                              </el-form-item>
-                            </el-col>
-                            <el-col :span="8">
-                              <el-form-item label="操作字典" label-width="82px" required>
-                                <el-select v-model="item.operation_id" clearable filterable placeholder="必填：选择操作字典项" style="width:100%" @change="handleRecordOperationChange(item)">
-                                  <el-option v-for="operation in recordOperationOptions" :key="operation.id" :label="recordOperationOptionLabel(operation)" :value="operation.id" />
-                                </el-select>
-                              </el-form-item>
-                            </el-col>
-                            <el-col :span="8">
-                              <el-form-item label="备注" label-width="82px">
-                                <el-input v-model="item.remark" placeholder="可选" />
-                              </el-form-item>
-                            </el-col>
-                          </el-row>
-                          <el-form-item v-if="item.need_lab_processing === 1" label="加工厂" label-width="82px">
-                            <el-select
-                              v-model="item.factory_id"
-                              clearable
-                              filterable
-                              style="width:100%"
-                              placeholder="必选：不选则不会生成加工订单"
-                              @change="handleRecordOperationFactoryChange(item)"
-                            >
-                              <el-option v-for="factory in labFactoryOptions" :key="factory.id" :label="factory.name" :value="factory.id" />
-                            </el-select>
-                          </el-form-item>
-                          <el-form-item label="牙位" label-width="82px">
-                            <ToothSelector v-model="item.tooth_positions" @input="handleRecordOperationToothChange" />
-                          </el-form-item>
-                        </div>
-                      </div>
-                      <div v-else class="operation-empty">未勾选任何操作时，病历仍可按原方式保存。</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="sheet-row">
                   <div class="sheet-label sheet-label--required">诊断</div>
                   <div class="sheet-cell">
                     <el-input v-model="recordForm.diagnosis" type="textarea" :rows="2" placeholder="请输入诊断结论" />
@@ -875,8 +849,7 @@
                   <div class="sheet-label">治疗文稿</div>
                   <div class="sheet-cell">
                     <div class="treatment-draft-toolbar">
-                      <span class="treatment-draft-hint">勾选操作后自动生成初稿，医生可继续润色。</span>
-                      <el-button size="mini" type="text" @click="regenerateRecordTreatmentDraft" :disabled="!(recordForm.operation_items || []).length">重新生成</el-button>
+                      <span class="treatment-draft-hint">请直接填写治疗文稿内容。</span>
                     </div>
                     <el-input v-model="recordForm.treatment" type="textarea" :rows="3" placeholder="治疗文稿" @input="handleRecordTreatmentInput" />
                   </div>
@@ -886,7 +859,7 @@
                   <div class="sheet-label">牙位</div>
                   <div class="sheet-cell">
                     <ToothSelector v-model="recordForm.tooth_positions" />
-                    <div class="sheet-field-hint">开启牙位同步时，会优先使用“本次操作”里的牙位集合。</div>
+                    <div class="sheet-field-hint">请直接勾选或输入牙位。</div>
                   </div>
                 </div>
 
@@ -952,6 +925,16 @@
         <el-form-item label="回访方式">
           <el-select v-model="followupForm.followup_type" style="width:100%">
             <el-option label="电话" value="电话" /><el-option label="复诊" value="复诊" /><el-option label="线上" value="线上" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="回访项目">
+          <el-select v-model="followupForm.followup_project" placeholder="请选择回访项目" clearable style="width:100%">
+            <el-option label="术后关怀" value="术后关怀" />
+            <el-option label="正畸复诊提醒" value="正畸复诊提醒" />
+            <el-option label="种植术后随访" value="种植术后随访" />
+            <el-option label="满意度调查" value="满意度调查" />
+            <el-option label="欠费催缴" value="欠费催缴" />
+            <el-option label="其他" value="其他" />
           </el-select>
         </el-form-item>
         <el-form-item label="回访结果"><el-input v-model="followupForm.summary" type="textarea" :rows="3" placeholder="回访后填写结果；留空则显示为待回访" /></el-form-item>
@@ -1395,6 +1378,7 @@ export default {
       refundForm: { amount: null, date: '', remark: '' },
       billingTreatment: null,
       chargeBatchTreatments: [],
+      treatmentViewMode: 'list',
       consentDialog: false,
       consentPreviewDialog: false,
       consentForm: {},
@@ -1558,6 +1542,38 @@ export default {
         map[batchNo].push(item)
       })
       return map
+    },
+    groupedTreatmentsByTooth() {
+      const groups = {}
+      const treatments = this.data && Array.isArray(this.data.treatments) ? this.data.treatments : []
+      treatments.forEach(item => {
+        const toothKey = String(item && item.tooth_positions ? item.tooth_positions : '未指定牙位').trim()
+        if (!groups[toothKey]) {
+          groups[toothKey] = []
+        }
+        groups[toothKey].push(item)
+      })
+      return Object.entries(groups).map(([tooth, items]) => {
+        const sortedItems = items.slice().sort((a, b) => String(b.treatment_date || '').localeCompare(String(a.treatment_date || '')))
+        const totalFee = sortedItems.reduce((sum, item) => sum + Number(item.treatment_fee || 0), 0)
+        const totalCharged = sortedItems.reduce((sum, item) => sum + Number(item.charged_amount || 0), 0)
+        const totalRefunded = sortedItems.reduce((sum, item) => sum + Number(item.refunded_amount || 0), 0)
+        const totalArrears = sortedItems.reduce((sum, item) => sum + Number(item.arrears_amount || 0), 0)
+        const allCompleted = sortedItems.every(item => item.status === '完成' || item.status === '取消')
+        return {
+          tooth_positions: tooth,
+          items: sortedItems,
+          itemCount: sortedItems.length,
+          totalFee,
+          totalCharged,
+          totalRefunded,
+          totalArrears,
+          canCharge: sortedItems.some(item => item.can_charge),
+          canRefund: sortedItems.some(item => item.can_refund),
+          allCompleted,
+          latestDate: sortedItems[0] ? sortedItems[0].treatment_date : ''
+        }
+      }).sort((a, b) => String(b.latestDate || '').localeCompare(String(a.latestDate || '')))
     },
     isBatchChargeMode() {
       return Array.isArray(this.chargeBatchTreatments) && this.chargeBatchTreatments.length > 1
@@ -2387,56 +2403,10 @@ export default {
     },
     // 病历
     openAddRecord() {
-      this.currentUser = this.readCurrentUser()
-      this.recordForm = this.buildEmptyRecordForm()
-      this.selectedMedicalRecordTemplateId = null
-      this.selectedRecordProjectId = ''
-      this.selectedQuickRecordOperationId = ''
-      this.recordLastAutoTreatmentDraft = ''
-      this.recordTreatmentDraftLocked = false
-      this.recordTemplateKeyword = ''
-      this.recordEditorFlags.autoSyncToothPositions = true
-      this.recordDialogTitle = '新增病历'; this.recordDialog = true
+      this.$router.push({ path: '/MedicalRecord', query: { patientId: this.patientId, patientName: this.patientName } })
     },
-    async openEditRecord(row) {
-      const detail = isLocalEntityId(row.id)
-        ? Object.assign({}, row)
-        : await axios.get('/medical-records/selectById', { params: { id: row.id } }).then(res => (res.data && res.data.code === '200' ? (res.data.data || {}) : {}))
-      const matchedDoctor = this.currentDoctorById(detail.doctor_account_id) || (this.doctors || []).find(item => item.name === String(detail.doctor_name || '').trim())
-      this.recordForm = Object.assign({}, this.buildEmptyRecordForm(), detail, {
-        visit_date: this.formatDateTimeValue(detail.visit_date) || this.currentDateTimeValue(),
-        doctor_account_id: matchedDoctor ? matchedDoctor.id : (detail.doctor_account_id ? Number(detail.doctor_account_id) : null),
-        doctor_name: matchedDoctor ? matchedDoctor.name : String(detail.doctor_name || '').trim(),
-        nurse_name: detail.nurse_name || '',
-        assistant_name: detail.assistant_name || '',
-        record_type: detail.record_type || '初诊',
-        present_illness_history: detail.present_illness_history || '',
-        past_history: detail.past_history || '',
-        infectious_history: detail.infectious_history || '',
-        allergy_history: detail.allergy_history || '',
-        general_condition: detail.general_condition || '体健',
-        examination: detail.examination || '',
-        auxiliary_examination: detail.auxiliary_examination || '',
-        treatment_plan: detail.treatment_plan || '',
-        tooth_positions: detail.tooth_positions || '',
-        medical_advice: detail.medical_advice || '',
-        record_tags: detail.record_tags || '',
-        image_summary: detail.image_summary || '',
-        record_status: detail.record_status || 'final',
-        operation_items: this.normalizeLoadedRecordOperationItems(detail.operation_items || [])
-      })
-      this.selectedMedicalRecordTemplateId = null
-      this.recordTemplateKeyword = ''
-      this.selectedRecordProjectId = this.recordForm.operation_items.length ? (this.recordForm.operation_items[0].project_id || '') : ''
-      this.selectedQuickRecordOperationId = ''
-      this.recordLastAutoTreatmentDraft = buildMedicalRecordTreatmentDraft(this.recordForm.operation_items || [])
-      this.recordTreatmentDraftLocked = String(this.recordForm.treatment || '').trim() && String(this.recordForm.treatment || '').trim() !== this.recordLastAutoTreatmentDraft
-      this.recordEditorFlags.autoSyncToothPositions = !!(this.recordForm.operation_items || []).length
-      this.recordDialogTitle = '编辑病历'
-      this.recordDialog = true
-      if (this.selectedRecordProjectId) {
-        await this.loadRecordProjectDetail(this.selectedRecordProjectId)
-      }
+    openEditRecord(row) {
+      this.$router.push({ path: '/MedicalRecord', query: { recordId: row.id } })
     },
     async openLabOrderForRecord(row) {
       const res = await axios.get('/medical-records/selectById', { params: { id: row.id } })
@@ -2560,6 +2530,7 @@ export default {
         doctor_name: this.resolveDefaultDoctorName(doctorAccountId),
         followup_date: '',
         followup_type: '电话',
+        followup_project: '',
         summary: '',
         next_followup_date: ''
       }
@@ -2762,19 +2733,26 @@ export default {
       this.treatmentForm.items.splice(index, 1)
       this.recalculateTreatmentSummary()
     },
-    openAddTreatment() {
+    async openAddTreatment() {
       this.currentUser = this.readCurrentUser()
       this.treatmentPricingSource = 'rate'
       this.treatmentForm = this.buildEmptyTreatmentForm()
-      this.loadTreatmentCatalogOptions()
+      await this.loadTreatmentCatalogOptions()
       this.treatmentDialog = true
     },
-    loadTreatmentCatalogOptions() {
-      axios.get('/treatment-projects/selectEnabled').then(res => {
-        this.treatmentProjectOptions = Array.isArray(res.data.data) ? res.data.data : []
-      }).catch(() => {
+    async loadTreatmentCatalogOptions() {
+      try {
+        const res = await axios.get('/treatment-projects/selectEnabled')
+        // 兼容标准 Result 包装结构（res.data.data）和直接返回数组（res.data）两种情况
+        const list = res && res.data && Array.isArray(res.data.data)
+          ? res.data.data
+          : (res && Array.isArray(res.data) ? res.data : [])
+        this.treatmentProjectOptions = list
+      } catch (error) {
+        console.error('加载项目库失败:', error)
+        this.$message.warning('项目库加载失败，请检查网络后重试')
         this.treatmentProjectOptions = []
-      })
+      }
     },
     loadPaymentChannelOptions() {
       axios.get('/payment-channels/selectEnabled').then(res => {
@@ -2934,6 +2912,21 @@ export default {
     },
     buildChargeChannelSplits(amount) {
       return [this.buildEmptyChargeChannelSplit(amount > 0 ? Number(amount.toFixed(2)) : null)]
+    },
+    openSingleChargeDialog(row) {
+      if (!this.paymentChannelOptions.length) {
+        this.loadPaymentChannelOptions()
+      }
+      this.billingTreatment = row
+      this.chargeBatchTreatments = [row]
+      const amount = Number(row.arrears_amount || row.treatment_fee || 0)
+      this.chargeForm = {
+        amount: amount > 0 ? Number(amount.toFixed(2)) : null,
+        date: this.currentDateValue(),
+        remark: '',
+        channel_splits: this.buildChargeChannelSplits(amount)
+      }
+      this.chargeDialog = true
     },
     openChargeDialog(row) {
       if (!this.paymentChannelOptions.length) {
@@ -3246,8 +3239,7 @@ export default {
       if (!record) return ''
       const visitDate = this.formatDate(record.visit_date) || '未设日期'
       const diagnosis = String(record.diagnosis || '').trim()
-      const operationSummary = String(record.operation_summary || '').trim()
-      return [visitDate, diagnosis || operationSummary || '病历记录'].filter(Boolean).join('｜')
+      return [visitDate, diagnosis || '病历记录'].filter(Boolean).join('｜')
     },
     currentDateTimeValue() {
       const now = new Date()
@@ -3831,8 +3823,49 @@ export default {
 .tag-label { font-size:13px; color: var(--text-secondary); margin-right:4px; }
 
 .p360-tabs { border-radius: var(--radius-sm); }
-.tab-toolbar { margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+.tab-toolbar {
+  margin-bottom:10px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  resize: vertical;
+  overflow: auto;
+  min-height: 40px;
+  max-height: 160px;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+  position: relative;
+}
+.tab-toolbar:hover {
+  border-color: var(--border-color);
+  background-color: #f8fafc;
+}
 .tab-toolbar--records { justify-content:space-between; }
+/* 自定义拖拽手柄 - 让用户更容易发现可调整大小的功能 */
+.tab-toolbar::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 4px;
+  border-radius: 2px;
+  background-color: #cbd5e1;
+  opacity: 0;
+  transition: opacity 0.2s ease, background-color 0.2s ease;
+  cursor: ns-resize;
+  pointer-events: none;
+}
+.tab-toolbar:hover::after {
+  opacity: 1;
+}
+.tab-toolbar:active::after {
+  background-color: #94a3b8;
+}
 .full-table { width:100%; }
 .empty-tip { text-align:center; color: var(--text-secondary); padding:40px 0; font-size:13px; }
 .record-cell-text { white-space:pre-wrap; line-height:1.6; }
@@ -4351,4 +4384,19 @@ export default {
     grid-template-columns: 1fr;
   }
 }
+
+/* 按牙位查看 - 展开行明细面板 */
+.tooth-detail-panel { padding: 8px 12px; background: #f8fafc; border-radius: var(--radius-sm); }
+.tooth-detail-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: #ffffff; border-radius: var(--radius-sm); border: 1px solid var(--border-color); margin-bottom: 8px; flex-wrap: wrap; }
+.tooth-detail-row:last-child { margin-bottom: 0; }
+.tdr-info { flex: 1; display: flex; align-items: center; gap: 12px; min-width: 200px; flex-wrap: wrap; }
+.tdr-date { font-size: 12px; color: var(--text-secondary); min-width: 80px; }
+.tdr-project { font-size: 13px; font-weight: 600; color: var(--text-primary); min-width: 100px; }
+.tdr-doctor { font-size: 12px; color: var(--text-secondary); min-width: 60px; }
+.tdr-content { font-size: 12px; color: var(--text-secondary); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tdr-fee { display: flex; align-items: center; gap: 4px; min-width: 80px; }
+.tdr-fee-label { font-size: 11px; color: var(--text-secondary); }
+.tdr-fee-val { font-size: 13px; font-weight: 600; color: #E6A23C; }
+.tdr-status { display: flex; align-items: center; min-width: 140px; }
+.tdr-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 </style>

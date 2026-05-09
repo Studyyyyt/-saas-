@@ -3,7 +3,7 @@
     <div class="page-title-bar">
       <div>
         <div class="page-kicker">预约管理</div>
-        <h2>预约工作台</h2>
+        <h2>预约视图</h2>
       </div>
       <div class="page-title-actions">
         <div class="view-tab-bar">
@@ -328,7 +328,7 @@ export default {
   components: { QueryCard },
   data() {
     return {
-      viewMode: 'list',
+      viewMode: 'calendar',
       searchName: '',
       searchDate: '',
       searchDoctor: '',

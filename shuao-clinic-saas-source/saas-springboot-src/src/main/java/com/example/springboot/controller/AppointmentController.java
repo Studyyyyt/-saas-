@@ -113,6 +113,16 @@ public class AppointmentController {
         return Result.success("状态更新成功");
     }
 
+    @PutMapping("/updateClinicStatus/{id}")
+    public Result updateClinicStatus(@PathVariable Long id, @RequestBody Appointment appointment) {
+        try {
+            appointmentService.updateClinicStatus(id, appointment.getClinic_status());
+            return Result.success("接诊状态更新成功");
+        } catch (IllegalArgumentException e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
     @PostMapping("/add")
     public Result addAppointment(@RequestBody Appointment appointment) {
         try {

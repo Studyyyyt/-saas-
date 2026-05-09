@@ -54,7 +54,6 @@ import InsuranceLogView from "@/views/Manager/InsuranceLogView.vue";
 import InsuranceMockPayloadView from "@/views/Manager/InsuranceMockPayloadView.vue";
 import BusinessAnalysisView from "@/views/Manager/BusinessAnalysisView.vue";
 import SystemTreatmentCatalogView from "@/views/Manager/SystemTreatmentCatalogView.vue";
-import SystemTreatmentOperationView from "@/views/Manager/SystemTreatmentOperationView.vue";
 import SystemPaymentChannelView from "@/views/Manager/SystemPaymentChannelView.vue";
 import SystemConsentTemplateView from "@/views/Manager/SystemConsentTemplateView.vue";
 import SystemAccountPermissionView from "@/views/Manager/SystemAccountPermissionView.vue";
@@ -127,7 +126,6 @@ const routes = [
       { path: 'InsuranceMockPayload', name: 'InsuranceMockPayloadView', component: InsuranceMockPayloadView},
       { path: 'BusinessAnalysis', name: 'BusinessAnalysisView', component: BusinessAnalysisView, meta: { allowedRoles: ['admin', 'nurse'] }},
       { path: 'SystemTreatmentCatalog', name: 'SystemTreatmentCatalogView', component: SystemTreatmentCatalogView, meta: { allowedRoles: ['admin', 'nurse'] }},
-      { path: 'SystemTreatmentOperation', name: 'SystemTreatmentOperationView', component: SystemTreatmentOperationView, meta: { allowedRoles: ['admin', 'nurse'] }},
       { path: 'SystemPaymentChannel', name: 'SystemPaymentChannelView', component: SystemPaymentChannelView, meta: { allowedRoles: ['admin', 'nurse'] }},
       { path: 'SystemConsentTemplate', name: 'SystemConsentTemplateView', component: SystemConsentTemplateView, meta: { allowedRoles: ['admin', 'nurse'] }},
       { path: 'SystemAccountPermission', name: 'SystemAccountPermissionView', component: SystemAccountPermissionView, meta: { allowedRoles: ['admin'] }},

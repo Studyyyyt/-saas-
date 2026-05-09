@@ -156,6 +156,19 @@ public class AppointmentService {
         appointmentMapper.updateStatus(id, status);
     }
 
+    public void updateClinicStatus(Long id, String clinicStatus) {
+        List<Appointment> list = appointmentMapper.selectById(id);
+        if (list == null || list.isEmpty()) {
+            throw new IllegalArgumentException("预约不存在");
+        }
+        Appointment appointment = list.get(0);
+        appointment.setClinic_status(clinicStatus);
+        if ("已挂号".equals(clinicStatus) && appointment.getCheck_in_time() == null) {
+            appointment.setCheck_in_time(new java.util.Date());
+        }
+        appointmentMapper.update(appointment);
+    }
+
     public List<Appointment> selectPatientAppointments(Long patientId) {
         if (patientId == null || patientId <= 0) {
             return List.of();

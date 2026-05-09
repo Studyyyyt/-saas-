@@ -70,6 +70,12 @@ public class PatientFollowupService {
         String followupType = StringUtils.hasText(followup.getFollowup_type()) ? followup.getFollowup_type().trim() : "电话";
         followup.setFollowup_type(followupType);
 
+        if (StringUtils.hasText(followup.getFollowup_project())) {
+            followup.setFollowup_project(followup.getFollowup_project().trim());
+        } else {
+            followup.setFollowup_project(null);
+        }
+
         if (StringUtils.hasText(followup.getSummary())) {
             followup.setSummary(followup.getSummary().trim());
         } else {

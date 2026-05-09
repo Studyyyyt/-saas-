@@ -18,9 +18,13 @@ public class MedicalRecordController {
     private MedicalRecordService service;
 
     @GetMapping("/selectAll")
-    public Result selectAll(@RequestParam int page, @RequestParam int size) {
+    public Result selectAll(@RequestParam int page, @RequestParam int size,
+                            @RequestParam(required = false) Long doctorAccountId,
+                            @RequestParam(required = false) String recordStatus,
+                            @RequestParam(required = false) String startDate,
+                            @RequestParam(required = false) String endDate) {
         PageHelper.startPage(page, size);
-        List<MedicalRecord> list = service.selectAll();
+        List<MedicalRecord> list = service.selectAll(doctorAccountId, recordStatus, startDate, endDate);
         return Result.success(new PageInfo<>(list));
     }
 

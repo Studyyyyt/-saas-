@@ -12,6 +12,7 @@ services:
     image: mysql:9.6
     container_name: clinic-mysql-dev
     restart: unless-stopped
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     environment:
       MYSQL_ROOT_PASSWORD: clinic_root_pass
       MYSQL_DATABASE: clinic_system
@@ -75,8 +76,8 @@ services:
     environment:
       # 开发服务器绑定到所有接口，允许宿主机访问
       HOST: 0.0.0.0
-      # Docker 容器内访问后端使用宿主机端口映射
-      VUE_APP_API_TARGET: http://host.docker.internal:8080
+      # Docker 容器内通过内部网络访问后端（避免 host.docker.internal IPv6 解析问题）
+      VUE_APP_API_TARGET: http://backend:8080
       # Docker 环境下 inotify 事件丢失，启用轮询模式保证热刷新生效
       CHOKIDAR_USEPOLLING: "true"
       CHOKIDAR_INTERVAL: "1000"

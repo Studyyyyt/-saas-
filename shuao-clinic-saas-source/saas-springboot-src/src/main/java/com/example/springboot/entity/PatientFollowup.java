@@ -9,6 +9,7 @@ public class PatientFollowup {
     private String doctor_name;
     private Date followup_date;
     private String followup_type;
+    private String followup_project;
     private String summary;
     private Date next_followup_date;
     private Date created_at;
@@ -62,6 +63,14 @@ public class PatientFollowup {
 
     public void setFollowup_type(String followup_type) {
         this.followup_type = followup_type;
+    }
+
+    public String getFollowup_project() {
+        return followup_project;
+    }
+
+    public void setFollowup_project(String followup_project) {
+        this.followup_project = followup_project;
     }
 
     public String getSummary() {

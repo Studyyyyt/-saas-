@@ -30,7 +30,7 @@
           <div class="list-card__desc">加工厂：{{ item.factory_name || '待登记' }}</div>
           <div class="list-card__desc">备注：{{ item.remark || '无' }}</div>
           <div class="list-card__actions">
-            <el-button size="mini" type="primary" plain @click="openPatient(item)">进入患者360</el-button>
+            <el-button size="mini" type="primary" plain @click="openPatient(item)">进入患者详情</el-button>
             <el-button size="mini" plain @click="markSkip(item)">标记已完成</el-button>
           </div>
         </div>

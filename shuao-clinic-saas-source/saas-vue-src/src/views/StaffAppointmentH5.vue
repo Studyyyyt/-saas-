@@ -64,7 +64,7 @@
         <div class="detail-row"><span>状态</span><strong>{{ detailItem.status || '-' }}</strong></div>
         <div class="detail-row detail-row--block"><span>预约目的</span><strong>{{ detailItem.appointment_purpose || '未填写' }}</strong></div>
         <div class="detail-actions">
-          <el-button type="primary" @click="goPatient360" :disabled="!resolveDetailPatientId()">进入患者360</el-button>
+          <el-button type="primary" @click="goPatient360" :disabled="!resolveDetailPatientId()">进入患者详情</el-button>
           <el-button type="warning" plain @click="goEditAppointment" :disabled="!resolveDetailPatientId()">编辑预约</el-button>
           <el-button type="primary" @click="goPatientList">查看患者列表</el-button>
           <el-button plain @click="detailVisible = false">关闭</el-button>

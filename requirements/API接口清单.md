@@ -198,15 +198,21 @@
 
 ### MedicalRecordController
 
-| 方法 | 路径 | 功能 |
-|------|------|------|
-| GET | /medical-records/selectAll | 分页查询所有病历 |
-| GET | /medical-records/selectByPatientId | 按患者ID查询病历 |
-| GET | /medical-records/selectByPatientName | 按患者姓名查询病历 |
-| GET | /medical-records/selectById | 按ID查询病历 |
-| POST | /medical-records/add | 新增病历 |
-| PUT | /medical-records/edit | 编辑病历 |
-| DELETE | /medical-records/delete/{id} | 删除病历 |
+| 方法 | 路径 | 功能 | 请求参数 | 响应结构 |
+|------|------|------|----------|----------|
+| GET | /medical-records/selectAll | 分页查询所有病历（支持筛选） | `page`（必填）, `size`（必填）, `doctorAccountId`（可选）, `recordStatus`（可选：`draft`/`final`）, `startDate`（可选：`yyyy-MM-dd`）, `endDate`（可选：`yyyy-MM-dd`） | `{ code, data: PageInfo<MedicalRecord> }` |
+| GET | /medical-records/selectByPatientId | 按患者ID查询病历 | `patientId`（必填）, `page`, `size` | `{ code, data: PageInfo<MedicalRecord> }` |
+| GET | /medical-records/selectByPatientName | 按患者姓名查询病历 | `name`（必填）, `page`, `size` | `{ code, data: PageInfo<MedicalRecord> }` |
+| GET | /medical-records/selectById | 按ID查询病历详情 | `id`（必填） | `{ code, data: MedicalRecord }`，含 `operation_items`、`operation_summary`、`pending_lab_count` |
+| POST | /medical-records/add | 新增病历 | `MedicalRecord` JSON | `{ code, data: MedicalRecord }` |
+| PUT | /medical-records/edit | 编辑病历 | `MedicalRecord` JSON | `{ code, data: MedicalRecord }` |
+| DELETE | /medical-records/delete/{id} | 删除病历 | 路径参数 `id` | `{ code, msg: "删除成功" }` |
+
+> **MedicalRecord 响应关键字段说明**：
+> - `operation_summary`（String）：操作汇总文本，由后端自动拼接
+> - `pending_lab_count`（Integer）：待登记加工操作数量，大于0时展示红色警示
+> - `operation_count`（Integer）：操作总数量
+> - `record_status`（String）：`draft`（暂存）/ `final`（已保存）
 
 ### MedicalRecordTemplateController
 
@@ -217,6 +223,23 @@
 | POST | /medical-record-templates/add | 新增病历模板 |
 | PUT | /medical-record-templates/edit | 编辑病历模板 |
 | DELETE | /medical-record-templates/delete/{id} | 删除病历模板 |
+
+### MedicalRecordPhraseController
+
+| 方法 | 路径 | 功能 | 请求参数 | 响应结构 |
+|------|------|------|----------|----------|
+| GET | /medical-record-phrases/selectByFieldType | 按字段类型查询启用词条 | `fieldType`(必填) | `{ code, data: List<MedicalRecordPhrase> }` |
+| GET | /medical-record-phrases/selectAll | 查询全部词条（管理用） | 无 | `{ code, data: List<MedicalRecordPhrase> }` |
+| POST | /medical-record-phrases/add | 新增词条 | `RequestBody MedicalRecordPhrase` | `{ code, data: MedicalRecordPhrase }` |
+| PUT | /medical-record-phrases/edit | 编辑词条 | `RequestBody MedicalRecordPhrase` | `{ code, data: MedicalRecordPhrase }` |
+| DELETE | /medical-record-phrases/delete/{id} | 删除词条 | `PathVariable Long id` | `{ code, msg: "删除成功" }` |
+
+> **MedicalRecordPhrase 字段说明**：
+> - `field_type`（String）：字段类型标识，如 `chief_complaint`/`present_illness_history`/`past_history`/`examination`/`diagnosis`/`treatment_plan`/`medical_advice`/`notes`
+> - `content`（String）：词条内容（1-500字符）
+> - `category`（String）：词条分类，可为空
+> - `sort_order`（Integer）：排序值，越小越靠前
+> - `status`（Integer）：1=启用，0=停用
 
 ### MedicalRecordOperationController
 
@@ -264,27 +287,71 @@
 
 ### TreatmentProjectController
 
-| 方法 | 路径 | 功能 |
-|------|------|------|
-| GET | /treatment-projects/search | 搜索治疗项目 |
-| GET | /treatment-projects/selectEnabled | 查询启用的治疗项目 |
-| GET | /treatment-projects/selectById | 按ID查询治疗项目 |
-| POST | /treatment-projects/add | 新增治疗项目 |
-| PUT | /treatment-projects/edit | 编辑治疗项目 |
-| DELETE | /treatment-projects/delete/{id} | 删除治疗项目 |
-| POST | /treatment-projects/importBatch | 批量导入治疗项目 |
+| 方法 | 路径 | 功能 | 请求参数 | 响应结构 |
+|------|------|------|----------|----------|
+| GET | /treatment-projects/search | 搜索治疗项目（分页） | `keyword`(可选), `categoryId`(可选), `status`(可选), `page`(默认1), `size`(默认20) | `{ code, data: { total, list, pageNum, pageSize } }` |
+| GET | /treatment-projects/selectEnabled | 查询启用的治疗项目 | 无 | `{ code, data: List<TreatmentProject> }` |
+| GET | /treatment-projects/selectById | 按ID查询治疗项目详情 | `id`(必填) | `{ code, data: TreatmentProject }`，含 `operation_relations` |
+| POST | /treatment-projects/add | 新增治疗项目 | `RequestBody TreatmentProject` | `{ code, data: TreatmentProject }` |
+| PUT | /treatment-projects/edit | 编辑治疗项目 | `RequestBody TreatmentProject` | `{ code, data: TreatmentProject }` |
+| DELETE | /treatment-projects/delete/{id} | 删除治疗项目 | `PathVariable Long id` | `{ code, msg: "删除成功" }` |
+| POST | /treatment-projects/importBatch | 批量导入治疗项目 | `RequestBody List<TreatmentProject>` | `{ code, data: "导入成功，共X条" }` |
+
+> **TreatmentProject 响应关键字段说明**：
+> - `id`（Long）：项目ID
+> - `project_code`（String）：项目编码，唯一
+> - `project_name`（String）：项目名称
+> - `category_id`（Long）：所属分类ID
+> - `category_path`（String）：分类路径，如 "修复/牙冠"
+> - `default_price`（BigDecimal）：默认价格
+> - `estimated_visit_count`（Integer）：预计治疗次数
+> - `estimated_cycle_days`（Integer）：预计周期天数
+> - `status`（String）：`在用` / `停用`
+> - `sort_order`（Integer）：排序值
+> - `remark`（String）：备注
+> - `operation_relations`（List）：标准操作流程关联列表，详见下方 `ProjectOperationRelation`
+
+> **ProjectOperationRelation 字段说明**：
+> - `id`（Long）：关联ID
+> - `project_id`（Long）：项目ID
+> - `operation_id`（Long）：操作字典ID
+> - `operation_name`（String）：操作名称
+> - `operation_category`（String）：操作大类
+> - `need_lab_processing`（Integer）：是否触发外加工，0=否，1=是
+> - `default_processing_days`（Integer）：默认加工天数
+> - `operation_order`（Integer）：项目内操作顺序
+> - `is_required`（Integer）：是否必经，0=否，1=是
+> - `performance_weight`（BigDecimal）：业绩权重，默认1.0，0表示不计业绩
+
+> **保存时 payload 特殊说明**：
+> - `add` / `edit` 接口提交时，`operation_relations` 字段为完整列表，后端会全量替换（先删除旧关联再插入新关联）
+> - `category_id` 传空时后端自动置为 null
 
 ### TreatmentProjectCategoryController
 
-| 方法 | 路径 | 功能 |
-|------|------|------|
-| GET | /treatment-project-categories/tree | 查询分类树 |
-| GET | /treatment-project-categories/selectEnabled | 查询启用的分类 |
-| POST | /treatment-project-categories/add | 新增分类 |
-| PUT | /treatment-project-categories/edit | 编辑分类 |
-| DELETE | /treatment-project-categories/delete/{id} | 删除分类 |
+| 方法 | 路径 | 功能 | 请求参数 | 响应结构 |
+|------|------|------|----------|----------|
+| GET | /treatment-project-categories/tree | 查询分类树 | `includeDisabled`(默认false) | `{ code, data: List<TreeNode> }` |
+| GET | /treatment-project-categories/selectEnabled | 查询启用的分类（平铺） | 无 | `{ code, data: List<TreatmentProjectCategory> }` |
+| POST | /treatment-project-categories/add | 新增分类 | `RequestBody TreatmentProjectCategory` | `{ code, data: TreatmentProjectCategory }` |
+| PUT | /treatment-project-categories/edit | 编辑分类 | `RequestBody TreatmentProjectCategory` | `{ code, data: TreatmentProjectCategory }` |
+| DELETE | /treatment-project-categories/delete/{id} | 删除分类 | `PathVariable Long id` | `{ code, msg: "删除成功" }` |
 
-### TreatmentOperationController
+> **TreatmentProjectCategory 字段说明**：
+> - `id`（Long）：分类ID
+> - `name`（String）：分类名称
+> - `parent_id`（Long）：父分类ID，0=一级分类
+> - `sort_order`（Integer）：排序值
+> - `status`（String）：`启用` / `停用`
+> - `children`（List）：子分类列表（仅 `/tree` 接口返回时填充）
+
+> **分类树约束**：
+> - 系统最多支持两级分类（parent_id=0 为一级，否则为二级）
+> - 删除分类为逻辑删除（状态改为 `已删除`）
+
+### TreatmentOperationController（已归档）
+
+> **说明**：操作字典独立管理页面已下线，前端不再提供独立入口。后端 API 仍保留，供病历结构化操作记录和项目库标准流程配置内部调用。
 
 | 方法 | 路径 | 功能 |
 |------|------|------|
@@ -671,6 +738,16 @@
 | POST | /ai-agent-configs | 新增自定义 Agent |
 | PUT | /ai-agent-configs/{id} | 更新 Agent 配置 |
 | DELETE | /ai-agent-configs/{id} | 删除 Agent |
+
+### 病历工作台筛选扩展（已开发完成，归档至「五、病历管理」）
+
+| 方法 | 路径 | 功能 | 请求参数 | 响应结构 |
+|------|------|------|----------|----------|
+| GET | /medical-records/selectAll | 分页查询病历列表（扩展筛选参数） | `page`, `size`, `doctorAccountId`(可选), `recordStatus`(可选:`draft`/`final`), `startDate`(可选:`yyyy-MM-dd`), `endDate`(可选:`yyyy-MM-dd`) | `{ code, data: PageInfo<MedicalRecord> }` |
+
+> **前端工作台复用的已有接口**：
+> - `GET /appointments/scheduleEntries`：获取全量预约条目，前端按 `appointment_date` 过滤今日数据，用于「今日工作流」Tab 展示。
+> - `GET /medical-record-operations/pendingLabList`：获取待加工列表，用于计算「待登记加工」统计。
 
 ---
 

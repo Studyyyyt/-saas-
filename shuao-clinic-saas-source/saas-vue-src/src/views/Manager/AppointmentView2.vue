@@ -269,7 +269,7 @@
       </div>
       <span slot="footer" class="dialog-footer">
         <el-button @click="quickStatusVisible = false">关闭</el-button>
-        <el-button v-if="quickStatusItem && quickStatusItem.patient_id" type="success" plain @click="goPatient360(quickStatusItem)">患者360</el-button>
+        <el-button v-if="quickStatusItem && quickStatusItem.patient_id" type="success" plain @click="goPatient360(quickStatusItem)">患者详情</el-button>
         <el-button type="primary" plain @click="openEditFromQuickStatus">编辑预约</el-button>
       </span>
     </el-dialog>
@@ -1155,7 +1155,7 @@ export default {
     goPatient360(source = null) {
       const current = source || this.editItem
       if (!current || !current.patient_id) {
-        this.$message.warning('当前预约缺少患者ID，无法进入患者360')
+        this.$message.warning('当前预约缺少患者ID，无法进入患者详情')
         return
       }
       this.closeDialog()

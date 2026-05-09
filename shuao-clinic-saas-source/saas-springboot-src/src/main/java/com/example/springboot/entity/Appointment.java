@@ -15,6 +15,8 @@ public class Appointment {
     private String appointment_purpose;
     private String cancel_reason;
     private String status;
+    private String clinic_status;
+    private java.util.Date check_in_time;
     private Boolean has_arrears;
     private Double arrears_amount;
 
@@ -104,6 +106,22 @@ public class Appointment {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getClinic_status() {
+        return clinic_status;
+    }
+
+    public void setClinic_status(String clinic_status) {
+        this.clinic_status = clinic_status;
+    }
+
+    public java.util.Date getCheck_in_time() {
+        return check_in_time;
+    }
+
+    public void setCheck_in_time(java.util.Date check_in_time) {
+        this.check_in_time = check_in_time;
     }
 
     public Boolean getHas_arrears() {

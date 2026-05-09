@@ -317,3 +317,18 @@
 .el-empty__description {
   color: #94a3b8;
 }
+
+/* ---------- 表格全局居中 + 行高舒适 + 内容不换行 ---------- */
+.el-table .cell {
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.el-table th > .cell {
+  text-align: center;
+  white-space: nowrap;
+}
+.el-table .el-table__row {
+  position: relative;
+}

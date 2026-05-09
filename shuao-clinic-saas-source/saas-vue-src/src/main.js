@@ -12,10 +12,11 @@ import './styles/apple-design/animations.css'
 import App from './App.vue'
 import router from './router'
 import { initOfflineSync } from './utils/offline/sync'
-
+import tablePersist from './mixins/tablePersist'
 
 Vue.config.productionTip = false
 Vue.use(ElementUI);
+Vue.mixin(tablePersist);
 initOfflineSync()
 
 new Vue({

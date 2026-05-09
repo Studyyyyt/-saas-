@@ -3,7 +3,7 @@
     <div class="h5-hero-card hero-card-mobile">
       <div class="hero-main">
         <div class="h5-page-kicker">员工微信 H5</div>
-        <h2>患者360</h2>
+        <h2>患者详情</h2>
         <p>{{ patientName || '患者档案' }} · 微信端快速查看患者全景信息</p>
       </div>
       <el-button class="hero-back-btn" size="small" plain @click="$router.push({ path: '/staff-h5/patients', query: portalQuery })">返回患者列表</el-button>

@@ -10,13 +10,13 @@ import java.util.List;
 @Mapper
 public interface AppointmentMapper {
 
-    @Select("SELECT id, patient_id, patient_name, appointment_date, appointment_time, duration_minutes, doctor_account_id, doctor_name, appointment_purpose, cancel_reason, status FROM appointment")
+    @Select("SELECT id, patient_id, patient_name, appointment_date, appointment_time, duration_minutes, doctor_account_id, doctor_name, appointment_purpose, cancel_reason, status, clinic_status, check_in_time FROM appointment")
     List<Appointment> selectAll();
 
-    @Select("SELECT id, patient_id, patient_name, appointment_date, appointment_time, duration_minutes, doctor_account_id, doctor_name, appointment_purpose, cancel_reason, status FROM appointment where status = #{status}")
+    @Select("SELECT id, patient_id, patient_name, appointment_date, appointment_time, duration_minutes, doctor_account_id, doctor_name, appointment_purpose, cancel_reason, status, clinic_status, check_in_time FROM appointment where status = #{status}")
     List<Appointment> findAllByStatus(String status);
 
-    @Select("SELECT id, patient_id, patient_name, appointment_date, appointment_time, duration_minutes, doctor_account_id, doctor_name, appointment_purpose, cancel_reason, status FROM appointment WHERE appointment_date = #{appointmentDate}")
+    @Select("SELECT id, patient_id, patient_name, appointment_date, appointment_time, duration_minutes, doctor_account_id, doctor_name, appointment_purpose, cancel_reason, status, clinic_status, check_in_time FROM appointment WHERE appointment_date = #{appointmentDate}")
     List<Appointment> selectByAppointmentDate(@Param("appointmentDate") Date appointmentDate);
 
 
@@ -36,8 +36,8 @@ public interface AppointmentMapper {
     @Select("select id, patient_id, patient_name, appointment_date, appointment_time, duration_minutes, doctor_account_id, doctor_name, appointment_purpose, cancel_reason, status from appointment where patient_id = #{patientId}")
     List<Appointment> selectByPatientReference(@Param("patientId") Long patientId);
 
-    @Insert("INSERT INTO appointment (patient_id, patient_name, appointment_date, appointment_time, duration_minutes, doctor_account_id, doctor_name, appointment_purpose, cancel_reason, status) " +
-            "VALUES (#{patient_id}, #{patient_name}, #{appointment_date}, #{appointment_time}, #{duration_minutes}, #{doctor_account_id}, #{doctor_name}, #{appointment_purpose}, #{cancel_reason}, #{status})")
+    @Insert("INSERT INTO appointment (patient_id, patient_name, appointment_date, appointment_time, duration_minutes, doctor_account_id, doctor_name, appointment_purpose, cancel_reason, status, clinic_status, check_in_time) " +
+            "VALUES (#{patient_id}, #{patient_name}, #{appointment_date}, #{appointment_time}, #{duration_minutes}, #{doctor_account_id}, #{doctor_name}, #{appointment_purpose}, #{cancel_reason}, #{status}, #{clinic_status}, #{check_in_time})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     void insert(Appointment appointment);
 
@@ -45,7 +45,7 @@ public interface AppointmentMapper {
     void updateStatus(@Param("id") Long id, @Param("status") String status);
 
     @Update("UPDATE appointment SET patient_id = #{patient_id}, patient_name = #{patient_name}, appointment_date = #{appointment_date}, appointment_time = #{appointment_time}, duration_minutes = #{duration_minutes}, " +
-            "doctor_account_id = #{doctor_account_id}, doctor_name = #{doctor_name}, appointment_purpose = #{appointment_purpose}, cancel_reason = #{cancel_reason}, status = #{status} WHERE id = #{id}")
+            "doctor_account_id = #{doctor_account_id}, doctor_name = #{doctor_name}, appointment_purpose = #{appointment_purpose}, cancel_reason = #{cancel_reason}, status = #{status}, clinic_status = #{clinic_status}, check_in_time = #{check_in_time} WHERE id = #{id}")
     void update(Appointment appointment);
 
     @Delete("DELETE FROM appointment WHERE id = #{id}")

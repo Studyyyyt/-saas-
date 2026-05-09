@@ -30,7 +30,11 @@ public class MedicalRecordService {
     private PatientInsightSummaryService patientInsightSummaryService;
 
     public List<MedicalRecord> selectAll() {
-        List<MedicalRecord> records = mapper.selectAll();
+        return selectAll(null, null, null, null);
+    }
+
+    public List<MedicalRecord> selectAll(Long doctorAccountId, String recordStatus, String startDate, String endDate) {
+        List<MedicalRecord> records = mapper.selectAllWithFilter(doctorAccountId, recordStatus, startDate, endDate);
         medicalRecordOperationService.enrichMedicalRecords(records, false);
         return records;
     }
