@@ -61,6 +61,8 @@
 | PUT | /doctors/edit | 编辑医生 |
 | DELETE | /doctors/delete/{id} | 删除医生 |
 | DELETE | /doctors/deleteBatch | 批量删除医生 |
+| GET | /doctors/schedules | 按日期范围查询排班 |
+| POST | /doctors/batchSave | 批量保存排班 |
 
 ### DoctorHomeReminderDismissalController
 
@@ -185,6 +187,7 @@
 | GET | /appointments/public/detail | 公开预约详情 |
 | GET | /appointments/selectByname | 按姓名查询预约 |
 | PUT | /appointments/updateStatus/{id} | 更新预约状态 |
+| PUT | /appointments/updateClinicStatus/{id} | 更新预约临床状态 |
 | POST | /appointments/add | 新增预约 |
 | POST | /appointments/manual-next-day-reminder | 手动触发次日预约提醒 |
 | PUT | /appointments/edit | 编辑预约 |
@@ -506,34 +509,36 @@
 
 ### LabFactoryController
 
-| 方法 | 路径 | 功能 |
-|------|------|------|
-| GET | /lab-factories/search | 搜索加工厂 |
-| GET | /lab-factories/selectEnabled | 查询启用的加工厂 |
-| GET | /lab-factories/{id} | 按ID查询加工厂 |
-| POST | /lab-factories/add | 新增加工厂 |
-| PUT | /lab-factories/edit | 编辑加工厂 |
-| DELETE | /lab-factories/delete/{id} | 删除加工厂 |
-| GET | /lab-factories/{factoryId}/products | 查询加工产品 |
-| POST | /lab-factories/{factoryId}/products/add | 新增加工产品 |
-| PUT | /lab-factories/{factoryId}/products/edit | 编辑加工产品 |
-| POST | /lab-factories/{factoryId}/products/batchSave | 批量保存加工产品 |
-| DELETE | /lab-factories/{factoryId}/products/delete/{productId} | 删除加工产品 |
-| GET | /lab-factories/{factoryId}/templates | 查询对账单模板 |
-| POST | /lab-factories/{factoryId}/templates/add | 新增对账单模板 |
-| PUT | /lab-factories/{factoryId}/templates/edit | 编辑对账单模板 |
-| DELETE | /lab-factories/{factoryId}/templates/delete/{templateId} | 删除对账单模板 |
+| 方法 | 路径 | 功能 | 请求参数 | 响应结构 |
+|------|------|------|----------|----------|
+| GET | /lab-factories/dashboard/overview | 加工厂概览统计 | 无 | `{ code, data: { total_count, active_count, inactive_count, total_products, total_templates } }` |
+| GET | /lab-factories/search | 搜索加工厂 | `keyword`(可选), `status`(可选), `page`, `size` | `{ code, data: { total, list, pageNum, pageSize } }` |
+| GET | /lab-factories/selectEnabled | 查询启用的加工厂 | 无 | `{ code, data: List<LabFactory> }` |
+| GET | /lab-factories/{id} | 按ID查询加工厂 | `PathVariable Long id` | `{ code, data: LabFactory }` |
+| POST | /lab-factories/add | 新增加工厂 | `RequestBody LabFactory` | `{ code, data: LabFactory }` |
+| PUT | /lab-factories/edit | 编辑加工厂 | `RequestBody LabFactory` | `{ code, data: LabFactory }` |
+| DELETE | /lab-factories/delete/{id} | 删除加工厂 | `PathVariable Long id` | `{ code, msg: "删除成功" }` |
+| GET | /lab-factories/{factoryId}/products | 查询加工产品 | `PathVariable Long factoryId`, `enabledOnly`(可选) | `{ code, data: List<LabFactoryProduct> }` |
+| POST | /lab-factories/{factoryId}/products/add | 新增加工产品 | `PathVariable Long factoryId`, `RequestBody LabFactoryProduct` | `{ code, data: LabFactoryProduct }` |
+| PUT | /lab-factories/{factoryId}/products/edit | 编辑加工产品 | `PathVariable Long factoryId`, `RequestBody LabFactoryProduct` | `{ code, data: LabFactoryProduct }` |
+| POST | /lab-factories/{factoryId}/products/batchSave | 批量保存加工产品 | `PathVariable Long factoryId`, `RequestBody List<LabFactoryProduct>` | `{ code, msg: "保存成功" }` |
+| DELETE | /lab-factories/{factoryId}/products/delete/{productId} | 删除加工产品 | `PathVariable Long factoryId`, `PathVariable Long productId` | `{ code, msg: "删除成功" }` |
+| GET | /lab-factories/{factoryId}/templates | 查询对账单模板 | `PathVariable Long factoryId` | `{ code, data: List<LabBillTemplate> }` |
+| POST | /lab-factories/{factoryId}/templates/add | 新增对账单模板 | `PathVariable Long factoryId`, `RequestBody LabBillTemplate` | `{ code, data: LabBillTemplate }` |
+| PUT | /lab-factories/{factoryId}/templates/edit | 编辑对账单模板 | `PathVariable Long factoryId`, `RequestBody LabBillTemplate` | `{ code, data: LabBillTemplate }` |
+| DELETE | /lab-factories/{factoryId}/templates/delete/{templateId} | 删除对账单模板 | `PathVariable Long factoryId`, `PathVariable Long templateId` | `{ code, msg: "删除成功" }` |
 
 ### LabOrderController
 
-| 方法 | 路径 | 功能 |
-|------|------|------|
-| GET | /lab-orders/search | 搜索加工订单 |
-| GET | /lab-orders/{id} | 按ID查询订单 |
-| POST | /lab-orders/add | 新增订单 |
-| PUT | /lab-orders/edit | 编辑订单 |
-| POST | /lab-orders/batchStatus | 批量更新订单状态 |
-| DELETE | /lab-orders/delete/{id} | 删除订单 |
+| 方法 | 路径 | 功能 | 请求参数 | 响应结构 |
+|------|------|------|----------|----------|
+| GET | /lab-orders/dashboard/overview | 加工订单概览统计 | `factoryId`(可选), `status`(可选), `patientId`(可选), `keyword`(可选), `startDate`(可选), `endDate`(可选) | `{ code, data: { total_count, total_amount, status_breakdown: [{status, count}], factory_breakdown: [{factory_name, count, amount}], monthly_trend: [{month, amount}] } }` |
+| GET | /lab-orders/search | 搜索加工订单 | `factoryId`(可选), `status`(可选), `patientId`(可选), `keyword`(可选), `startDate`(可选), `endDate`(可选), `page`, `size` | `{ code, data: { total, list, pageNum, pageSize } }` |
+| GET | /lab-orders/{id} | 按ID查询订单 | `PathVariable Long id` | `{ code, data: LabOrder }` |
+| POST | /lab-orders/add | 新增订单 | `RequestBody LabOrder` | `{ code, data: LabOrder }` |
+| PUT | /lab-orders/edit | 编辑订单 | `RequestBody LabOrder` | `{ code, data: LabOrder }` |
+| POST | /lab-orders/batchStatus | 批量更新订单状态 | `RequestBody {ids: List<Long>, status: String, actual_delivery_date: String}` | `{ code, msg: "更新成功" }` |
+| DELETE | /lab-orders/delete/{id} | 删除订单 | `PathVariable Long id` | `{ code, msg: "删除成功" }` |
 
 ### LabBillController
 
@@ -598,13 +603,13 @@
 
 ### AdvertisingSpendingController
 
-| 方法 | 路径 | 功能 |
-|------|------|------|
-| GET | /advertising-spending/search | 搜索广告支出 |
-| POST | /advertising-spending/add | 新增广告支出 |
-| PUT | /advertising-spending/edit | 编辑广告支出 |
-| DELETE | /advertising-spending/delete/{id} | 删除广告支出 |
-| GET | /advertising-spending/dashboard/overview | 广告支出概览 |
+| 方法 | 路径 | 功能 | 请求参数 | 响应结构 |
+|------|------|------|----------|----------|
+| GET | /advertising-spending/search | 搜索广告支出 | `platform`(可选), `keyword`(可选), `startDate`(可选), `endDate`(可选), `createdBy`(可选), `page`, `size` | `{ code, data: { total, list, pageNum, pageSize } }` |
+| POST | /advertising-spending/add | 新增广告支出 | `RequestBody AdvertisingSpending` | `{ code, data: AdvertisingSpending }` |
+| PUT | /advertising-spending/edit | 编辑广告支出 | `RequestBody AdvertisingSpending` | `{ code, data: AdvertisingSpending }` |
+| DELETE | /advertising-spending/delete/{id} | 删除广告支出 | `PathVariable Long id` | `{ code, msg: "删除成功" }` |
+| GET | /advertising-spending/dashboard/overview | 广告支出概览 | `platform`(可选), `keyword`(可选), `startDate`(可选), `endDate`(可选), `createdBy`(可选) | `{ code, data: { total_spend_amount, record_count, total_roi_ratio, total_consultation_count, total_arrived_count, total_deal_count, total_deal_amount, funnel: [{name, value}], platform_share: [{platform, amount}], platform_roi: [{platform, spend_amount, consultation_count, arrived_count, deal_count, deal_amount, roi_ratio}], trend: [{month, amount}] } }` |
 
 ---
 
@@ -727,6 +732,24 @@
 
 ---
 
+## 前后端对接修正记录
+
+> 以下记录本次接口核对（2026-05-10）中发现并修正的契约偏差，供联调时参考。
+
+### 1. 登录接口路径统一
+- **问题**：`login.vue` 调用 `POST /login`，后端实际提供 `POST /loginController/login`
+- **修正**：前端已统一为 `/loginController/login`，响应结构同步适配后端 `Result` 标准格式
+
+### 2. 注册接口复用
+- **问题**：`register.vue` 调用 `POST /register`，后端无独立注册接口
+- **修正**：前端改为调用 `POST /accounts/add`，构造 `{ username, password, name, role: 'user' }` 复用账号新增接口
+
+### 3. 排班模板接口（前端 Mock）
+- **说明**：`GET /doctors/shiftTemplates` 暂无后端实现，`DoctorView.vue` 中已内置 Mock 数据降级处理，当前不影响功能运行
+- **后续**：如需持久化排班模板，请在 `DoctorController` 中补充该接口
+
+---
+
 ## 待开发接口预留区
 
 > 新增功能时，在此区域补充接口设计，开发完成后再归档到上方对应模块。
@@ -770,4 +793,4 @@
 
 ---
 
-*最后更新：2026-05-09*
+*最后更新：2026-05-10*

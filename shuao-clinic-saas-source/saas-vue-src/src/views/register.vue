@@ -70,13 +70,19 @@ export default {
     register() {
       this.$refs['registerRef'].validate((valid) => {
         if (valid) {
-          // 验证通过
-          this.$request.post('/register', this.user).then(res => {
-            if (res.code === '200') {
+          // 注册复用账号新增接口（后端暂无独立注册接口）
+          const payload = {
+            username: this.user.username,
+            password: this.user.password,
+            name: this.user.username,
+            role: 'user'
+          }
+          this.$request.post('/accounts/add', payload).then(res => {
+            if (res.code === '200' || res.code === 200) {
               this.$router.push('/login')
               this.$message.success('注册成功')
             } else {
-              this.$message.error(res.msg)
+              this.$message.error(res.msg || '注册失败')
             }
           })
         }

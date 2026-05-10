@@ -48,26 +48,30 @@ export default {
   },
   methods: {
     handleLogin() {
-      axios.post('/login', this.loginForm)
+      axios.post('/loginController/login', this.loginForm)
           .then(response => {
-            const {success, message, role} = response.data;
-            if (success) {
+            const {code, msg, data} = response.data;
+            if (code == 200) {
               this.$message.success('登录成功');
+              const role = data && data.role;
               // 根据角色跳转
-              if (role === 'admin') {
-                this.$router.push('/admin');
-              } else if (role === 'doctor') {
-                this.$router.push('/doctor');
-              } else if (role === 'nurse') {
-                this.$router.push('/nurse');
+              if (role === 'admin' || role === '管理员') {
+                this.$router.push('/home');
+              } else if (role === 'doctor' || role === '医生') {
+                this.$router.push('/Consultation');
+              } else if (role === 'nurse' || role === '护士') {
+                this.$router.push('/home');
+              } else {
+                this.$router.push('/home');
               }
             } else {
-              this.$message.error(message);
+              this.$message.error(msg || '登录失败');
             }
           })
           .catch(error => {
             console.error('Error:', error);
-            this.$message.error('登录失败');
+            const msg = error && error.response && error.response.data && error.response.data.msg;
+            this.$message.error(msg || '登录失败');
           });
     },
     refreshCaptcha() {
