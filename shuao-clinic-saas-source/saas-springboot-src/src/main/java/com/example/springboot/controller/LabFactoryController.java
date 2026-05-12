@@ -19,6 +19,11 @@ public class LabFactoryController {
     @Autowired
     private LabFactoryService labFactoryService;
 
+    @GetMapping("/dashboard/overview")
+    public Result overview() {
+        return Result.success(labFactoryService.buildOverview());
+    }
+
     @GetMapping("/search")
     public Result search(@RequestParam(required = false) String keyword,
                          @RequestParam(required = false) String status,

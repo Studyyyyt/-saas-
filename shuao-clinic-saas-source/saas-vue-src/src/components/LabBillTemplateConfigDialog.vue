@@ -4,6 +4,7 @@
     :visible.sync="dialogVisible"
     width="920px"
     :close-on-click-modal="false"
+    append-to-body
   >
     <div class="template-dialog">
       <el-form label-width="110px" class="template-form">

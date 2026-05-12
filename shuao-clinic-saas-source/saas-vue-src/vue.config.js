@@ -11,6 +11,7 @@ module.exports = defineConfig({
   devServer: {
     host: '0.0.0.0',
     port: 7070,
+    historyApiFallback: true,
     proxy: {
       '/loginController': {
         target: API_TARGET,

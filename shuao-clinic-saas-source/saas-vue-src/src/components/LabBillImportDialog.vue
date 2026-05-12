@@ -4,6 +4,7 @@
     :visible.sync="dialogVisible"
     width="880px"
     :close-on-click-modal="false"
+    append-to-body
   >
     <div class="bill-import-dialog">
       <el-form label-width="110px">

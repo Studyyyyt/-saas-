@@ -440,10 +440,7 @@ export default {
 
 <style scoped>
 .agent-config-page {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 32px 24px;
-  min-height: calc(100vh - var(--apple-nav-height));
+  padding: 0 0 32px;
   box-sizing: border-box;
 }
 

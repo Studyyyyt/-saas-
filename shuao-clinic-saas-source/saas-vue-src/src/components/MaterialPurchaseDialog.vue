@@ -4,6 +4,7 @@
     :visible.sync="dialogVisible"
     :width="dialogWidth"
     :close-on-click-modal="false"
+    append-to-body
   >
     <div class="purchase-dialog">
       <el-form label-width="100px">

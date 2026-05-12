@@ -17,6 +17,7 @@ import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 
 @Service
@@ -339,6 +340,27 @@ public class LabFactoryService {
 
     private int normalizePositiveInt(Integer value, int defaultValue) {
         return value == null || value <= 0 ? defaultValue : value;
+    }
+
+    public Map<String, Object> buildOverview() {
+        List<LabFactory> all = labFactoryMapper.selectAll();
+        int activeCount = 0;
+        int inactiveCount = 0;
+        for (LabFactory f : all) {
+            if (f == null) continue;
+            if (FACTORY_STATUS_ACTIVE.equals(f.getStatus())) activeCount++;
+            else if (FACTORY_STATUS_INACTIVE.equals(f.getStatus())) inactiveCount++;
+        }
+        int totalProducts = labFactoryProductMapper.selectAll().size();
+        int totalTemplates = labBillTemplateMapper.selectAll().size();
+
+        Map<String, Object> result = new java.util.LinkedHashMap<>();
+        result.put("total_count", all.size());
+        result.put("active_count", activeCount);
+        result.put("inactive_count", inactiveCount);
+        result.put("total_products", totalProducts);
+        result.put("total_templates", totalTemplates);
+        return result;
     }
 
     private String normalizeText(String value) {

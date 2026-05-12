@@ -95,4 +95,21 @@ public class DoctorController {
             return Result.error("批量删除失败：" + e.getMessage());
         }
     }
+
+    // 按日期范围查询排班
+    @GetMapping("/schedules")
+    public Result getSchedulesByDateRange(@RequestParam String startDate, @RequestParam String endDate) {
+        return Result.success(doctorService.getSchedulesByDateRange(startDate, endDate));
+    }
+
+    // 批量保存排班
+    @PostMapping("/batchSave")
+    public Result batchSaveSchedules(@RequestBody List<Doctor> schedules) {
+        try {
+            doctorService.batchSaveSchedules(schedules);
+            return Result.success("批量保存成功");
+        } catch (Exception e) {
+            return Result.error("批量保存失败：" + e.getMessage());
+        }
+    }
 }

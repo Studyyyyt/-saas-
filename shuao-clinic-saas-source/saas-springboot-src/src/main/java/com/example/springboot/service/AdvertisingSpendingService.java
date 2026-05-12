@@ -205,14 +205,37 @@ public class AdvertisingSpendingService {
         platformShare.sort(Comparator.comparing(item -> -Double.parseDouble(String.valueOf(item.get("amount")))));
         platformRoi.sort(Comparator.comparing(item -> -Double.parseDouble(String.valueOf(item.get("spend_amount")))));
 
+        // 汇总跨平台的总计数据
+        int totalConsultationCount = platformRoi.stream().mapToInt(r -> (int) r.getOrDefault("consultation_count", 0)).sum();
+        int totalArrivedCount = platformRoi.stream().mapToInt(r -> (int) r.getOrDefault("arrived_count", 0)).sum();
+        int totalDealCount = platformRoi.stream().mapToInt(r -> (int) r.getOrDefault("deal_count", 0)).sum();
+        BigDecimal totalRevenue = platformRoi.stream()
+                .map(r -> BigDecimal.valueOf(((Number) r.getOrDefault("deal_amount", 0D)).doubleValue()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalRoiRatio = totalSpend.compareTo(BigDecimal.ZERO) <= 0
+                ? BigDecimal.ZERO
+                : totalRevenue.divide(totalSpend, 4, RoundingMode.HALF_UP);
+
+        List<Map<String, Object>> funnel = List.of(
+                Map.of("name", "咨询", "value", totalConsultationCount),
+                Map.of("name", "到店", "value", totalArrivedCount),
+                Map.of("name", "成交", "value", totalDealCount)
+        );
+
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("start_date", rangeStart.toString());
         result.put("end_date", rangeEnd.toString());
         result.put("total_spend_amount", roundMoney(totalSpend));
         result.put("record_count", scopedRecords.size());
+        result.put("total_roi_ratio", round2(totalRoiRatio.doubleValue()));
+        result.put("total_consultation_count", totalConsultationCount);
+        result.put("total_arrived_count", totalArrivedCount);
+        result.put("total_deal_count", totalDealCount);
+        result.put("total_deal_amount", roundMoney(totalRevenue));
         result.put("trend", trend);
         result.put("platform_share", platformShare);
         result.put("platform_roi", platformRoi);
+        result.put("funnel", funnel);
         return result;
     }
 

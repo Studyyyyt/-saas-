@@ -16,6 +16,20 @@ public class LabOrderController {
     @Autowired
     private LabOrderService labOrderService;
 
+    @GetMapping("/dashboard/overview")
+    public Result overview(@RequestParam(required = false) String keyword,
+                           @RequestParam(required = false) Long factoryId,
+                           @RequestParam(required = false) String status,
+                           @RequestParam(required = false) Long patientId,
+                           @RequestParam(required = false) String startDate,
+                           @RequestParam(required = false) String endDate) {
+        try {
+            return Result.success(labOrderService.buildOverview(keyword, factoryId, status, patientId, startDate, endDate));
+        } catch (IllegalArgumentException exception) {
+            return Result.error(exception.getMessage());
+        }
+    }
+
     @GetMapping("/search")
     public Result search(@RequestParam(required = false) String keyword,
                          @RequestParam(required = false) Long factoryId,

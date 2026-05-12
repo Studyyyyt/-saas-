@@ -4,6 +4,7 @@
     :visible.sync="dialogVisible"
     width="520px"
     :close-on-click-modal="false"
+    append-to-body
   >
     <el-form label-width="110px" class="material-form">
       <el-form-item label="耗材名称">

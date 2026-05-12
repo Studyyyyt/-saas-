@@ -1,39 +1,66 @@
 <template>
   <div class="lab-page">
-    <div class="hero-card">
-      <div>
-        <div class="page-kicker">义齿加工</div>
-        <h2>加工厂档案</h2>
+    <!-- 页面头部 -->
+    <el-card class="hero-card" shadow="never">
+      <div class="hero-head">
+        <div>
+          <div class="page-kicker">义齿加工</div>
+          <h2>加工厂档案</h2>
           <p>维护合作加工厂；点击“产品库维护”可直接进入外加工产品价格库和账单模板配置。</p>
+        </div>
+        <div class="hero-actions">
+          <el-button type="primary" plain icon="el-icon-magic-stick" @click="openAiPanel">
+            AI 加工分析
+          </el-button>
+          <el-button v-if="canManage" type="primary" icon="el-icon-plus" @click="openCreateDialog">
+            新增加工厂
+          </el-button>
+          <el-button icon="el-icon-refresh" @click="loadList">刷新</el-button>
+        </div>
       </div>
-      <div class="hero-actions">
-        <el-button v-if="canManage" type="primary" plain @click="openCreateDialog">新增加工厂</el-button>
-        <el-button @click="loadList">刷新</el-button>
+    </el-card>
+
+    <!-- 指标卡片 -->
+    <div class="summary-grid">
+      <div class="summary-card total">
+        <div class="summary-icon"><i class="el-icon-office-building"></i></div>
+        <div class="summary-body">
+          <div class="summary-value">{{ overview.total_count || 0 }}</div>
+          <div class="summary-label">档案总数</div>
+        </div>
+      </div>
+      <div class="summary-card active">
+        <div class="summary-icon"><i class="el-icon-circle-check"></i></div>
+        <div class="summary-body">
+          <div class="summary-value">{{ overview.active_count || 0 }}</div>
+          <div class="summary-label">合作中</div>
+        </div>
+      </div>
+      <div class="summary-card inactive">
+        <div class="summary-icon"><i class="el-icon-circle-close"></i></div>
+        <div class="summary-body">
+          <div class="summary-value">{{ overview.inactive_count || 0 }}</div>
+          <div class="summary-label">已停止合作</div>
+        </div>
+      </div>
+      <div class="summary-card product">
+        <div class="summary-icon"><i class="el-icon-goods"></i></div>
+        <div class="summary-body">
+          <div class="summary-value">{{ overview.total_products || 0 }}</div>
+          <div class="summary-label">价格项总数</div>
+        </div>
+      </div>
+      <div class="summary-card template">
+        <div class="summary-icon"><i class="el-icon-document-copy"></i></div>
+        <div class="summary-body">
+          <div class="summary-value">{{ overview.total_templates || 0 }}</div>
+          <div class="summary-label">账单模板数</div>
+        </div>
       </div>
     </div>
 
-    <el-row :gutter="14" class="summary-row">
-      <el-col :xs="24" :sm="8">
-        <el-card shadow="never" class="summary-card">
-          <div class="summary-label">档案总数</div>
-          <div class="summary-value">{{ totalItems }}</div>
-        </el-card>
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <el-card shadow="never" class="summary-card">
-          <div class="summary-label">合作中</div>
-          <div class="summary-value">{{ activeCount }}</div>
-        </el-card>
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <el-card shadow="never" class="summary-card">
-          <div class="summary-label">已停止合作</div>
-          <div class="summary-value">{{ inactiveCount }}</div>
-        </el-card>
-      </el-col>
-    </el-row>
-
-    <el-card shadow="never" class="query-card">
+    <!-- 查询筛选 -->
+    <el-card class="query-card" shadow="never">
       <div class="query-row">
         <el-input
           v-model="filters.keyword"
@@ -46,34 +73,50 @@
           <el-option v-for="item in LAB_FACTORY_STATUS_OPTIONS" :key="item" :label="item" :value="item" />
         </el-select>
         <el-button type="primary" icon="el-icon-search" @click="loadList">查询</el-button>
-        <el-button icon="el-icon-refresh" @click="resetFilters">重置</el-button>
+        <el-button icon="el-icon-refresh-left" @click="resetFilters">重置</el-button>
       </div>
     </el-card>
 
-    <el-card shadow="never" class="table-card">
+    <!-- 表格 -->
+    <el-card class="table-card" shadow="never">
       <el-table
         :data="rows"
         stripe
         v-loading="loading"
-        :header-cell-style="{ backgroundColor: '#f8fafc', color: '#475569', fontWeight: '600' }"
+        size="small"
+        :header-cell-style="tableHeaderStyle"
       >
-        <el-table-column prop="name" label="加工厂" min-width="180" />
-        <el-table-column prop="contact_name" label="联系人" min-width="120" />
+        <el-table-column prop="name" label="加工厂" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="contact_name" label="联系人" min-width="100" />
         <el-table-column prop="contact_phone" label="联系电话" min-width="130" />
-        <el-table-column prop="cooperation_start_date" label="合作开始" min-width="120">
+        <el-table-column prop="cooperation_start_date" label="合作开始" min-width="110">
           <template slot-scope="scope">{{ formatDate(scope.row.cooperation_start_date) || '-' }}</template>
         </el-table-column>
-        <el-table-column label="状态" width="120" align="center">
+        <el-table-column label="状态" width="100" align="center">
           <template slot-scope="scope">
-            <el-tag size="mini" :type="scope.row.status === '合作中' ? 'success' : 'info'">{{ scope.row.status || '-' }}</el-tag>
+            <el-tag
+              size="mini"
+              :type="scope.row.status === '合作中' ? 'success' : 'info'"
+              effect="light"
+            >
+              {{ scope.row.status || '-' }}
+            </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="address" label="地址" min-width="220" show-overflow-tooltip />
-        <el-table-column label="操作" fixed="right" width="280">
+        <el-table-column prop="address" label="地址" min-width="200" show-overflow-tooltip />
+        <el-table-column label="操作" fixed="right" width="260">
           <template slot-scope="scope">
-            <el-button type="text" size="mini" @click="goDetail(scope.row)">产品库维护</el-button>
+            <el-button type="text" size="mini" class="primary-link" @click="goDetail(scope.row)">
+              <i class="el-icon-s-operation"></i> 产品库维护
+            </el-button>
             <el-button v-if="canManage" type="text" size="mini" @click="openEditDialog(scope.row)">编辑</el-button>
-            <el-button v-if="canManage" type="text" size="mini" style="color:#ef4444" @click="handleDelete(scope.row)">删除</el-button>
+            <el-button
+              v-if="canManage"
+              type="text"
+              size="mini"
+              class="danger-link"
+              @click="handleDelete(scope.row)"
+            >删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -93,12 +136,13 @@
       </div>
     </el-card>
 
-    <el-dialog :title="editItem.id ? '编辑加工厂' : '新增加工厂'" :visible.sync="dialogVisible" width="520px">
+    <!-- 新增/编辑弹窗 -->
+    <el-dialog :title="editItem.id ? '编辑加工厂' : '新增加工厂'" :visible.sync="dialogVisible" width="520px" append-to-body>
       <el-form :model="editItem" label-width="110px">
-        <el-form-item label="加工厂名称"><el-input v-model="editItem.name" /></el-form-item>
-        <el-form-item label="联系人"><el-input v-model="editItem.contact_name" /></el-form-item>
-        <el-form-item label="联系电话"><el-input v-model="editItem.contact_phone" /></el-form-item>
-        <el-form-item label="地址"><el-input v-model="editItem.address" type="textarea" :rows="2" /></el-form-item>
+        <el-form-item label="加工厂名称"><el-input v-model="editItem.name" maxlength="100" /></el-form-item>
+        <el-form-item label="联系人"><el-input v-model="editItem.contact_name" maxlength="50" /></el-form-item>
+        <el-form-item label="联系电话"><el-input v-model="editItem.contact_phone" maxlength="30" /></el-form-item>
+        <el-form-item label="地址"><el-input v-model="editItem.address" type="textarea" :rows="2" maxlength="200" /></el-form-item>
         <el-form-item label="合作开始日期">
           <el-date-picker v-model="editItem.cooperation_start_date" type="date" value-format="yyyy-MM-dd" style="width:100%" />
         </el-form-item>
@@ -113,6 +157,46 @@
         <el-button type="primary" :loading="saving" @click="saveFactory">保存</el-button>
       </span>
     </el-dialog>
+
+    <!-- AI 侧边浮层面板 -->
+    <transition name="ai-panel-slide">
+      <div v-if="aiPanelVisible" class="ai-panel-overlay" @click.self="closeAiPanel">
+        <div class="ai-panel">
+          <div class="ai-panel-head">
+            <div class="ai-panel-title">
+              <i class="el-icon-magic-stick"></i>
+              AI 加工分析
+            </div>
+            <button class="ai-panel-close" @click="closeAiPanel">
+              <i class="el-icon-close"></i>
+            </button>
+          </div>
+          <div class="ai-panel-body">
+            <div class="ai-section">
+              <div class="ai-section-title"><i class="el-icon-s-data"></i> 加工厂评估</div>
+              <div class="ai-section-content">
+                <p class="ai-placeholder">基于交货周期、价格、质量综合评估加工厂合作价值</p>
+                <div class="ai-coming-soon">功能即将上线，敬请期待</div>
+              </div>
+            </div>
+            <div class="ai-section">
+              <div class="ai-section-title"><i class="el-icon-s-opportunity"></i> 价格异常检测</div>
+              <div class="ai-section-content">
+                <p class="ai-placeholder">识别价格波动异常的产品项</p>
+                <div class="ai-coming-soon">功能即将上线，敬请期待</div>
+              </div>
+            </div>
+            <div class="ai-section">
+              <div class="ai-section-title"><i class="el-icon-s-marketing"></i> 采购趋势预测</div>
+              <div class="ai-section-content">
+                <p class="ai-placeholder">基于历史订单预测未来加工需求</p>
+                <div class="ai-coming-soon">功能即将上线，敬请期待</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -151,24 +235,24 @@ export default {
         status: ''
       },
       dialogVisible: false,
-      editItem: defaultItem()
+      editItem: defaultItem(),
+      overview: {},
+      aiPanelVisible: false
     }
   },
   computed: {
     canManage() {
       return canManageLabFactory(normalizeLabRole(this.currentUser && this.currentUser.role))
-    },
-    activeCount() {
-      return this.rows.filter(item => item.status === '合作中').length
-    },
-    inactiveCount() {
-      return this.rows.filter(item => item.status === '已停止合作').length
     }
   },
   mounted() {
     this.loadList()
+    this.loadOverview()
   },
   methods: {
+    tableHeaderStyle() {
+      return { backgroundColor: '#f8fafc', color: '#475569', fontWeight: '600' }
+    },
     formatDate(value) {
       return value ? String(value).slice(0, 10) : ''
     },
@@ -192,6 +276,14 @@ export default {
         showApiError(this, '获取加工厂档案', error)
       } finally {
         this.loading = false
+      }
+    },
+    async loadOverview() {
+      try {
+        const res = await axios.get('/lab-factories/dashboard/overview')
+        this.overview = (res.data && res.data.data) || {}
+      } catch (error) {
+        this.overview = {}
       }
     },
     resetFilters() {
@@ -233,6 +325,7 @@ export default {
           this.$message.success(this.editItem.id ? '更新成功' : '新增成功')
           this.dialogVisible = false
           this.loadList()
+          this.loadOverview()
         } else {
           this.$message.error(res.data.msg || '保存失败')
         }
@@ -248,6 +341,7 @@ export default {
         if (res.data.code === '200') {
           this.$message.success('删除成功')
           this.loadList()
+          this.loadOverview()
         } else {
           this.$message.error(res.data.msg || '删除失败')
         }
@@ -255,30 +349,289 @@ export default {
     },
     goDetail(row) {
       this.$router.push({ path: `/lab-factories/${row.id}` }).catch(() => {})
+    },
+    openAiPanel() {
+      this.aiPanelVisible = true
+    },
+    closeAiPanel() {
+      this.aiPanelVisible = false
     }
   }
 }
 </script>
 
 <style scoped>
-.lab-page { display:flex; flex-direction:column; gap:14px; }
-.hero-card { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:18px; border-radius:18px; background:#fff; box-shadow:0 8px 24px rgba(31,71,136,.08); }
-.page-kicker { color:#64748b; font-size:13px; }
-.hero-card h2 { margin:6px 0 8px; color:#0f172a; font-size:24px; }
-.hero-card p { margin:0; color:#94a3b8; }
-.hero-actions { display:flex; gap:10px; flex-wrap:wrap; }
-.summary-row { margin:0 !important; }
-.summary-card { border-radius:18px; }
-.summary-label { color:#94a3b8; font-size:13px; }
-.summary-value { margin-top:8px; font-size:28px; font-weight:700; color:#0f172a; }
-.query-card,.table-card { border-radius:18px; }
-.query-row { display:flex; gap:12px; flex-wrap:wrap; }
-.query-input { width:280px; }
-.query-select { width:180px; }
-.pagination-row { display:flex; justify-content:flex-end; padding-top:16px; }
+.lab-page {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.hero-card {
+  border-radius: 20px;
+}
+
+.hero-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.page-kicker {
+  color: #2563eb;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hero-head h2 {
+  margin: 8px 0 6px;
+  font-size: 28px;
+  color: #0f172a;
+}
+
+.hero-head p {
+  margin: 0;
+  color: #64748b;
+}
+
+.query-card,
+.table-card {
+  border-radius: 20px;
+}
+
+.query-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.query-input {
+  width: 280px;
+}
+
+.query-select {
+  width: 180px;
+}
+
+/* 指标卡片 */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.summary-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.summary-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.summary-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.summary-card.total .summary-icon { background: #eff6ff; color: #2563eb; }
+.summary-card.active .summary-icon { background: #f0fdf4; color: #16a34a; }
+.summary-card.inactive .summary-icon { background: #f8fafc; color: #64748b; }
+.summary-card.product .summary-icon { background: #fff7ed; color: #ea580c; }
+.summary-card.template .summary-icon { background: #f5f3ff; color: #7c3aed; }
+
+.summary-body {
+  min-width: 0;
+}
+
+.summary-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.summary-label {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.pagination-row {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 16px;
+}
+
+.primary-link {
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.danger-link {
+  color: #ef4444;
+}
+
+/* AI 面板 */
+.ai-panel-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.ai-panel {
+  width: 420px;
+  max-width: 90vw;
+  height: 100vh;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.12);
+}
+
+.ai-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.ai-panel-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ai-panel-title i {
+  color: #a855f7;
+  font-size: 18px;
+}
+
+.ai-panel-close {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-panel-close:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.ai-panel-body {
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ai-section {
+  background: #fff;
+  border-radius: 14px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+}
+
+.ai-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.ai-section-title i {
+  color: #a855f7;
+}
+
+.ai-placeholder {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0 0 10px;
+}
+
+.ai-coming-soon {
+  font-size: 12px;
+  color: #94a3b8;
+  background: #f8fafc;
+  padding: 8px 12px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.ai-panel-slide-enter-active,
+.ai-panel-slide-leave-active {
+  transition: all 0.25s ease;
+}
+
+.ai-panel-slide-enter,
+.ai-panel-slide-leave-to {
+  opacity: 0;
+}
+
+.ai-panel-slide-enter .ai-panel,
+.ai-panel-slide-leave-to .ai-panel {
+  transform: translateX(100%);
+}
+
 @media (max-width: 768px) {
-  .hero-card { flex-direction:column; align-items:flex-start; }
-  .query-input,.query-select { width:100%; }
-  .pagination-row { justify-content:center; }
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .query-input,
+  .query-select {
+    width: 100%;
+  }
+
+  .pagination-row {
+    justify-content: center;
+  }
 }
 </style>

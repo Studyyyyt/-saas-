@@ -4,6 +4,7 @@
     :visible.sync="dialogVisible"
     width="760px"
     :close-on-click-modal="false"
+    append-to-body
   >
     <div class="lab-order-dialog">
       <div class="dialog-topbar">

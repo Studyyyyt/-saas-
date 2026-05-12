@@ -29,4 +29,7 @@ public interface LabFactoryProductMapper {
 
     @Delete("DELETE FROM lab_factory_products WHERE factory_id = #{factoryId}")
     void deleteByFactoryId(@Param("factoryId") Long factoryId);
+
+    @Select("SELECT * FROM lab_factory_products ORDER BY id DESC")
+    List<LabFactoryProduct> selectAll();
 }

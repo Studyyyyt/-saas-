@@ -26,4 +26,7 @@ public interface LabBillTemplateMapper {
 
     @Delete("DELETE FROM lab_bill_templates WHERE factory_id = #{factoryId}")
     void deleteByFactoryId(@Param("factoryId") Long factoryId);
+
+    @Select("SELECT * FROM lab_bill_templates ORDER BY id DESC")
+    List<LabBillTemplate> selectAll();
 }

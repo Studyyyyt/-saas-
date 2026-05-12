@@ -106,7 +106,7 @@ export default {
       loading: false,
       saveLoading: false,
       testLoading: false,
-      showApiKey: false,
+      showApiKey: true,
       testResult: null,
       form: {
         id: null,
@@ -139,8 +139,8 @@ export default {
           this.form.reasoningEffort = data.reasoningEffort || 'medium'
           this.form.maxOutputTokens = data.maxOutputTokens || 3000
           this.form.enabled = data.enabled !== false
-          // apiKey 返回的是脱敏的，前端留空表示不修改
-          this.form.apiKey = ''
+          // apiKey 返回的是脱敏的，显示脱敏值方便用户确认已配置
+          this.form.apiKey = data.apiKey || ''
         }
       } catch (e) {
         this.$message.error('加载配置失败')
@@ -236,10 +236,7 @@ export default {
 
 <style scoped>
 .provider-config-page {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 32px 24px;
-  min-height: calc(100vh - var(--apple-nav-height));
+  padding: 0 0 32px;
   box-sizing: border-box;
 }
 

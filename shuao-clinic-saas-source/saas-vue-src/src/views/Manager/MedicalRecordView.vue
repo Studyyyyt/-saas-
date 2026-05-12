@@ -102,16 +102,16 @@
                   <i class="el-icon-s-order section-header__icon"></i>
                   <span class="section-header__title">主诉与现病史</span>
                 </div>
-                <el-button size="mini" type="primary" plain round @click="aiAssist('complaint')">
-                  <i class="el-icon-magic-stick"></i> AI 辅助
-                </el-button>
               </div>
               <div class="section-body">
                 <el-form-item prop="chief_complaint" label="主诉" label-width="80px">
                   <div class="phrase-input-wrap">
-                    <el-popover append-to-body ref="phrasePopover-chief_complaint" placement="bottom-start" width="300" trigger="manual" v-model="phrasePopoverVisible['chief_complaint']">
+                    <el-popover append-to-body ref="phrasePopover-chief_complaint" placement="bottom-start" width="340" trigger="manual" v-model="phrasePopoverVisible['chief_complaint']">
                       <div class="phrase-popover" @mouseenter="$set(phrasePopoverHover, 'chief_complaint', true)" @mouseleave="$set(phrasePopoverHover, 'chief_complaint', false)">
-                        <div class="phrase-popover__title">常用短语 — 主诉</div>
+                        <div class="phrase-popover__title">
+                          <span>常用短语 — 主诉</span>
+                          <i class="el-icon-close phrase-popover__close" @click.stop="closePhrasePopover('chief_complaint')"></i>
+                        </div>
                         <div v-for="(items, category) in groupedPhrases('chief_complaint')" :key="category" class="phrase-popover__group">
                           <div class="phrase-popover__category">{{ category }}</div>
                           <div class="phrase-popover__list">
@@ -136,9 +136,12 @@
                 </el-form-item>
                 <el-form-item label="现病史" label-width="80px">
                   <div class="phrase-input-wrap">
-                    <el-popover append-to-body ref="phrasePopover-present_illness_history" placement="bottom-start" width="300" trigger="manual" v-model="phrasePopoverVisible['present_illness_history']">
+                    <el-popover append-to-body ref="phrasePopover-present_illness_history" placement="bottom-start" width="340" trigger="manual" v-model="phrasePopoverVisible['present_illness_history']">
                       <div class="phrase-popover" @mouseenter="$set(phrasePopoverHover, 'present_illness_history', true)" @mouseleave="$set(phrasePopoverHover, 'present_illness_history', false)">
-                        <div class="phrase-popover__title">常用短语 — 现病史</div>
+                        <div class="phrase-popover__title">
+                          <span>常用短语 — 现病史</span>
+                          <i class="el-icon-close phrase-popover__close" @click.stop="closePhrasePopover('present_illness_history')"></i>
+                        </div>
                         <div v-for="(items, category) in groupedPhrases('present_illness_history')" :key="category" class="phrase-popover__group">
                           <div class="phrase-popover__category">{{ category }}</div>
                           <div class="phrase-popover__list">
@@ -163,9 +166,12 @@
                 </el-form-item>
                 <el-form-item label="既往史" label-width="80px">
                   <div class="phrase-input-wrap">
-                    <el-popover append-to-body ref="phrasePopover-past_history" placement="bottom-start" width="300" trigger="manual" v-model="phrasePopoverVisible['past_history']">
+                    <el-popover append-to-body ref="phrasePopover-past_history" placement="bottom-start" width="340" trigger="manual" v-model="phrasePopoverVisible['past_history']">
                       <div class="phrase-popover" @mouseenter="$set(phrasePopoverHover, 'past_history', true)" @mouseleave="$set(phrasePopoverHover, 'past_history', false)">
-                        <div class="phrase-popover__title">常用短语 — 既往史</div>
+                        <div class="phrase-popover__title">
+                          <span>常用短语 — 既往史</span>
+                          <i class="el-icon-close phrase-popover__close" @click.stop="closePhrasePopover('past_history')"></i>
+                        </div>
                         <div v-for="(items, category) in groupedPhrases('past_history')" :key="category" class="phrase-popover__group">
                           <div class="phrase-popover__category">{{ category }}</div>
                           <div class="phrase-popover__list">
@@ -214,16 +220,16 @@
                   <i class="el-icon-search section-header__icon"></i>
                   <span class="section-header__title">检查与诊断</span>
                 </div>
-                <el-button size="mini" type="primary" plain round @click="aiAssist('diagnosis')">
-                  <i class="el-icon-magic-stick"></i> AI 辅助
-                </el-button>
               </div>
               <div class="section-body">
                 <el-form-item label="检查" label-width="80px">
                   <div class="phrase-input-wrap">
-                    <el-popover append-to-body ref="phrasePopover-examination" placement="bottom-start" width="300" trigger="manual" v-model="phrasePopoverVisible['examination']">
+                    <el-popover append-to-body ref="phrasePopover-examination" placement="bottom-start" width="340" trigger="manual" v-model="phrasePopoverVisible['examination']">
                       <div class="phrase-popover" @mouseenter="$set(phrasePopoverHover, 'examination', true)" @mouseleave="$set(phrasePopoverHover, 'examination', false)">
-                        <div class="phrase-popover__title">常用短语 — 检查</div>
+                        <div class="phrase-popover__title">
+                          <span>常用短语 — 检查</span>
+                          <i class="el-icon-close phrase-popover__close" @click.stop="closePhrasePopover('examination')"></i>
+                        </div>
                         <div v-for="(items, category) in groupedPhrases('examination')" :key="category" class="phrase-popover__group">
                           <div class="phrase-popover__category">{{ category }}</div>
                           <div class="phrase-popover__list">
@@ -251,9 +257,12 @@
                 </el-form-item>
                 <el-form-item prop="diagnosis" label="诊断" label-width="80px">
                   <div class="phrase-input-wrap">
-                    <el-popover append-to-body ref="phrasePopover-diagnosis" placement="bottom-start" width="300" trigger="manual" v-model="phrasePopoverVisible['diagnosis']">
+                    <el-popover append-to-body ref="phrasePopover-diagnosis" placement="bottom-start" width="340" trigger="manual" v-model="phrasePopoverVisible['diagnosis']">
                       <div class="phrase-popover" @mouseenter="$set(phrasePopoverHover, 'diagnosis', true)" @mouseleave="$set(phrasePopoverHover, 'diagnosis', false)">
-                        <div class="phrase-popover__title">常用短语 — 诊断</div>
+                        <div class="phrase-popover__title">
+                          <span>常用短语 — 诊断</span>
+                          <i class="el-icon-close phrase-popover__close" @click.stop="closePhrasePopover('diagnosis')"></i>
+                        </div>
                         <div v-for="(items, category) in groupedPhrases('diagnosis')" :key="category" class="phrase-popover__group">
                           <div class="phrase-popover__category">{{ category }}</div>
                           <div class="phrase-popover__list">
@@ -293,16 +302,16 @@
                   <i class="el-icon-s-claim section-header__icon"></i>
                   <span class="section-header__title">治疗计划</span>
                 </div>
-                <el-button size="mini" type="primary" plain round @click="aiAssist('treatment')">
-                  <i class="el-icon-magic-stick"></i> AI 辅助
-                </el-button>
               </div>
               <div class="section-body">
                 <el-form-item label="治疗方案" label-width="80px">
                   <div class="phrase-input-wrap">
-                    <el-popover append-to-body ref="phrasePopover-treatment_plan" placement="bottom-start" width="300" trigger="manual" v-model="phrasePopoverVisible['treatment_plan']">
+                    <el-popover append-to-body ref="phrasePopover-treatment_plan" placement="bottom-start" width="340" trigger="manual" v-model="phrasePopoverVisible['treatment_plan']">
                       <div class="phrase-popover" @mouseenter="$set(phrasePopoverHover, 'treatment_plan', true)" @mouseleave="$set(phrasePopoverHover, 'treatment_plan', false)">
-                        <div class="phrase-popover__title">常用短语 — 治疗方案</div>
+                        <div class="phrase-popover__title">
+                          <span>常用短语 — 治疗方案</span>
+                          <i class="el-icon-close phrase-popover__close" @click.stop="closePhrasePopover('treatment_plan')"></i>
+                        </div>
                         <div v-for="(items, category) in groupedPhrases('treatment_plan')" :key="category" class="phrase-popover__group">
                           <div class="phrase-popover__category">{{ category }}</div>
                           <div class="phrase-popover__list">
@@ -326,10 +335,34 @@
                   </div>
                 </el-form-item>
                 <el-form-item label="治疗文稿" label-width="80px">
-                  <div class="treatment-draft-toolbar">
-                    <span class="treatment-draft-hint">请直接填写治疗文稿内容。</span>
+                  <div class="phrase-input-wrap">
+                    <el-popover append-to-body ref="phrasePopover-treatment" placement="bottom-start" width="340" trigger="manual" v-model="phrasePopoverVisible['treatment']">
+                      <div class="phrase-popover" @mouseenter="$set(phrasePopoverHover, 'treatment', true)" @mouseleave="$set(phrasePopoverHover, 'treatment', false)">
+                        <div class="phrase-popover__title">
+                          <span>常用短语 — 治疗文稿</span>
+                          <i class="el-icon-close phrase-popover__close" @click.stop="closePhrasePopover('treatment')"></i>
+                        </div>
+                        <div v-for="(items, category) in groupedPhrases('treatment')" :key="category" class="phrase-popover__group">
+                          <div class="phrase-popover__category">{{ category }}</div>
+                          <div class="phrase-popover__list">
+                            <div v-for="item in items" :key="item.id" class="phrase-item">
+                              <el-button size="mini" type="text" @click="insertPhrase('treatment', item.content)">{{ item.content }}</el-button>
+                              <el-button size="mini" type="text" style="color:#ef4444" @click="deletePhrase(item.id, 'treatment')"><i class="el-icon-delete" /></el-button>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="phrase-popover__empty" v-if="!phraseData['treatment'] || !phraseData['treatment'].length">暂无词条，请在下方添加</div>
+                        <div class="phrase-popover__add">
+                          <el-input v-model="phraseNewCategory['treatment']" size="mini" placeholder="分类（如根管治疗）" />
+                          <div style="display:flex;gap:6px;margin-top:6px;">
+                            <el-input v-model="phraseNewContent['treatment']" size="mini" placeholder="添加新词条" style="flex:1" />
+                            <el-button size="mini" type="primary" @click="addPhrase('treatment')">添加</el-button>
+                          </div>
+                        </div>
+                      </div>
+                      <el-input slot="reference" v-model="form.treatment" type="textarea" :rows="3" placeholder="治疗文稿" @focus="handlePhraseFocus('treatment')" @blur="(e) => handlePhraseBlur('treatment', e)" @input="handleTreatmentInput" />
+                    </el-popover>
                   </div>
-                  <el-input v-model="form.treatment" type="textarea" :rows="3" placeholder="治疗文稿" @input="handleTreatmentInput" />
                 </el-form-item>
               </div>
             </el-card>
@@ -346,9 +379,12 @@
               <div class="section-body">
                 <el-form-item label="医嘱" label-width="80px">
                   <div class="phrase-input-wrap">
-                    <el-popover append-to-body ref="phrasePopover-medical_advice" placement="bottom-start" width="300" trigger="manual" v-model="phrasePopoverVisible['medical_advice']">
+                    <el-popover append-to-body ref="phrasePopover-medical_advice" placement="bottom-start" width="340" trigger="manual" v-model="phrasePopoverVisible['medical_advice']">
                       <div class="phrase-popover" @mouseenter="$set(phrasePopoverHover, 'medical_advice', true)" @mouseleave="$set(phrasePopoverHover, 'medical_advice', false)">
-                        <div class="phrase-popover__title">常用短语 — 医嘱</div>
+                        <div class="phrase-popover__title">
+                          <span>常用短语 — 医嘱</span>
+                          <i class="el-icon-close phrase-popover__close" @click.stop="closePhrasePopover('medical_advice')"></i>
+                        </div>
                         <div v-for="(items, category) in groupedPhrases('medical_advice')" :key="category" class="phrase-popover__group">
                           <div class="phrase-popover__category">{{ category }}</div>
                           <div class="phrase-popover__list">
@@ -447,9 +483,12 @@
                 </el-form-item>
                 <el-form-item label="病历备注" label-width="80px">
                   <div class="phrase-input-wrap">
-                    <el-popover append-to-body ref="phrasePopover-notes" placement="bottom-start" width="300" trigger="manual" v-model="phrasePopoverVisible['notes']">
+                    <el-popover append-to-body ref="phrasePopover-notes" placement="bottom-start" width="340" trigger="manual" v-model="phrasePopoverVisible['notes']">
                       <div class="phrase-popover" @mouseenter="$set(phrasePopoverHover, 'notes', true)" @mouseleave="$set(phrasePopoverHover, 'notes', false)">
-                        <div class="phrase-popover__title">常用短语 — 病历备注</div>
+                        <div class="phrase-popover__title">
+                          <span>常用短语 — 病历备注</span>
+                          <i class="el-icon-close phrase-popover__close" @click.stop="closePhrasePopover('notes')"></i>
+                        </div>
                         <div v-for="(items, category) in groupedPhrases('notes')" :key="category" class="phrase-popover__group">
                           <div class="phrase-popover__category">{{ category }}</div>
                           <div class="phrase-popover__list">
@@ -487,16 +526,76 @@
                 </div>
                 <el-tag size="mini" type="primary" effect="plain" round><i class="el-icon-magic-stick" style="margin-right:4px;"></i>智能</el-tag>
               </div>
-              <div class="ai-panel-chips">
-                <span class="ai-chip" @click="aiAssist('complaint')"><i class="el-icon-document"></i>补全病历</span>
-                <span class="ai-chip" @click="aiAssist('diagnosis')"><i class="el-icon-first-aid-kit"></i>辅助诊断</span>
-                <span class="ai-chip" @click="aiAssist('treatment')"><i class="el-icon-s-claim"></i>生成方案</span>
-                <span class="ai-chip" @click="aiAssist('operation')"><i class="el-icon-coin"></i>推荐价格</span>
-              </div>
-              <div class="ai-panel-input" @click="aiAssist('')">
-                <i class="el-icon-chat-dot-round"></i>
-                <span>向 AI 助手提问...</span>
-                <i class="el-icon-arrow-right"></i>
+              <div class="ai-panel-actions">
+                <!-- 治疗场景选择 -->
+                <div class="scene-select-row">
+                  <el-select
+                    v-model="selectedSceneId"
+                    size="mini"
+                    placeholder="选择治疗类型（可选）"
+                    style="width: 100%"
+                    clearable
+                    @change="onSceneChange"
+                  >
+                    <el-option-group
+                      v-for="group in sceneGroups"
+                      :key="group.category"
+                      :label="group.category"
+                    >
+                      <el-option
+                        v-for="scene in group.scenes"
+                        :key="scene.id"
+                        :label="scene.name"
+                        :value="scene.id"
+                      >
+                        <span style="float: left">{{ scene.name }}</span>
+                        <el-tag v-if="scene.level === 3" size="mini" type="warning" style="float: right; margin-left: 8px">复杂</el-tag>
+                        <el-tag v-else-if="scene.level === 2" size="mini" type="info" style="float: right; margin-left: 8px">中等</el-tag>
+                        <el-tag v-else size="mini" type="success" style="float: right; margin-left: 8px">简单</el-tag>
+                      </el-option>
+                    </el-option-group>
+                  </el-select>
+                </div>
+
+                <!-- 操作清单（仅复杂/中等病种显示） -->
+                <div v-if="currentSceneSteps.length > 0" class="scene-steps-box">
+                  <div class="scene-steps-title">
+                    <i class="el-icon-check"></i>
+                    本次操作（勾选已做）
+                  </div>
+                  <el-checkbox-group v-model="selectedOperations" size="mini" class="scene-steps-group">
+                    <el-checkbox
+                      v-for="step in currentSceneSteps"
+                      :key="step.id"
+                      :label="step.name"
+                      border
+                      class="scene-step-tag"
+                    >
+                      {{ step.name }}
+                    </el-checkbox>
+                  </el-checkbox-group>
+                  <div class="scene-steps-hint">
+                    <i class="el-icon-warning-outline"></i>
+                    AI 只会扩写您勾选的操作，未勾选的不会编造
+                  </div>
+                </div>
+
+                <el-button
+                  type="primary"
+                  round
+                  size="small"
+                  :loading="aiLoading"
+                  :disabled="aiLoading"
+                  class="ai-panel-main-btn"
+                  @click="aiAssist"
+                >
+                  <i class="el-icon-magic-stick"></i>
+                  {{ aiLoading ? 'AI 正在扩写中...' : '一键智能扩写' }}
+                </el-button>
+                <div class="ai-panel-hint">
+                  <i class="el-icon-info"></i>
+                  自动检查已填写字段进行扩充，未填写字段智能补全
+                </div>
               </div>
             </el-card>
 
@@ -883,6 +982,11 @@ export default {
       activeTemplateCategory: DEFAULT_TEMPLATE_CATEGORY,
       patientImages: [],
       patientImagesLoading: false,
+      aiLoading: false,
+      scenes: [],
+      selectedSceneId: null,
+      selectedOperations: [],
+      currentSceneSteps: [],
       previewVisible: false,
       previewImageItem: null,
       imageUploadExtra: {
@@ -915,6 +1019,18 @@ export default {
   computed: {
     pendingLabTotal() {
       return (this.tableData || []).reduce((sum, item) => sum + Number(item.pending_lab_count || 0), 0)
+    },
+    sceneGroups() {
+      const groups = {}
+      for (const scene of this.scenes || []) {
+        const cat = scene.category || '其他'
+        if (!groups[cat]) groups[cat] = []
+        groups[cat].push(scene)
+      }
+      return Object.keys(groups).map(category => ({
+        category,
+        scenes: groups[category].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+      }))
     },
     selectedProjectOperations() {
       const detail = this.projectDetailCache[String(this.selectedProjectId || '')]
@@ -1060,6 +1176,7 @@ export default {
     this.loadMedicalRecordTemplateOptions()
     this.loadAll()
     this.loadScheduleEntries()
+    this.loadScenes()
     this.form = this.buildEmptyForm()
     this.imageUploadExtra.imageDate = this.currentDateValue()
     this.handleRouteQuery()
@@ -1210,7 +1327,7 @@ export default {
         past_history: '',
         infectious_history: '',
         allergy_history: '',
-        general_condition: '体健',
+        general_condition: '',
         examination: '',
         auxiliary_examination: '',
         diagnosis: '',
@@ -1382,6 +1499,10 @@ export default {
     handlePhraseFocus(fieldType) {
       this.loadPhrases(fieldType)
       this.$set(this.phrasePopoverVisible, fieldType, true)
+    },
+    closePhrasePopover(fieldType) {
+      this.$set(this.phrasePopoverVisible, fieldType, false)
+      this.$set(this.phrasePopoverHover, fieldType, false)
     },
     handlePhraseBlur(fieldType, event) {
       const relatedTarget = event && event.relatedTarget
@@ -2121,15 +2242,94 @@ export default {
       if (!patientId) return
       this.$router.push({ path: '/patient360', query: { id: patientId } }).catch(() => {})
     },
-    aiAssist(type) {
-      const messages = {
-        complaint: 'AI 正在分析患者信息，为您补全病历内容...',
-        diagnosis: 'AI 正在根据检查结果生成辅助诊断建议...',
-        treatment: 'AI 正在根据操作项目生成治疗方案与价格...',
-        operation: 'AI 正在推荐关联治疗项目与报价...',
-        summary: 'AI 正在分析所有病历数据，生成统计洞察...'
+    async loadScenes() {
+      try {
+        const res = await axios.get('/api/treatment-scenes/enabled')
+        if (res.data && res.data.code === '200') {
+          this.scenes = res.data.data || []
+        }
+      } catch (e) {
+        console.warn('加载治疗场景失败', e)
       }
-      this.$message.info(messages[type] || 'AI 功能开发中')
+    },
+    onSceneChange(sceneId) {
+      this.selectedOperations = []
+      this.currentSceneSteps = []
+      if (!sceneId) return
+      const scene = this.scenes.find(s => s.id === sceneId)
+      if (!scene) return
+      if (scene.level === 1) {
+        // 简单病种不需要步骤勾选
+        this.currentSceneSteps = []
+        return
+      }
+      // 加载步骤
+      axios.get(`/api/treatment-scenes/${sceneId}/steps`).then(res => {
+        if (res.data && res.data.code === '200') {
+          this.currentSceneSteps = (res.data.data || []).filter(s => s.enabled !== false)
+          // 默认选中第一个步骤
+          if (this.currentSceneSteps.length > 0) {
+            this.selectedOperations = [this.currentSceneSteps[0].name]
+          }
+        }
+      }).catch(() => {})
+    },
+    async aiAssist() {
+      if (this.aiLoading) return
+      // 如果有选择场景但没有任何操作被勾选，提示用户
+      if (this.selectedSceneId && this.currentSceneSteps.length > 0 && this.selectedOperations.length === 0) {
+        this.$message.warning('请先勾选本次已做的操作，再点击扩写')
+        return
+      }
+      this.$message.info('AI 正在分析病历字段，智能扩写中...')
+      this.aiLoading = true
+      try {
+        const fields = {
+          chiefComplaint: this.form.chief_complaint || '',
+          historyOfPresentIllness: this.form.present_illness_history || '',
+          pastHistory: this.form.past_history || '',
+          generalCondition: this.form.general_condition || '',
+          examinationFindings: this.form.examination || '',
+          auxiliaryExamination: this.form.auxiliary_examination || '',
+          diagnosis: this.form.diagnosis || '',
+          treatmentPlan: this.form.treatment_plan || '',
+          treatment: this.form.treatment || '',
+          medicalAdvice: this.form.medical_advice || '',
+          prescription: this.form.prescription || '',
+          notes: this.form.notes || ''
+        }
+        const payload = {
+          fields,
+          sceneId: this.selectedSceneId || undefined,
+          operations: this.selectedOperations.length > 0 ? this.selectedOperations : undefined
+        }
+        const res = await axios.post('/api/ai/medical-record/expand', payload)
+        if (res.data && res.data.code === '200' && res.data.data) {
+          const data = res.data.data
+          if (data.chiefComplaint != null) this.form.chief_complaint = data.chiefComplaint
+          if (data.historyOfPresentIllness != null) this.form.present_illness_history = data.historyOfPresentIllness
+          if (data.pastHistory != null) this.form.past_history = data.pastHistory
+          if (data.generalCondition != null) this.form.general_condition = data.generalCondition
+          if (data.examinationFindings != null) this.form.examination = data.examinationFindings
+          if (data.auxiliaryExamination != null) this.form.auxiliary_examination = data.auxiliaryExamination
+          if (data.diagnosis != null) this.form.diagnosis = data.diagnosis
+          if (data.treatmentPlan != null) this.form.treatment_plan = data.treatmentPlan
+          if (data.treatment != null) this.form.treatment = data.treatment
+          if (data.medicalAdvice != null) this.form.medical_advice = data.medicalAdvice
+          if (data.prescription != null) this.form.prescription = data.prescription
+          if (data.notes != null) this.form.notes = data.notes
+          this.$message.success('AI 扩写完成')
+        } else {
+          this.$message.error(res.data && res.data.msg ? res.data.msg : 'AI 扩写失败')
+        }
+      } catch (e) {
+        const msg = e && e.response && e.response.data && e.response.data.msg
+          ? e.response.data.msg
+          : (e.message || '请求失败')
+        this.$message.error('AI 扩写出错：' + msg)
+      } finally {
+        this.aiLoading = false
+      }
     }
   }
 }
@@ -3203,6 +3403,86 @@ export default {
   font-size: 13px;
 }
 
+/* 统一 AI 扩写按钮 */
+.ai-panel-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ai-panel-main-btn {
+  width: 100%;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.ai-panel-main-btn i {
+  margin-right: 4px;
+}
+.ai-panel-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--apple-text-tertiary);
+  line-height: 1.5;
+  padding: 0 4px;
+}
+.ai-panel-hint i {
+  font-size: 12px;
+  margin-top: 1px;
+  color: var(--apple-text-tertiary);
+}
+
+/* 场景选择 */
+.scene-select-row {
+  margin-bottom: 8px;
+}
+.scene-steps-box {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(37, 99, 235, 0.1);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.scene-steps-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--apple-text-primary);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.scene-steps-title i {
+  color: var(--apple-accent);
+  font-size: 13px;
+}
+.scene-steps-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.scene-step-tag {
+  margin: 0 !important;
+}
+.scene-step-tag .el-checkbox__label {
+  font-size: 12px;
+  padding-left: 4px;
+}
+.scene-steps-hint {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--apple-text-tertiary);
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  line-height: 1.4;
+}
+.scene-steps-hint i {
+  font-size: 12px;
+  margin-top: 1px;
+  color: var(--apple-warning, #f59e0b);
+}
+
 /* section-card 微调 */
 .section-card {
   border: 1px solid var(--apple-border);
@@ -3267,35 +3547,86 @@ export default {
   width: 100%;
 }
 .phrase-popover {
-  max-height: 260px;
+  max-height: 380px;
   overflow-y: auto;
+  padding: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,0.15) transparent;
+}
+.phrase-popover::-webkit-scrollbar {
+  width: 5px;
+}
+.phrase-popover::-webkit-scrollbar-track {
+  background: transparent;
+}
+.phrase-popover::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.15);
+  border-radius: 10px;
 }
 .phrase-popover__title {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--apple-text-primary);
-  margin-bottom: 10px;
-  padding-bottom: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
   border-bottom: 1px solid var(--apple-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.phrase-popover__close {
+  cursor: pointer;
+  color: var(--apple-text-secondary);
+  padding: 4px;
+  border-radius: 50%;
+  transition: all 0.2s;
+  font-size: 14px;
+}
+.phrase-popover__close:hover {
+  color: var(--apple-text-primary);
+  background: rgba(0,0,0,0.06);
 }
 .phrase-popover__group {
-  margin-bottom: 10px;
+  margin-bottom: 14px;
 }
 .phrase-popover__category {
   font-size: 11px;
-  color: var(--apple-text-secondary);
-  margin-bottom: 4px;
+  font-weight: 600;
+  color: var(--apple-blue);
+  margin-bottom: 8px;
+  padding: 3px 10px;
+  background: rgba(0, 113, 227, 0.08);
+  border-radius: 20px;
+  display: inline-block;
+  letter-spacing: 0.3px;
 }
 .phrase-popover__list {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 8px;
 }
-.phrase-popover__list .el-button {
-  padding: 4px 8px;
-  border-radius: 8px;
-  background: var(--apple-bg-primary);
+.phrase-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #ffffff;
   border: 1px solid var(--apple-border);
+  border-radius: 20px;
+  padding: 5px 10px 5px 14px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.phrase-item:hover {
+  background: var(--apple-blue-light);
+  border-color: rgba(0, 113, 227, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.12);
+  transform: translateY(-1px);
+}
+.phrase-item .el-button--text {
+  padding: 0;
+  border: none;
+  background: transparent;
   color: var(--apple-text-primary);
   font-size: 12px;
   line-height: 1.4;
@@ -3303,35 +3634,43 @@ export default {
   text-align: left;
   margin-left: 0;
 }
-.phrase-popover__list .el-button:hover {
-  background: var(--apple-blue-light);
-  border-color: rgba(0, 113, 227, 0.2);
+.phrase-item .el-button--text:hover {
   color: var(--apple-blue);
 }
-.phrase-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 4px;
+.phrase-item .el-button--text + .el-button--text {
+  padding: 2px 4px;
+  border-radius: 50%;
+  color: #cbd5e1;
+  font-size: 11px;
+  margin-left: 2px;
+  transition: all 0.2s;
 }
-.phrase-item .el-button {
-  padding: 4px 6px;
+.phrase-item .el-button--text + .el-button--text:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.08);
 }
 .phrase-popover__empty {
   font-size: 12px;
   color: var(--apple-text-secondary);
   text-align: center;
-  padding: 12px 0;
+  padding: 20px 0;
 }
 .phrase-popover__add {
   display: flex;
+  flex-direction: column;
   gap: 6px;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid var(--apple-border);
+  margin-top: 12px;
+  padding: 10px;
+  background: #f9fafb;
+  border-radius: 10px;
+  border: 1px solid var(--apple-border);
 }
 .phrase-popover__add .el-input {
   flex: 1;
+}
+.phrase-popover__add .el-input__inner {
+  background: #ffffff;
+  border-radius: 6px;
 }
 
 /* 响应式 */

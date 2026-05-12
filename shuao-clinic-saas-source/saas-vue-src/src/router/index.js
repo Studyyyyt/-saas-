@@ -59,8 +59,20 @@ import SystemConsentTemplateView from "@/views/Manager/SystemConsentTemplateView
 import SystemAccountPermissionView from "@/views/Manager/SystemAccountPermissionView.vue";
 import SystemAccountManageView from "@/views/Manager/SystemAccountManageView.vue";
 import SystemSettingsView from "@/views/Manager/SystemSettingsView.vue";
+import SystemSettingsLayout from "@/views/Manager/SystemSettingsLayout.vue";
 import AIAgentConfigView from "@/views/Manager/AIAgentConfigView.vue";
 import ModelProviderConfigView from "@/views/Manager/ModelProviderConfigView.vue";
+import AIOverviewView from "@/views/Manager/AIOverviewView.vue";
+import AIAgentLinkView from "@/views/Manager/AIAgentLinkView.vue";
+import MedicalRecordAIConfigView from "@/views/Manager/MedicalRecordAIConfigView.vue";
+import PatientAIConfigView from "@/views/Manager/PatientAIConfigView.vue";
+import HelpDocumentLayout from "@/views/Manager/HelpDocumentLayout.vue";
+import HelpDocumentIndexView from "@/views/Manager/HelpDocumentIndexView.vue";
+import HelpMedicalRecordAIView from "@/views/Manager/HelpMedicalRecordAIView.vue";
+import HelpTreatmentSceneView from "@/views/Manager/HelpTreatmentSceneView.vue";
+import HelpPatientInsightView from "@/views/Manager/HelpPatientInsightView.vue";
+import HelpModelProviderView from "@/views/Manager/HelpModelProviderView.vue";
+import HelpPlaceholderView from "@/views/Manager/HelpPlaceholderView.vue";
 import LabFactoryView from "@/views/Manager/LabFactoryView.vue";
 import LabFactoryDetailView from "@/views/Manager/LabFactoryDetailView.vue";
 import LabOrderView from "@/views/Manager/LabOrderView.vue";
@@ -130,9 +142,59 @@ const routes = [
       { path: 'SystemConsentTemplate', name: 'SystemConsentTemplateView', component: SystemConsentTemplateView, meta: { allowedRoles: ['admin', 'nurse'] }},
       { path: 'SystemAccountPermission', name: 'SystemAccountPermissionView', component: SystemAccountPermissionView, meta: { allowedRoles: ['admin'] }},
       { path: 'SystemAccountManage', name: 'SystemAccountManageView', component: SystemAccountManageView, meta: { allowedRoles: ['admin'] }},
-      { path: 'SystemSettings', name: 'SystemSettingsView', component: SystemSettingsView, meta: { allowedRoles: ['admin', 'nurse'] }},
-      { path: 'SystemAIAgentConfig', name: 'AIAgentConfigView', component: AIAgentConfigView, meta: { allowedRoles: ['admin', 'nurse'] }},
-      { path: 'SystemModelProviderConfig', name: 'ModelProviderConfigView', component: ModelProviderConfigView, meta: { allowedRoles: ['admin', 'nurse'] }},
+      {
+        path: 'SystemSettings',
+        component: SystemSettingsLayout,
+        meta: { allowedRoles: ['admin', 'nurse'] },
+        redirect: '/SystemSettings/ai/overview',
+        children: [
+          { path: 'basic/treatment', component: SystemTreatmentCatalogView },
+          { path: 'basic/payment', component: SystemPaymentChannelView },
+          { path: 'basic/consent', component: SystemConsentTemplateView },
+          { path: 'basic/account', component: SystemAccountManageView },
+          { path: 'ai/overview', name: 'AIOverviewView', component: AIOverviewView },
+          { path: 'ai/agent', name: 'AIAgentConfigView', component: AIAgentConfigView },
+          { path: 'ai/model', name: 'ModelProviderConfigView', component: ModelProviderConfigView },
+          { path: 'ai/link', name: 'AIAgentLinkView', component: AIAgentLinkView },
+          { path: 'ai/pages/medical', name: 'MedicalRecordAIConfigView', component: MedicalRecordAIConfigView },
+          { path: 'ai/pages/patient', name: 'PatientAIConfigView', component: PatientAIConfigView },
+          {
+            path: 'help',
+            component: HelpDocumentLayout,
+            redirect: '/SystemSettings/help/index',
+            children: [
+              { path: 'index', name: 'HelpDocumentIndexView', component: HelpDocumentIndexView },
+              { path: 'ai/overview', component: HelpPlaceholderView },
+              { path: 'ai/medical', component: HelpMedicalRecordAIView },
+              { path: 'ai/scene', component: HelpTreatmentSceneView },
+              { path: 'ai/patient', component: HelpPatientInsightView },
+              { path: 'ai/model', component: HelpModelProviderView },
+              { path: 'ai/agent', component: HelpPlaceholderView },
+              { path: 'ai/link', component: HelpPlaceholderView },
+              { path: 'basic/treatment', component: HelpPlaceholderView },
+              { path: 'basic/payment', component: HelpPlaceholderView },
+              { path: 'basic/consent', component: HelpPlaceholderView },
+              { path: 'basic/lab', component: HelpPlaceholderView },
+              { path: 'basic/material', component: HelpPlaceholderView },
+              { path: 'basic/account', component: HelpPlaceholderView },
+              { path: 'patient/list', component: HelpPlaceholderView },
+              { path: 'patient/360', component: HelpPlaceholderView },
+              { path: 'patient/record', component: HelpPlaceholderView },
+              { path: 'patient/followup', component: HelpPlaceholderView },
+              { path: 'patient/consultation', component: HelpPlaceholderView },
+              { path: 'inventory/material', component: HelpPlaceholderView },
+              { path: 'inventory/purchase', component: HelpPlaceholderView },
+              { path: 'inventory/statistics', component: HelpPlaceholderView },
+              { path: 'lab/factory', component: HelpPlaceholderView },
+              { path: 'lab/order', component: HelpPlaceholderView },
+              { path: 'lab/bill', component: HelpPlaceholderView }
+            ]
+          }
+        ]
+      },
+      { path: 'SystemSettingsOld', name: 'SystemSettingsView', component: SystemSettingsView, meta: { allowedRoles: ['admin', 'nurse'] }},
+      { path: 'SystemAIAgentConfig', name: 'AIAgentConfigViewOld', component: AIAgentConfigView, meta: { allowedRoles: ['admin', 'nurse'] }},
+      { path: 'SystemModelProviderConfig', name: 'ModelProviderConfigViewOld', component: ModelProviderConfigView, meta: { allowedRoles: ['admin', 'nurse'] }},
       { path: 'lab-factories', alias: ['/LabFactory'], name: 'LabFactoryView', component: LabFactoryView, meta: { allowedRoles: ['admin', 'nurse'] } },
       { path: 'lab-factories/:id', alias: ['/LabFactoryDetail/:id'], name: 'LabFactoryDetailView', component: LabFactoryDetailView, meta: { allowedRoles: ['admin', 'nurse'] } },
       { path: 'lab-orders', alias: ['/LabOrder'], name: 'LabOrderView', component: LabOrderView, meta: { allowedRoles: ['admin', 'doctor', 'nurse'] } },

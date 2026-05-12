@@ -4,6 +4,7 @@ import com.example.springboot.entity.Doctor;
 import com.example.springboot.mapper.DoctorMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -62,5 +63,19 @@ public class DoctorService {
         doctorMapper.deleteByIds(ids);
     }
 
+    public List<Doctor> getSchedulesByDateRange(String startDate, String endDate) {
+        return doctorMapper.selectByDateRange(startDate, endDate);
+    }
 
+    @Transactional
+    public void batchSaveSchedules(List<Doctor> schedules) {
+        if (schedules == null || schedules.isEmpty()) return;
+        for (Doctor doctor : schedules) {
+            if (doctor.getId() != null) {
+                doctorMapper.update(doctor);
+            } else {
+                doctorMapper.insert(doctor);
+            }
+        }
+    }
 }

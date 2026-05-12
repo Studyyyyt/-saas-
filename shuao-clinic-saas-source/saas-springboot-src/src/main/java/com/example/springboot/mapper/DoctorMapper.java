@@ -33,9 +33,13 @@ public interface DoctorMapper {
     @Select("SELECT * FROM doctors WHERE doctor_name = #{name} AND status = #{status}")
     List<Doctor> selectByNameAndStatus(@Param("name") String name, @Param("status") String status);
 
+    // 按日期范围查询排班
+    @Select("SELECT * FROM doctors WHERE schedule_date >= #{startDate} AND schedule_date <= #{endDate} ORDER BY schedule_date, doctor_name")
+    List<Doctor> selectByDateRange(@Param("startDate") String startDate, @Param("endDate") String endDate);
+
     // 插入医生排班信息
-    @Insert("INSERT INTO doctors (doctor_name, schedule_date, start_time, end_time, status) " +
-            "VALUES (#{doctor_name}, #{schedule_date}, #{start_time}, #{end_time}, #{status})")
+    @Insert("INSERT INTO doctors (doctor_name, schedule_date, start_time, end_time, status, shift_type) " +
+            "VALUES (#{doctor_name}, #{schedule_date}, #{start_time}, #{end_time}, #{status}, #{shift_type})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     void insert(Doctor doctor);
 
@@ -52,7 +56,7 @@ public interface DoctorMapper {
     })
     void deleteByIds(@Param("ids") List<Long> ids);
 
-    @Update("UPDATE doctors SET doctor_name = #{doctor_name}, schedule_date = #{schedule_date}, start_time = #{start_time}, end_time = #{end_time}, status = #{status} WHERE id = #{id}")
+    @Update("UPDATE doctors SET doctor_name = #{doctor_name}, schedule_date = #{schedule_date}, start_time = #{start_time}, end_time = #{end_time}, status = #{status}, shift_type = #{shift_type} WHERE id = #{id}")
     void update(Doctor doctor);
 
     @Delete("DELETE FROM doctors WHERE id = #{id}")

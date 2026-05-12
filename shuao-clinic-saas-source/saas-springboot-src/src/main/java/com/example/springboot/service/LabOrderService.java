@@ -552,6 +552,72 @@ public class LabOrderService {
         }
     }
 
+    public Map<String, Object> buildOverview(String keyword,
+                                              Long factoryId,
+                                              String status,
+                                              Long patientId,
+                                              String startDate,
+                                              String endDate) {
+        List<LabOrder> orders = searchOrders(keyword, factoryId, status, patientId, startDate, endDate);
+        BigDecimal totalAmount = BigDecimal.ZERO;
+        Map<String, Integer> statusCount = new java.util.LinkedHashMap<>();
+        Map<String, BigDecimal> factoryAmount = new java.util.LinkedHashMap<>();
+        Map<String, Integer> factoryCount = new java.util.LinkedHashMap<>();
+        Map<String, BigDecimal> monthAmount = new java.util.LinkedHashMap<>();
+
+        for (LabOrder order : orders) {
+            if (order == null) continue;
+            totalAmount = totalAmount.add(normalizeMoney(order.getTotal_amount()));
+            String s = order.getStatus() == null ? "未知" : order.getStatus();
+            statusCount.merge(s, 1, Integer::sum);
+            String factoryName = order.getFactory_name() == null ? "未知" : order.getFactory_name();
+            factoryAmount.merge(factoryName, normalizeMoney(order.getTotal_amount()), BigDecimal::add);
+            factoryCount.merge(factoryName, 1, Integer::sum);
+            String monthKey = order.getOrder_date() == null ? "未知"
+                    : YearMonth.from(order.getOrder_date().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()).toString();
+            monthAmount.merge(monthKey, normalizeMoney(order.getTotal_amount()), BigDecimal::add);
+        }
+
+        List<Map<String, Object>> statusBreakdown = statusCount.entrySet().stream()
+                .map(e -> {
+                    Map<String, Object> m = new java.util.LinkedHashMap<>();
+                    m.put("status", e.getKey());
+                    m.put("count", e.getValue());
+                    return m;
+                })
+                .sorted((a, b) -> -Integer.compare((int) a.get("count"), (int) b.get("count")))
+                .toList();
+
+        List<Map<String, Object>> factoryBreakdown = factoryAmount.entrySet().stream()
+                .map(e -> {
+                    Map<String, Object> m = new java.util.LinkedHashMap<>();
+                    m.put("factory_name", e.getKey());
+                    m.put("amount", e.getValue().doubleValue());
+                    m.put("count", factoryCount.getOrDefault(e.getKey(), 0));
+                    return m;
+                })
+                .sorted((a, b) -> -Double.compare(((Number) a.get("amount")).doubleValue(), ((Number) b.get("amount")).doubleValue()))
+                .toList();
+
+        List<Map<String, Object>> monthlyTrend = monthAmount.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> {
+                    Map<String, Object> m = new java.util.LinkedHashMap<>();
+                    m.put("month", e.getKey());
+                    m.put("amount", e.getValue().doubleValue());
+                    return m;
+                })
+                .toList();
+
+        Map<String, Object> result = new java.util.LinkedHashMap<>();
+        result.put("total_count", orders.size());
+        result.put("total_amount", totalAmount.doubleValue());
+        result.put("status_breakdown", statusBreakdown);
+        result.put("factory_breakdown", factoryBreakdown);
+        result.put("monthly_trend", monthlyTrend);
+        return result;
+    }
+
     private String normalizeText(String value) {
         return value == null ? "" : value.trim();
     }

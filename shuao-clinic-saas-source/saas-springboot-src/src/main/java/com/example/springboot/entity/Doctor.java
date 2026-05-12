@@ -10,6 +10,7 @@ public class Doctor {
     private Time start_time;
     private Time end_time;
     private String status;
+    private String shift_type;
 
     public Long getId() {
         return id;
@@ -57,5 +58,13 @@ public class Doctor {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getShift_type() {
+        return shift_type;
+    }
+
+    public void setShift_type(String shift_type) {
+        this.shift_type = shift_type;
     }
 }

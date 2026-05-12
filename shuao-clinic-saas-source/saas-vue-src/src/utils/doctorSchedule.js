@@ -7,7 +7,8 @@ export const SHIFT_CODE_NONE = '未排班'
 export const SHIFT_OPTIONS = [
   { value: SHIFT_CODE_MORNING, label: '早班', shortLabel: '早', timeText: '09:00-18:00', tone: 'morning' },
   { value: SHIFT_CODE_EVENING, label: '晚班', shortLabel: '晚', timeText: '13:00-21:00', tone: 'evening' },
-  { value: SHIFT_CODE_REST, label: '休息', shortLabel: '休', timeText: '全天休息', tone: 'rest' }
+  { value: SHIFT_CODE_REST, label: '休息', shortLabel: '休', timeText: '全天休息', tone: 'rest' },
+  { value: SHIFT_CODE_CUSTOM, label: '自定义', shortLabel: '定', timeText: '自定义时间', tone: 'custom' }
 ]
 
 export const SHIFT_DEFINITIONS = {
@@ -40,6 +41,16 @@ export const SHIFT_DEFINITIONS = {
     endMinutes: null,
     timeText: '全天休息',
     tone: 'rest'
+  },
+  [SHIFT_CODE_CUSTOM]: {
+    label: '自定义',
+    shortLabel: '定',
+    start: '',
+    end: '',
+    startMinutes: null,
+    endMinutes: null,
+    timeText: '自定义时间',
+    tone: 'custom'
   }
 }
 
@@ -108,7 +119,7 @@ export function minutesToTimeText(minutes, withSeconds = false) {
 export function resolveShiftType(record) {
   if (!record) return SHIFT_CODE_NONE
   const status = String(record.status || '').trim()
-  if (status === SHIFT_CODE_MORNING || status === SHIFT_CODE_EVENING || status === SHIFT_CODE_REST) {
+  if (status === SHIFT_CODE_MORNING || status === SHIFT_CODE_EVENING || status === SHIFT_CODE_REST || status === SHIFT_CODE_CUSTOM) {
     return status
   }
   const startMinutes = timeTextToMinutes(record.start_time)
@@ -148,7 +159,8 @@ export function normalizeScheduleRecord(item) {
     schedule_date: scheduleDate,
     start_time: normalizeTimeText(item.start_time, true),
     end_time: normalizeTimeText(item.end_time, true),
-    status: String(item.status || '').trim()
+    status: String(item.status || '').trim(),
+    shift_type: String(item.shift_type || '').trim()
   }
   record.shiftType = resolveShiftType(record)
   return record
@@ -158,7 +170,7 @@ export function scheduleKey(doctorName, scheduleDate) {
   return `${normalizeDoctorName(doctorName)}|${normalizeDateText(scheduleDate)}`
 }
 
-export function createShiftPayload({ id = null, doctorName = '', scheduleDate = '', shiftType = '' } = {}) {
+export function createShiftPayload({ id = null, doctorName = '', scheduleDate = '', shiftType = '', startTime = '', endTime = '' } = {}) {
   const normalizedDoctorName = normalizeDoctorName(doctorName)
   const normalizedDate = normalizeDateText(scheduleDate)
   if (!normalizedDoctorName || !normalizedDate || !shiftType) {
@@ -172,9 +184,27 @@ export function createShiftPayload({ id = null, doctorName = '', scheduleDate = 
     id,
     doctor_name: normalizedDoctorName,
     schedule_date: normalizedDate,
-    start_time: definition.start || null,
-    end_time: definition.end || null,
-    status: shiftType
+    start_time: startTime || definition.start || null,
+    end_time: endTime || definition.end || null,
+    status: shiftType,
+    shift_type: scheduleTone(shiftType)
+  }
+}
+
+export function createCustomShiftPayload({ id = null, doctorName = '', scheduleDate = '', startTime = '', endTime = '' } = {}) {
+  const normalizedDoctorName = normalizeDoctorName(doctorName)
+  const normalizedDate = normalizeDateText(scheduleDate)
+  if (!normalizedDoctorName || !normalizedDate || !startTime || !endTime) {
+    return null
+  }
+  return {
+    id,
+    doctor_name: normalizedDoctorName,
+    schedule_date: normalizedDate,
+    start_time: normalizeTimeText(startTime, true),
+    end_time: normalizeTimeText(endTime, true),
+    status: SHIFT_CODE_CUSTOM,
+    shift_type: 'custom'
   }
 }
 
@@ -258,6 +288,7 @@ export function scheduleDisplayLabel(record) {
   if (shiftType === SHIFT_CODE_MORNING || shiftType === SHIFT_CODE_EVENING || shiftType === SHIFT_CODE_REST) {
     return shiftType
   }
+  if (shiftType === SHIFT_CODE_CUSTOM) return SHIFT_CODE_CUSTOM
   if (record.status) return record.status
   const startTime = normalizeTimeText(record.start_time)
   const endTime = normalizeTimeText(record.end_time)
@@ -279,4 +310,57 @@ export function scheduleTimeDescription(record) {
     return `${startTime}-${endTime}`
   }
   return record.status || '未设置排班'
+}
+
+// 排班模板相关工具函数
+export function buildTemplateFromCells(cells) {
+  // cells 为某一医生当月所有单元格数组，按日期排序
+  const pattern = {}
+  const weekPattern = {}
+  cells.forEach(cell => {
+    const dayOfWeek = new Date(cell.dateText).getDay() // 0-6
+    // 以周一为起点: 1-7
+    const weekDay = dayOfWeek === 0 ? 7 : dayOfWeek
+    if (!weekPattern[weekDay]) {
+      weekPattern[weekDay] = []
+    }
+    weekPattern[weekDay].push(cell.tone)
+  })
+
+  // 取每周各天出现最多的班次作为模板
+  Object.keys(weekPattern).forEach(day => {
+    const tones = weekPattern[day]
+    const counts = {}
+    tones.forEach(t => {
+      counts[t] = (counts[t] || 0) + 1
+    })
+    const maxTone = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b, 'empty')
+    pattern[day] = maxTone === 'empty' ? 'rest' : maxTone
+  })
+
+  return pattern
+}
+
+export function applyTemplateToMonth(templatePattern, monthDates, doctor) {
+  // templatePattern: {"1":"morning", "2":"evening"...}  key 为 weekDay 1-7
+  const drafts = {}
+  monthDates.forEach(date => {
+    const dayOfWeek = new Date(date.dateText).getDay()
+    const weekDay = dayOfWeek === 0 ? 7 : dayOfWeek
+    const tone = templatePattern[String(weekDay)]
+    if (!tone || tone === 'empty') return
+
+    let shiftType = SHIFT_CODE_MORNING
+    if (tone === 'evening') shiftType = SHIFT_CODE_EVENING
+    if (tone === 'rest') shiftType = SHIFT_CODE_REST
+    if (tone === 'custom') shiftType = SHIFT_CODE_CUSTOM
+
+    const key = scheduleKey(doctor.name, date.dateText)
+    drafts[key] = createShiftPayload({
+      doctorName: doctor.name,
+      scheduleDate: date.dateText,
+      shiftType
+    })
+  })
+  return drafts
 }
