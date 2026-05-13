@@ -25,26 +25,6 @@ import FollowupManagementView from "@/views/Manager/FollowupManagementView.vue";
 import ConsultationView from "@/views/Manager/ConsultationView.vue";
 import ConsultationDashboardView from "@/views/Manager/ConsultationDashboardView.vue";
 import AdvertisingSpendingView from "@/views/Manager/AdvertisingSpendingView.vue";
-import BindSuccess from "@/views/BindSuccess.vue";
-import AppointmentNoticeView from "@/views/AppointmentNoticeView.vue";
-import PatientPortalHome from "@/views/PatientPortalHome.vue";
-import PatientPortalAuthError from "@/views/PatientPortalAuthError.vue";
-import PatientRegisterH5 from "@/views/PatientRegisterH5.vue";
-import StaffPortalHome from "@/views/StaffPortalHome.vue";
-import StaffPortalAuthError from "@/views/StaffPortalAuthError.vue";
-import StaffPortalBind from "@/views/StaffPortalBind.vue";
-import StaffAppointmentH5 from "@/views/StaffAppointmentH5.vue";
-import StaffConsultationH5 from "@/views/StaffConsultationH5.vue";
-import StaffPatientH5 from "@/views/StaffPatientH5.vue";
-import StaffPatient360H5 from "@/views/StaffPatient360H5.vue";
-import StaffMedicalRecordH5 from "@/views/StaffMedicalRecordH5.vue";
-import StaffFinanceH5 from "@/views/StaffFinanceH5.vue";
-import StaffInventoryH5 from "@/views/StaffInventoryH5.vue";
-import StaffLabProcessingH5 from "@/views/StaffLabProcessingH5.vue";
-import StaffMaterialPurchaseH5 from "@/views/StaffMaterialPurchaseH5.vue";
-import AdminReportH5 from "@/views/AdminReportH5.vue";
-import PatientPortalSection from "@/views/PatientPortalSection.vue";
-import StaffH5Shell from "@/views/StaffH5Shell.vue";
 import TreatmentCatalogView from "@/views/Manager/TreatmentCatalogView.vue";
 import InsuranceOverviewView from "@/views/Manager/InsuranceOverviewView.vue";
 import InsuranceConfigView from "@/views/Manager/InsuranceConfigView.vue";
@@ -63,15 +43,14 @@ import SystemSettingsLayout from "@/views/Manager/SystemSettingsLayout.vue";
 import AIAgentConfigView from "@/views/Manager/AIAgentConfigView.vue";
 import ModelProviderConfigView from "@/views/Manager/ModelProviderConfigView.vue";
 import AIOverviewView from "@/views/Manager/AIOverviewView.vue";
-import AIAgentLinkView from "@/views/Manager/AIAgentLinkView.vue";
 import MedicalRecordAIConfigView from "@/views/Manager/MedicalRecordAIConfigView.vue";
-import PatientAIConfigView from "@/views/Manager/PatientAIConfigView.vue";
 import HelpDocumentLayout from "@/views/Manager/HelpDocumentLayout.vue";
 import HelpDocumentIndexView from "@/views/Manager/HelpDocumentIndexView.vue";
 import HelpMedicalRecordAIView from "@/views/Manager/HelpMedicalRecordAIView.vue";
 import HelpTreatmentSceneView from "@/views/Manager/HelpTreatmentSceneView.vue";
 import HelpPatientInsightView from "@/views/Manager/HelpPatientInsightView.vue";
 import HelpModelProviderView from "@/views/Manager/HelpModelProviderView.vue";
+import HelpAIOverviewView from "@/views/Manager/HelpAIOverviewView.vue";
 import HelpPlaceholderView from "@/views/Manager/HelpPlaceholderView.vue";
 import LabFactoryView from "@/views/Manager/LabFactoryView.vue";
 import LabFactoryDetailView from "@/views/Manager/LabFactoryDetailView.vue";
@@ -86,14 +65,6 @@ import MaterialPurchaseDetailView from "@/views/Manager/MaterialPurchaseDetailVi
 import MaterialStatisticsView from "@/views/Manager/MaterialStatisticsView.vue";
 import { getAdminSession, hasAdminSession } from "@/utils/adminSession";
 import { findFirstAccessibleMenuKey, getAllowedMenuKeys, resolveMenuPermissionKey } from "@/utils/roleMenuCatalog";
-import {
-  getPatientPortalQuery,
-  getPatientPortalSession,
-  getStaffPortalQuery,
-  getStaffPortalSession,
-  savePatientPortalSessionFromQuery,
-  saveStaffPortalSessionFromQuery
-} from "@/utils/portalSession";
 
 Vue.use(VueRouter)
 
@@ -154,17 +125,16 @@ const routes = [
           { path: 'basic/account', component: SystemAccountManageView },
           { path: 'ai/overview', name: 'AIOverviewView', component: AIOverviewView },
           { path: 'ai/agent', name: 'AIAgentConfigView', component: AIAgentConfigView },
-          { path: 'ai/model', name: 'ModelProviderConfigView', component: ModelProviderConfigView },
-          { path: 'ai/link', name: 'AIAgentLinkView', component: AIAgentLinkView },
+          // { path: 'ai/model', name: 'ModelProviderConfigView', component: ModelProviderConfigView },
           { path: 'ai/pages/medical', name: 'MedicalRecordAIConfigView', component: MedicalRecordAIConfigView },
-          { path: 'ai/pages/patient', name: 'PatientAIConfigView', component: PatientAIConfigView },
+          // { path: 'ai/pages/patient', name: 'PatientAIConfigView', component: PatientAIConfigView },
           {
             path: 'help',
             component: HelpDocumentLayout,
             redirect: '/SystemSettings/help/index',
             children: [
               { path: 'index', name: 'HelpDocumentIndexView', component: HelpDocumentIndexView },
-              { path: 'ai/overview', component: HelpPlaceholderView },
+              { path: 'ai/overview', component: HelpAIOverviewView },
               { path: 'ai/medical', component: HelpMedicalRecordAIView },
               { path: 'ai/scene', component: HelpTreatmentSceneView },
               { path: 'ai/patient', component: HelpPatientInsightView },
@@ -226,172 +196,7 @@ const routes = [
     path: '/register',
     name: 'register',
     component: register
-  },
-  {
-    path: '/app/bind-success',
-    name: 'BindSuccess',
-    component: BindSuccess
-  },
-  {
-    path: '/appointment-notice',
-    name: 'AppointmentNoticeView',
-    component: AppointmentNoticeView
-  },
-  {
-    path: '/patient-register-h5',
-    name: 'PatientRegisterH5',
-    component: PatientRegisterH5
-  },
-  {
-    path: '/patient-portal-home',
-    name: 'PatientPortalHome',
-    component: PatientPortalHome
-  },
-  {
-    path: '/patient-portal-section',
-    name: 'PatientPortalSection',
-    component: PatientPortalSection
-  },
-  {
-    path: '/portal-auth-error',
-    name: 'PatientPortalAuthError',
-    component: PatientPortalAuthError
-  },
-  {
-    path: '/staff-portal-home',
-    component: StaffH5Shell,
-    children: [
-      {
-        path: '',
-        name: 'StaffPortalHome',
-        component: StaffPortalHome
-      }
-    ]
-  },
-  {
-    path: '/staff-h5/appointments',
-    component: StaffH5Shell,
-    children: [
-      {
-        path: '',
-        name: 'StaffAppointmentH5',
-        component: StaffAppointmentH5
-      }
-    ]
-  },
-  {
-    path: '/staff-h5/consultations',
-    component: StaffH5Shell,
-    children: [
-      {
-        path: '',
-        name: 'StaffConsultationH5',
-        component: StaffConsultationH5
-      }
-    ]
-  },
-  {
-    path: '/staff-h5/patients',
-    component: StaffH5Shell,
-    children: [
-      {
-        path: '',
-        name: 'StaffPatientH5',
-        component: StaffPatientH5
-      }
-    ]
-  },
-  {
-    path: '/staff-h5/patient360',
-    component: StaffH5Shell,
-    children: [
-      {
-        path: '',
-        name: 'StaffPatient360H5',
-        component: StaffPatient360H5
-      }
-    ]
-  },
-  {
-    path: '/staff-h5/records',
-    component: StaffH5Shell,
-    children: [
-      {
-        path: '',
-        name: 'StaffMedicalRecordH5',
-        component: StaffMedicalRecordH5
-      }
-    ]
-  },
-  {
-    path: '/staff-h5/finance',
-    component: StaffH5Shell,
-    children: [
-      {
-        path: '',
-        name: 'StaffFinanceH5',
-        component: StaffFinanceH5
-      }
-    ]
-  },
-  {
-    path: '/staff-h5/inventory',
-    component: StaffH5Shell,
-    children: [
-      {
-        path: '',
-        name: 'StaffInventoryH5',
-        component: StaffInventoryH5
-      }
-    ]
-  },
-  {
-    path: '/staff-h5/lab-processing',
-    component: StaffH5Shell,
-    children: [
-      {
-        path: '',
-        name: 'StaffLabProcessingH5',
-        component: StaffLabProcessingH5
-      }
-    ]
-  },
-  {
-    path: '/staff-h5/material-purchases',
-    component: StaffH5Shell,
-    children: [
-      {
-        path: '',
-        name: 'StaffMaterialPurchaseH5',
-        component: StaffMaterialPurchaseH5
-      }
-    ]
-  },
-  {
-    path: '/staff-portal-bind',
-    name: 'StaffPortalBind',
-    component: StaffPortalBind
-  },
-  {
-    path: '/staff-portal-auth-error',
-    name: 'StaffPortalAuthError',
-    component: StaffPortalAuthError
-  },
-  {
-    path: '/admin-report-h5',
-    name: 'AdminReportH5',
-    component: AdminReportH5
   }
-
-
-  // {
-  //   path: '/about',
-  //   name: 'about',
-  //   // route level code-splitting
-  //   // this generates a separate chunk (about.[hash].js) for this route
-  //   // which is lazy-loaded when the route is visited.
-  //   component: () => import(/* webpackChunkName: "about" */ '../views/AboutView.vue')
-  // }
 ]
 
 const router = new VueRouter({
@@ -402,59 +207,10 @@ const router = new VueRouter({
 
 const PUBLIC_PATHS = new Set([
   '/login1',
-  '/register',
-  '/app/bind-success',
-  '/appointment-notice',
-  '/patient-register-h5',
-  '/portal-auth-error',
-  '/staff-portal-bind',
-  '/staff-portal-auth-error',
-  '/admin-report-h5'
+  '/register'
 ])
 
-function isPatientPortalPath(path) {
-  return path === '/patient-portal-home' || path === '/patient-portal-section'
-}
-
-function isStaffPortalPath(path) {
-  return path === '/staff-portal-home' || path.startsWith('/staff-h5/')
-}
-
 router.beforeEach((to, from, next) => {
-  if (isPatientPortalPath(to.path)) {
-    savePatientPortalSessionFromQuery(to.query)
-    const session = getPatientPortalSession()
-    if (!session) {
-      next({ path: '/portal-auth-error', query: { reason: 'session' } })
-      return
-    }
-    const normalizedQuery = getPatientPortalQuery(to.query)
-    if (String(to.query.patientId || '') !== String(normalizedQuery.patientId || '')
-      || String(to.query.portalToken || '') !== String(normalizedQuery.portalToken || '')) {
-      next({ path: to.path, query: normalizedQuery, replace: true })
-      return
-    }
-    next()
-    return
-  }
-
-  if (isStaffPortalPath(to.path)) {
-    saveStaffPortalSessionFromQuery(to.query)
-    const session = getStaffPortalSession()
-    if (!session) {
-      next({ path: '/staff-portal-auth-error', query: { reason: 'session' } })
-      return
-    }
-    const normalizedQuery = getStaffPortalQuery(to.query)
-    if (String(to.query.accountId || '') !== String(normalizedQuery.accountId || '')
-      || String(to.query.staffToken || '') !== String(normalizedQuery.staffToken || '')) {
-      next({ path: to.path, query: normalizedQuery, replace: true })
-      return
-    }
-    next()
-    return
-  }
-
   if (!PUBLIC_PATHS.has(to.path) && !hasAdminSession()) {
     next({ path: '/login1', query: { reason: 'auth' } })
     return

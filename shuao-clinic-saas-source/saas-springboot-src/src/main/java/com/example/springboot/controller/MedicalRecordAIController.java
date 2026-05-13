@@ -7,7 +7,6 @@ import com.example.springboot.entity.TreatmentSceneExpandRequest;
 import com.example.springboot.service.MedicalRecordAIService;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -40,10 +39,8 @@ public class MedicalRecordAIController {
         try {
             Map<String, String> result = medicalRecordAIService.expand(dto);
             return Result.success(result);
-        } catch (MedicalRecordAIService.AIValidationException e) {
-            Map<String, Object> errorData = new HashMap<>();
-            errorData.put("errors", e.getErrors());
-            return new Result(Result.CODE_SYS_ERROR, "AI 输出未通过安全校验", errorData);
+        } catch (IllegalStateException e) {
+            return Result.error(e.getMessage());
         } catch (IllegalArgumentException e) {
             return Result.error(e.getMessage());
         } catch (Exception e) {

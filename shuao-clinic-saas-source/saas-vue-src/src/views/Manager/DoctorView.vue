@@ -8,7 +8,7 @@
         <p class="page-subtitle">智能排班 · 关联预约 · 高效管理</p>
       </div>
       <div class="page-header-right">
-        <el-button type="primary" plain icon="el-icon-magic-stick" @click="openAiPanel">
+        <el-button v-if="isAiEnabled('doctor-schedule')" type="primary" plain icon="el-icon-magic-stick" @click="openAiPanel">
           AI 智能排班
         </el-button>
         <el-button icon="el-icon-download" @click="exportSchedule">导出排班</el-button>
@@ -345,6 +345,7 @@
 <script>
 import axios from 'axios'
 import { showApiError } from '@/utils/errorMessage'
+import { isAiEnabled as checkAiEnabled } from '@/utils/aiConfig'
 import {
   SHIFT_CODE_EVENING,
   SHIFT_CODE_MORNING,
@@ -1013,6 +1014,9 @@ export default {
     },
     exportSchedule() {
       this.$message.info('导出功能开发中，即将支持 Excel/PDF 导出')
+    },
+    isAiEnabled(key) {
+      return checkAiEnabled(key)
     }
   }
 }

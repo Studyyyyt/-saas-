@@ -12,8 +12,18 @@ public class AiAgentConfig {
     private String description;
     private String gradient;
     private List<String> chips;
-    private String systemPrompt;
-    private List<String> enabledTools;
+    /** 外部工作流端点地址 */
+    private String endpointUrl;
+    /** 认证类型：bearer / basic / api_key / 自定义header名 */
+    private String authType;
+    /** 认证令牌 */
+    private String authToken;
+    /** 请求体模板，支持 {{变量}} 替换 */
+    private String requestTemplate;
+    /** 响应类型：sse（流式）/ json（一次性） */
+    private String responseType;
+    /** 超时秒数，默认60 */
+    private Integer timeoutSeconds;
     private Integer sortOrder;
     private Boolean isSystemDefault;
     private Date createdAt;
@@ -43,11 +53,23 @@ public class AiAgentConfig {
     public List<String> getChips() { return chips; }
     public void setChips(List<String> chips) { this.chips = chips; }
 
-    public String getSystemPrompt() { return systemPrompt; }
-    public void setSystemPrompt(String systemPrompt) { this.systemPrompt = systemPrompt; }
+    public String getEndpointUrl() { return endpointUrl; }
+    public void setEndpointUrl(String endpointUrl) { this.endpointUrl = endpointUrl; }
 
-    public List<String> getEnabledTools() { return enabledTools; }
-    public void setEnabledTools(List<String> enabledTools) { this.enabledTools = enabledTools; }
+    public String getAuthType() { return authType; }
+    public void setAuthType(String authType) { this.authType = authType; }
+
+    public String getAuthToken() { return authToken; }
+    public void setAuthToken(String authToken) { this.authToken = authToken; }
+
+    public String getRequestTemplate() { return requestTemplate; }
+    public void setRequestTemplate(String requestTemplate) { this.requestTemplate = requestTemplate; }
+
+    public String getResponseType() { return responseType; }
+    public void setResponseType(String responseType) { this.responseType = responseType; }
+
+    public Integer getTimeoutSeconds() { return timeoutSeconds; }
+    public void setTimeoutSeconds(Integer timeoutSeconds) { this.timeoutSeconds = timeoutSeconds; }
 
     public Integer getSortOrder() { return sortOrder; }
     public void setSortOrder(Integer sortOrder) { this.sortOrder = sortOrder; }

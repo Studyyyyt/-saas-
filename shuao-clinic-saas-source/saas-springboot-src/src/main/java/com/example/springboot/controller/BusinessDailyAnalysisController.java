@@ -65,7 +65,12 @@ public class BusinessDailyAnalysisController {
 
     @GetMapping("/chat/memory")
     public Result chatMemory(@RequestParam(required = false) Long accountId) {
-        return Result.success(businessAnalysisChatService.getMemoryDocument(accountId));
+        // 记忆管理已移除，返回空文档兼容前端
+        java.util.Map<String, Object> result = new java.util.LinkedHashMap<>();
+        result.put("has_memory", false);
+        result.put("content", "");
+        result.put("updated_at", "");
+        return Result.success(result);
     }
 
     @PostMapping("/chat/message")

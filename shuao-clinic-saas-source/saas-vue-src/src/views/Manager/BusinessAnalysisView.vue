@@ -571,6 +571,7 @@ export default {
       const { abort } = streamChat({
         message,
         sessionId: this.chatSessionId || '',
+        functionKey: 'business-analysis',
         onToken: (token) => {
           const msg = this.chatMessages[assistantIndex]
           if (msg) {

@@ -9,7 +9,7 @@
           <p>统一记录义齿下单、加工、收货与对账状态，支撑后续账单核对。</p>
         </div>
         <div class="hero-actions">
-          <el-button type="primary" plain icon="el-icon-magic-stick" @click="openAiPanel">
+          <el-button v-if="isAiEnabled('lab-order-analysis')" type="primary" plain icon="el-icon-magic-stick" @click="openAiPanel">
             AI 订单分析
           </el-button>
           <el-button v-if="canEditOrders" type="primary" icon="el-icon-plus" @click="openCreateDialog">新建订单</el-button>
@@ -303,6 +303,7 @@ import * as echarts from 'echarts'
 import { getAdminSession } from '@/utils/adminSession'
 import LabOrderDialog from '@/components/LabOrderDialog.vue'
 import { showApiError } from '@/utils/errorMessage'
+import { isAiEnabled as checkAiEnabled } from '@/utils/aiConfig'
 import {
   LAB_MANUAL_ORDER_STATUS_OPTIONS,
   LAB_ORDER_STATUS_OPTIONS,
@@ -659,6 +660,9 @@ export default {
     },
     closeAiPanel() {
       this.aiPanelVisible = false
+    },
+    isAiEnabled(key) {
+      return checkAiEnabled(key)
     }
   }
 }

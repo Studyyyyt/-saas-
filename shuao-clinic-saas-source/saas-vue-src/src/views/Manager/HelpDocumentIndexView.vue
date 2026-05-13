@@ -79,7 +79,7 @@ const moduleIndex = [
     title: 'AI 智能中心',
     icon: 'el-icon-cpu',
     children: [
-      { key: 'ai-overview', title: 'AI 总览', path: '/SystemSettings/help/ai/overview', status: 'pending' },
+      { key: 'ai-overview', title: 'AI 总览', path: '/SystemSettings/help/ai/overview', status: 'completed' },
       { key: 'ai-medical', title: '病历 AI 扩写配置', path: '/SystemSettings/help/ai/medical', status: 'completed' },
       { key: 'ai-scene', title: '诊疗场景库', path: '/SystemSettings/help/ai/scene', status: 'completed' },
       { key: 'ai-patient', title: '患者洞察配置', path: '/SystemSettings/help/ai/patient', status: 'completed' },

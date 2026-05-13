@@ -49,7 +49,6 @@ public class BusinessPeriodReportService {
     private final TreatmentMapper treatmentMapper;
     private final PatientMapper patientMapper;
     private final BusinessDailyAnalysisService dailyAnalysisService;
-    private final BusinessWechatPushService businessWechatPushService;
     private final ObjectMapper objectMapper;
 
     public BusinessPeriodReportService(BusinessPeriodReportMapper reportMapper,
@@ -58,7 +57,6 @@ public class BusinessPeriodReportService {
                                        TreatmentMapper treatmentMapper,
                                        PatientMapper patientMapper,
                                        BusinessDailyAnalysisService dailyAnalysisService,
-                                       BusinessWechatPushService businessWechatPushService,
                                        ObjectMapper objectMapper) {
         this.reportMapper = reportMapper;
         this.appointmentMapper = appointmentMapper;
@@ -66,7 +64,6 @@ public class BusinessPeriodReportService {
         this.treatmentMapper = treatmentMapper;
         this.patientMapper = patientMapper;
         this.dailyAnalysisService = dailyAnalysisService;
-        this.businessWechatPushService = businessWechatPushService;
         this.objectMapper = objectMapper;
     }
 
@@ -234,7 +231,6 @@ public class BusinessPeriodReportService {
         save(entity);
 
         Map<String, Object> view = buildView(entity);
-        businessWechatPushService.pushPeriodicReportToAdmins(reportTypeLabel, view);
         return view;
     }
 

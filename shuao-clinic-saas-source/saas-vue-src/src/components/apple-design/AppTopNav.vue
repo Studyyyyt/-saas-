@@ -53,6 +53,7 @@
             class="menu-item"
             :class="{ active: $route.path === item.path }"
           >
+            <i v-if="item.icon" :class="item.icon" class="menu-item-icon"></i>
             <span>{{ item.label }}</span>
             <div v-if="$route.path === item.path" class="active-indicator"></div>
           </router-link>
@@ -62,6 +63,7 @@
             class="menu-item has-dropdown"
             :class="{ active: isGroupActive(item), open: hoverGroup === item.group }"
           >
+            <i v-if="item.icon" :class="item.icon" class="menu-item-icon"></i>
             <span>{{ item.label }}</span>
             <i class="el-icon-arrow-down dropdown-arrow"></i>
             <div v-if="isGroupActive(item)" class="active-indicator"></div>
@@ -73,6 +75,7 @@
                 @mouseenter="cancelCloseDropdown()"
                 @mouseleave="scheduleCloseDropdown()"
               >
+                <div class="dropdown-group-header">{{ item.label }}</div>
                 <router-link
                   v-for="child in item.children"
                   :key="child.path"
@@ -80,6 +83,7 @@
                   class="dropdown-item"
                   :class="{ active: $route.path === child.path }"
                 >
+                  <i v-if="item.icon" :class="item.icon" class="dropdown-item-icon"></i>
                   {{ child.label }}
                 </router-link>
               </div>
@@ -116,16 +120,13 @@
                   class="dropdown-item"
                   :class="{ active: $route.path === item.path }"
                 >
+                  <i v-if="item.icon" :class="item.icon" class="dropdown-item-icon"></i>
                   {{ item.label }}
                 </router-link>
 
-                <!-- 更多中的分组菜单 -->
-                <div
-                  v-for="item in moreMenuItems.filter(i => i.children)"
-                  :key="item.group"
-                  class="more-group"
-                >
-                  <div class="more-group-title">{{ item.label }}</div>
+                <!-- 更多中的分组菜单（展平显示，不显示分组标题） -->
+                <template v-for="(item, idx) in moreMenuItems.filter(i => i.children)">
+                  <div :key="'sep-' + item.group" v-if="idx > 0 || moreMenuItems.filter(i => !i.children).length > 0" class="more-divider"></div>
                   <router-link
                     v-for="child in item.children"
                     :key="child.path"
@@ -133,9 +134,10 @@
                     class="dropdown-item"
                     :class="{ active: $route.path === child.path }"
                   >
+                    <i v-if="item.icon" :class="item.icon" class="dropdown-item-icon"></i>
                     {{ child.label }}
                   </router-link>
-                </div>
+                </template>
               </div>
             </transition>
           </div>
@@ -229,7 +231,7 @@ import {
 import { canAccessRoleMenu } from '@/utils/roleMenuCatalog'
 
 const MENU_ORDER_KEY = 'nav_menu_order_v2'
-const CORE_MENU_COUNT = 6
+const CORE_MENU_COUNT = 5
 
 export default {
   name: 'AppTopNav',
@@ -246,14 +248,15 @@ export default {
       draggingIndex: -1,
       dragOverIndex: -1,
       menuItems: [
-        { label: '首页概览', path: '/home' },
-        { label: '患者列表', path: '/Patient' },
-        { label: '今日工作', path: '/MedicalRecord' },
-        { label: '预约视图', path: '/Appointment' },
-        { label: '回访管理', path: '/Followup' },
+        { label: '首页概览', path: '/home', icon: 'el-icon-s-home' },
+        { label: '患者列表', path: '/Patient', icon: 'el-icon-user' },
+        { label: '今日工作', path: '/MedicalRecord', icon: 'el-icon-first-aid-kit' },
+        { label: '预约视图', path: '/Appointment', icon: 'el-icon-date' },
+        { label: '回访管理', path: '/Followup', icon: 'el-icon-phone-outline' },
         {
           group: 'consultation',
           label: '咨询管理',
+          icon: 'el-icon-chat-dot-square',
           children: [
             { label: '咨询记录', path: '/Consultation' },
             { label: '咨询看板', path: '/ConsultationDashboard' }
@@ -262,6 +265,7 @@ export default {
         {
           group: 'marketing',
           label: '市场投放',
+          icon: 'el-icon-data-line',
           children: [
             { label: '广告投放', path: '/advertising-spending' }
           ]
@@ -269,8 +273,9 @@ export default {
         {
           group: 'lab',
           label: '义齿加工',
+          icon: 'el-icon-box',
           children: [
-            { label: '加工厂/产品库', path: '/lab-factories' },
+            { label: '加工厂', path: '/lab-factories' },
             { label: '加工订单', path: '/lab-orders' },
             { label: '月度账单', path: '/lab-bills' },
             { label: '加工统计', path: '/lab-statistics' }
@@ -279,6 +284,7 @@ export default {
         {
           group: 'material',
           label: '耗材管理',
+          icon: 'el-icon-shopping-bag-1',
           children: [
             { label: '耗材分类', path: '/material-categories' },
             { label: '耗材档案', path: '/materials' },
@@ -286,10 +292,11 @@ export default {
             { label: '耗材统计', path: '/material-statistics' }
           ]
         },
-        { label: '医生排班', path: '/Doctor' },
+        { label: '医生排班', path: '/Doctor', icon: 'el-icon-time' },
         {
           group: 'financial',
           label: '财务管理',
+          icon: 'el-icon-money',
           children: [
             { label: '财务信息', path: '/Financial' },
             { label: '财务分析', path: '/Financial2' },
@@ -300,6 +307,7 @@ export default {
         {
           group: 'insurance',
           label: '医保管理',
+          icon: 'el-icon-document-checked',
           children: [
             { label: '医保总览', path: '/InsuranceOverview' },
             { label: '医保配置', path: '/InsuranceConfig' },
@@ -307,18 +315,6 @@ export default {
             { label: '医保结算', path: '/InsuranceSettlement' },
             { label: '医保日志', path: '/InsuranceLog' },
             { label: 'mock报文', path: '/InsuranceMockPayload' }
-          ]
-        },
-        {
-          group: 'system',
-          label: '系统设置',
-          children: [
-            { label: '项目库', path: '/SystemTreatmentCatalog' },
-            { label: '操作字典', path: '/SystemTreatmentOperation' },
-            { label: '收款渠道', path: '/SystemPaymentChannel' },
-            { label: '知情同意书库', path: '/SystemConsentTemplate' },
-            { label: '账号权限', path: '/SystemAccountPermission' },
-            { label: '账号管理', path: '/SystemAccountManage' }
           ]
         }
       ]
@@ -646,16 +642,34 @@ export default {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 8px 14px;
-  font-size: 14px;
+  gap: 6px;
+  padding: 9px 16px;
+  font-size: 13.5px;
   font-weight: 500;
   color: var(--apple-text-secondary);
   text-decoration: none;
-  border-radius: var(--apple-radius-sm);
+  border-radius: 10px;
   transition: all var(--apple-transition-fast);
   cursor: pointer;
   white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+.menu-item-icon {
+  font-size: 15px;
+  width: 18px;
+  text-align: center;
+  opacity: 0.75;
+  transition: opacity 0.2s ease;
+}
+
+.menu-item:hover .menu-item-icon {
+  opacity: 1;
+}
+
+.menu-item.active .menu-item-icon {
+  opacity: 1;
+  color: var(--apple-accent);
 }
 
 .menu-item:hover {
@@ -693,18 +707,29 @@ export default {
 /* 下拉面板 */
 .dropdown-panel {
   position: absolute;
-  top: calc(100% + 6px);
+  top: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
-  min-width: 180px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
-  padding: 6px;
+  min-width: 200px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 24px 40px -8px rgba(0, 0, 0, 0.1), 0 8px 12px -4px rgba(0, 0, 0, 0.04);
+  padding: 8px;
   z-index: 1001;
+}
+
+.dropdown-group-header {
+  padding: 8px 12px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--apple-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  margin-bottom: 4px;
 }
 
 /* 填充 menu-item 与 dropdown-panel 之间的间隙 */
@@ -718,15 +743,25 @@ export default {
 }
 
 .dropdown-item {
-  display: block;
-  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
   font-size: 13px;
   font-weight: 500;
   color: var(--apple-text-primary);
   text-decoration: none;
-  border-radius: 8px;
+  border-radius: 10px;
   transition: all var(--apple-transition-fast);
   white-space: nowrap;
+}
+
+.dropdown-item-icon {
+  font-size: 14px;
+  width: 16px;
+  text-align: center;
+  color: var(--apple-text-tertiary);
+  transition: color 0.2s ease;
 }
 
 .dropdown-item:hover {
@@ -734,10 +769,18 @@ export default {
   color: var(--apple-accent);
 }
 
+.dropdown-item:hover .dropdown-item-icon {
+  color: var(--apple-accent);
+}
+
 .dropdown-item.active {
   color: var(--apple-accent);
   background: var(--apple-accent-light);
   font-weight: 600;
+}
+
+.dropdown-item.active .dropdown-item-icon {
+  color: var(--apple-accent);
 }
 
 /* 更多下拉面板 */
@@ -756,25 +799,10 @@ export default {
   border-radius: 2px;
 }
 
-.more-group {
-  margin-top: 4px;
-  padding-top: 4px;
-  border-top: 1px solid var(--apple-divider);
-}
-
-.more-group:first-of-type {
-  margin-top: 0;
-  padding-top: 0;
-  border-top: none;
-}
-
-.more-group-title {
-  padding: 6px 12px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--apple-text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.more-divider {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.06);
+  margin: 4px 10px;
 }
 
 /* 右侧操作区 */

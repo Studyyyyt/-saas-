@@ -517,7 +517,7 @@
 
           <aside class="editor-sidebar">
             <!-- AI 智能助手面板 -->
-            <el-card class="ai-panel-card apple-page-enter-delay-2" shadow="never">
+            <el-card v-if="isAiEnabled('medical-expand')" class="ai-panel-card apple-page-enter-delay-2" shadow="never">
               <div class="ai-panel-header">
                 <div class="ai-panel-icon"><i class="el-icon-cpu"></i></div>
                 <div class="ai-panel-meta">
@@ -926,6 +926,7 @@ import { getAdminSession } from '@/utils/adminSession'
 import { buildMedicalRecordTreatmentDraft, normalizeToothPositions } from '@/utils/medicalRecordOperationDraft'
 import { fetchCachedResource, saveMedicalRecord } from '@/utils/offline/apiClient'
 import { isLocalEntityId } from '@/utils/offline/queue'
+import { isAiEnabled as checkAiEnabled } from '@/utils/aiConfig'
 
 const DEFAULT_TEMPLATE_CATEGORY = '常用模板'
 
@@ -1185,6 +1186,9 @@ export default {
     this.enableRowResize()
   },
   methods: {
+    isAiEnabled(key) {
+      return checkAiEnabled(key)
+    },
     enableRowResize() {
       this.$nextTick(() => {
         const tables = this.$el.querySelectorAll('.workbench-table')
@@ -2284,6 +2288,7 @@ export default {
       this.$message.info('AI 正在分析病历字段，智能扩写中...')
       this.aiLoading = true
       try {
+        // 1. 收集当前页面所有字段数据
         const fields = {
           chiefComplaint: this.form.chief_complaint || '',
           historyOfPresentIllness: this.form.present_illness_history || '',
@@ -2298,26 +2303,64 @@ export default {
           prescription: this.form.prescription || '',
           notes: this.form.notes || ''
         }
+        // 2. 获取选中的场景与操作
+        const sceneId = this.selectedSceneId || undefined
+        const scene = this.scenes.find(s => s.id === sceneId)
+        const sceneName = scene ? scene.name : ''
+        const operations = this.selectedOperations.length > 0 ? this.selectedOperations : undefined
+        // 3. 从 sessionStorage 读取当前用户信息
+        const sessionRaw = sessionStorage.getItem('adminSession')
+        const session = sessionRaw ? JSON.parse(sessionRaw) : {}
+        const accountId = session.id || null
+        const accountName = session.name || ''
+        // 4. 从配置读取 enabled_fields 列表（优先使用本地缓存的配置）
+        let enabledFields = []
+        try {
+          const configRaw = localStorage.getItem('saas_medical_ai_config')
+          if (configRaw) {
+            const config = JSON.parse(configRaw)
+            if (config.fields && Array.isArray(config.fields)) {
+              enabledFields = config.fields.filter(f => f.enabled).map(f => f.fieldKey)
+            }
+          }
+        } catch (e) {
+          console.warn('读取本地病历 AI 配置失败', e)
+        }
+        // 5. POST 到统一代理接口
         const payload = {
           fields,
-          sceneId: this.selectedSceneId || undefined,
-          operations: this.selectedOperations.length > 0 ? this.selectedOperations : undefined
+          scene_id: sceneId,
+          scene_name: sceneName,
+          operations,
+          account_id: accountId,
+          account_name: accountName,
+          enabled_fields: enabledFields
         }
-        const res = await axios.post('/api/ai/medical-record/expand', payload)
+        const res = await axios.post('/api/ai/proxy/medical-expand', payload)
         if (res.data && res.data.code === '200' && res.data.data) {
           const data = res.data.data
-          if (data.chiefComplaint != null) this.form.chief_complaint = data.chiefComplaint
-          if (data.historyOfPresentIllness != null) this.form.present_illness_history = data.historyOfPresentIllness
-          if (data.pastHistory != null) this.form.past_history = data.pastHistory
-          if (data.generalCondition != null) this.form.general_condition = data.generalCondition
-          if (data.examinationFindings != null) this.form.examination = data.examinationFindings
-          if (data.auxiliaryExamination != null) this.form.auxiliary_examination = data.auxiliaryExamination
-          if (data.diagnosis != null) this.form.diagnosis = data.diagnosis
-          if (data.treatmentPlan != null) this.form.treatment_plan = data.treatmentPlan
-          if (data.treatment != null) this.form.treatment = data.treatment
-          if (data.medicalAdvice != null) this.form.medical_advice = data.medicalAdvice
-          if (data.prescription != null) this.form.prescription = data.prescription
-          if (data.notes != null) this.form.notes = data.notes
+          // 6. 根据 enabled_fields 过滤：只回填启用的字段
+          const fieldMap = {
+            chiefComplaint: 'chief_complaint',
+            historyOfPresentIllness: 'present_illness_history',
+            pastHistory: 'past_history',
+            generalCondition: 'general_condition',
+            examinationFindings: 'examination',
+            auxiliaryExamination: 'auxiliary_examination',
+            diagnosis: 'diagnosis',
+            treatmentPlan: 'treatment_plan',
+            treatment: 'treatment',
+            medicalAdvice: 'medical_advice',
+            prescription: 'prescription',
+            notes: 'notes'
+          }
+          for (const [key, formKey] of Object.entries(fieldMap)) {
+            if (enabledFields.length === 0 || enabledFields.includes(key)) {
+              if (data[key] != null) {
+                this.form[formKey] = data[key]
+              }
+            }
+          }
           this.$message.success('AI 扩写完成')
         } else {
           this.$message.error(res.data && res.data.msg ? res.data.msg : 'AI 扩写失败')

@@ -6,33 +6,45 @@
         <h1 class="page-title">AI 总览</h1>
         <p class="page-subtitle">管理系统所有 AI 功能的开关与运行状态</p>
       </div>
+      <div class="page-header-right">
+        <el-button size="small" icon="el-icon-refresh" :loading="loading" @click="loadData">刷新</el-button>
+      </div>
     </div>
 
     <!-- 全局开关区 -->
-    <div class="section-card">
+    <div class="section-card global-control-card">
       <div class="section-title">全局控制</div>
       <div class="global-switches">
         <div class="switch-item">
           <div class="switch-info">
-            <div class="switch-label">AI 功能总开关</div>
+            <div class="switch-label">
+              <i class="el-icon-set-up switch-icon"></i>
+              AI 功能总开关
+            </div>
             <div class="switch-desc">关闭后，系统所有 AI 入口将隐藏且不可用</div>
           </div>
           <el-switch
             v-model="globalEnabled"
             active-text="开启"
             inactive-text="关闭"
+            :disabled="switchLoading.global"
             @change="onGlobalSwitchChange"
           />
         </div>
         <div class="switch-item">
           <div class="switch-info">
-            <div class="switch-label">调试模式</div>
+            <div class="switch-label">
+              <i class="el-icon-bug switch-icon"></i>
+              调试模式
+            </div>
             <div class="switch-desc">开启后，AI 请求会在浏览器控制台打印详细日志</div>
           </div>
           <el-switch
             v-model="debugMode"
             active-text="开启"
             inactive-text="关闭"
+            :disabled="switchLoading.debug"
+            @change="onDebugModeChange"
           />
         </div>
       </div>
@@ -40,77 +52,83 @@
 
     <!-- 统计卡片区 -->
     <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon" style="background: linear-gradient(135deg, #2563eb, #3b82f6);">
-          <i class="el-icon-chat-dot-round"></i>
+      <div class="stat-card" v-for="(stat, index) in statCards" :key="index">
+        <div class="stat-icon" :style="{ background: stat.gradient }">
+          <i :class="stat.icon"></i>
         </div>
         <div class="stat-body">
-          <div class="stat-value">{{ stats.todayCalls }}</div>
-          <div class="stat-label">今日 AI 调用</div>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="background: linear-gradient(135deg, #059669, #10b981);">
-          <i class="el-icon-document"></i>
-        </div>
-        <div class="stat-body">
-          <div class="stat-value">{{ stats.todayTokens }}</div>
-          <div class="stat-label">今日 Token 消耗</div>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="background: linear-gradient(135deg, #d97706, #f59e0b);">
-          <i class="el-icon-magic-stick"></i>
-        </div>
-        <div class="stat-body">
-          <div class="stat-value">{{ stats.activeFunctions }} / {{ stats.totalFunctions }}</div>
-          <div class="stat-label">活跃功能数</div>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="background: linear-gradient(135deg, #dc2626, #ef4444);">
-          <i class="el-icon-warning-outline"></i>
-        </div>
-        <div class="stat-body">
-          <div class="stat-value">{{ stats.errorRate }}%</div>
-          <div class="stat-label">错误率</div>
+          <div class="stat-value">{{ stat.value }}</div>
+          <div class="stat-label">{{ stat.label }}</div>
         </div>
       </div>
     </div>
 
     <!-- 功能列表区 -->
-    <div class="section-card">
+    <div class="section-card function-list-card">
       <div class="section-header">
         <div class="section-title">AI 功能列表</div>
-        <el-button size="small" icon="el-icon-refresh" @click="loadFunctions">刷新</el-button>
+        <el-tag v-if="!globalEnabled" type="warning" size="small" effect="plain">
+          <i class="el-icon-warning-outline"></i> AI 已全局关闭
+        </el-tag>
       </div>
-      <el-table :data="aiFunctions" style="width: 100%" v-loading="loading">
-        <el-table-column prop="name" label="功能名称" min-width="140">
+      <el-table
+        :data="aiFunctions"
+        style="width: 100%"
+        v-loading="loading"
+        :class="{ 'disabled-table': !globalEnabled }"
+      >
+        <el-table-column prop="name" label="功能名称" min-width="160">
           <template slot-scope="scope">
             <div class="func-name">
               <span class="func-icon">{{ scope.row.icon }}</span>
-              <span>{{ scope.row.name }}</span>
+              <div class="func-info">
+                <div class="func-title">{{ scope.row.functionName }}</div>
+                <div class="func-model" v-if="scope.row.modelName">
+                  <i class="el-icon-cpu"></i> {{ scope.row.modelName }}
+                </div>
+              </div>
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="page" label="所属页面" min-width="120" />
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="pagePath" label="所属页面" min-width="120">
           <template slot-scope="scope">
-            <el-tag :type="scope.row.enabled ? 'success' : 'info'" size="small">
-              {{ scope.row.enabled ? '已启用' : '已禁用' }}
+            <el-tag size="mini" type="info" effect="plain">{{ scope.row.pagePath || '-' }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="100" align="center">
+          <template slot-scope="scope">
+            <el-tag
+              :type="scope.row.isEnabled ? 'success' : 'info'"
+              size="small"
+              effect="dark"
+              class="status-tag"
+            >
+              {{ scope.row.isEnabled ? '已启用' : '已禁用' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="todayCalls" label="今日调用" width="100" align="center" />
-        <el-table-column prop="modelName" label="使用模型" min-width="120" />
-        <el-table-column label="操作" width="120" fixed="right">
+        <el-table-column label="今日调用" width="100" align="center">
           <template slot-scope="scope">
-            <el-button type="text" size="small" @click="goToConfig(scope.row)">配置</el-button>
+            <span class="call-count" :class="{ 'zero': getTodayCalls(scope.row.functionKey) === 0 }">
+              {{ getTodayCalls(scope.row.functionKey) }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="140" fixed="right" align="center">
+          <template slot-scope="scope">
+            <el-button
+              type="text"
+              size="small"
+              icon="el-icon-setting"
+              @click="goToConfig(scope.row)"
+              :disabled="!globalEnabled"
+            >配置</el-button>
             <el-switch
-              v-model="scope.row.enabled"
+              v-model="scope.row.isEnabled"
               active-color="#13ce66"
               inactive-color="#dcdfe6"
-              @change="onFunctionSwitchChange(scope.row)"
+              :disabled="!globalEnabled || switchLoading[scope.row.functionKey]"
+              @change="(val) => onFunctionSwitchChange(scope.row, val)"
             />
           </template>
         </el-table-column>
@@ -120,6 +138,9 @@
 </template>
 
 <script>
+import axios from 'axios'
+import { updateAiState } from '@/utils/aiConfig'
+
 export default {
   name: 'AIOverviewView',
   data() {
@@ -127,90 +148,200 @@ export default {
       globalEnabled: true,
       debugMode: false,
       loading: false,
-      stats: {
-        todayCalls: 128,
-        todayTokens: '45.2K',
-        activeFunctions: 3,
-        totalFunctions: 5,
-        errorRate: 2.1
+      switchLoading: {
+        global: false,
+        debug: false
       },
-      aiFunctions: [
+      stats: {
+        todayCalls: 0,
+        todayTokens: 0,
+        activeFunctions: 0,
+        totalFunctions: 0,
+        errorRate: 0
+      },
+      aiFunctions: []
+    }
+  },
+  computed: {
+    statCards() {
+      return [
         {
-          key: 'home-assistant',
-          name: '首页 AI 助手',
-          icon: '🤖',
-          page: '首页',
-          enabled: true,
-          todayCalls: 128,
-          modelName: 'DeepSeek-V3',
-          configPath: '/SystemSettings/ai/agent'
+          value: this.stats.todayCalls,
+          label: '今日 AI 调用',
+          icon: 'el-icon-chat-dot-round',
+          gradient: 'linear-gradient(135deg, #2563eb, #3b82f6)'
         },
         {
-          key: 'medical-expand',
-          name: '病历 AI 扩写',
-          icon: '📝',
-          page: '病历编辑',
-          enabled: true,
-          todayCalls: 56,
-          modelName: 'DeepSeek-V3',
-          configPath: '/SystemSettings/ai/pages/medical'
+          value: this.formatTokens(this.stats.todayTokens),
+          label: '今日 Token 消耗',
+          icon: 'el-icon-document',
+          gradient: 'linear-gradient(135deg, #059669, #10b981)'
         },
         {
-          key: 'patient-insight',
-          name: '患者 AI 洞察',
-          icon: '🔍',
-          page: '患者列表',
-          enabled: false,
-          todayCalls: 0,
-          modelName: '-',
-          configPath: '/SystemSettings/ai/pages/patient'
+          value: `${this.stats.activeFunctions} / ${this.stats.totalFunctions}`,
+          label: '活跃功能数',
+          icon: 'el-icon-magic-stick',
+          gradient: 'linear-gradient(135deg, #d97706, #f59e0b)'
         },
         {
-          key: 'followup-generate',
-          name: '智能随访生成',
-          icon: '📞',
-          page: '随访管理',
-          enabled: true,
-          todayCalls: 23,
-          modelName: 'DeepSeek-V3',
-          configPath: '/SystemSettings/ai/link'
-        },
-        {
-          key: 'business-analysis',
-          name: '经营 AI 分析',
-          icon: '📊',
-          page: '经营分析',
-          enabled: false,
-          todayCalls: 0,
-          modelName: '-',
-          configPath: '/SystemSettings/ai/link'
+          value: `${this.stats.errorRate}%`,
+          label: '错误率',
+          icon: 'el-icon-warning-outline',
+          gradient: 'linear-gradient(135deg, #dc2626, #ef4444)'
         }
       ]
     }
   },
   created() {
-    this.loadFunctions()
+    this.loadData()
   },
   methods: {
-    loadFunctions() {
+    async loadData() {
       this.loading = true
-      // TODO: 调用后端接口 GET /api/ai-config/functions
-      setTimeout(() => {
+      try {
+        const [overviewRes, functionsRes] = await Promise.all([
+          axios.get('/api/ai-config/overview'),
+          axios.get('/api/ai-config/functions')
+        ])
+
+        if (overviewRes.data && overviewRes.data.code === '200') {
+          const data = overviewRes.data.data || {}
+          this.stats.todayCalls = data.todayCalls || 0
+          this.stats.todayTokens = data.todayTokens || 0
+          this.stats.activeFunctions = data.activeFunctions || 0
+          this.stats.totalFunctions = data.totalFunctions || 0
+          this.stats.errorRate = data.errorRate || 0
+          this.globalEnabled = data.globalEnabled !== false
+          this.debugMode = data.debugMode === true
+        }
+
+        if (functionsRes.data && functionsRes.data.code === '200') {
+          this.aiFunctions = Array.isArray(functionsRes.data.data) ? functionsRes.data.data : []
+        }
+      } catch (error) {
+        console.error('加载 AI 总览数据失败:', error)
+        this.$message.error('加载数据失败，请稍后重试')
+      } finally {
         this.loading = false
-      }, 300)
-    },
-    onGlobalSwitchChange(val) {
-      this.$message.success(val ? 'AI 功能已全局开启' : 'AI 功能已全局关闭')
-      // TODO: 调用后端接口保存全局开关状态
-    },
-    onFunctionSwitchChange(row) {
-      this.$message.success(`${row.name} 已${row.enabled ? '启用' : '禁用'}`)
-      // TODO: 调用后端接口 PUT /api/ai-config/functions/{key}
-    },
-    goToConfig(row) {
-      if (row.configPath) {
-        this.$router.push(row.configPath)
       }
+    },
+
+    async onGlobalSwitchChange(val) {
+      this.switchLoading.global = true
+      try {
+        const res = await axios.put('/api/ai-config/global', {
+          globalEnabled: val,
+          debugMode: this.debugMode
+        })
+        if (res.data && res.data.code === '200') {
+          this.$message.success(val ? 'AI 功能已全局开启' : 'AI 功能已全局关闭')
+          updateAiState({ globalEnabled: val })
+          // 全局关闭时刷新列表，让禁用状态更明显
+          if (!val) {
+            await this.loadData()
+          }
+        } else {
+          this.$message.error(res.data?.msg || '操作失败')
+          // 回滚状态
+          this.globalEnabled = !val
+        }
+      } catch (error) {
+        console.error('更新全局开关失败:', error)
+        this.$message.error('保存失败')
+        this.globalEnabled = !val
+      } finally {
+        this.switchLoading.global = false
+      }
+    },
+
+    async onDebugModeChange(val) {
+      this.switchLoading.debug = true
+      try {
+        const res = await axios.put('/api/ai-config/global', {
+          globalEnabled: this.globalEnabled,
+          debugMode: val
+        })
+        if (res.data && res.data.code === '200') {
+          this.$message.success(val ? '调试模式已开启' : '调试模式已关闭')
+          updateAiState({ debugMode: val })
+        } else {
+          this.$message.error(res.data?.msg || '操作失败')
+          this.debugMode = !val
+        }
+      } catch (error) {
+        console.error('更新调试模式失败:', error)
+        this.$message.error('保存失败')
+        this.debugMode = !val
+      } finally {
+        this.switchLoading.debug = false
+      }
+    },
+
+    async onFunctionSwitchChange(row, val) {
+      this.$set(this.switchLoading, row.functionKey, true)
+      try {
+        const res = await axios.put(`/api/ai-config/functions/${row.functionKey}`, {
+          enabled: val === true
+        })
+        if (res.data && res.data.code === '200') {
+          this.$message.success(`${row.functionName} 已${val ? '启用' : '禁用'}`)
+          updateAiState({ functions: { [row.functionKey]: val === true } })
+          // 刷新统计数据
+          const overviewRes = await axios.get('/api/ai-config/overview')
+          if (overviewRes.data && overviewRes.data.code === '200') {
+            const data = overviewRes.data.data || {}
+            this.stats.activeFunctions = data.activeFunctions || 0
+            this.stats.totalFunctions = data.totalFunctions || 0
+          }
+        } else {
+          this.$message.error(res.data?.msg || '操作失败')
+          // 回滚状态
+          this.$set(row, 'isEnabled', !val)
+        }
+      } catch (error) {
+        console.error('更新功能状态失败:', error)
+        this.$message.error('保存失败')
+        this.$set(row, 'isEnabled', !val)
+      } finally {
+        this.$set(this.switchLoading, row.functionKey, false)
+      }
+    },
+
+    goToConfig(row) {
+      // 根据功能键映射到对应的路由
+      // 注：followup-generate（智能随访）与 business-analysis（经营分析）暂无独立配置页
+      const routeMap = {
+        'home-assistant': '/SystemSettings/ai/agent',
+        'medical-expand': '/SystemSettings/ai/pages/medical',
+        'patient-insight': '/SystemSettings/ai/pages/patient',
+        'followup-generate': '/SystemSettings/ai/agent',
+        'business-analysis': '/SystemSettings/ai/agent',
+        'lab-order-analysis': '/SystemSettings/ai/agent',
+        'lab-factory-analysis': '/SystemSettings/ai/agent',
+        'ad-spending-analysis': '/SystemSettings/ai/agent',
+        'doctor-schedule': '/SystemSettings/ai/agent'
+      }
+      const path = routeMap[row.functionKey]
+      if (path) {
+        this.$router.push(path)
+      } else {
+        this.$message.info('该功能配置页面尚未开放')
+      }
+    },
+
+    formatTokens(tokens) {
+      if (tokens >= 1000) {
+        return (tokens / 1000).toFixed(1) + 'K'
+      }
+      return String(tokens)
+    },
+
+    getTodayCalls(functionKey) {
+      // 说明：后端已提供 ai_operation_log 表记录各功能调用日志，
+      // 但当前 MedicalRecordAIService 等 AI 服务尚未在调用成功后写入日志。
+      // 待后端各 AI 服务接入 logAiOperation() 后，
+      // 可扩展 OverviewVO 返回各功能今日调用明细，此处再改为真实数据。
+      return 0
     }
   }
 }
@@ -223,7 +354,14 @@ export default {
 }
 
 .page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 28px;
+}
+
+.page-header-left {
+  flex: 1;
 }
 
 .page-title {
@@ -251,6 +389,11 @@ export default {
   border-radius: 16px;
   padding: 24px;
   margin-bottom: 20px;
+  transition: box-shadow 0.3s ease;
+}
+
+.section-card:hover {
+  box-shadow: var(--apple-shadow-lg), var(--apple-surface-shadow-inset);
 }
 
 .section-header {
@@ -270,15 +413,16 @@ export default {
 .global-switches {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 4px;
 }
 
 .switch-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 0;
+  padding: 16px 0;
   border-bottom: 1px solid var(--apple-divider);
+  transition: background 0.2s ease;
 }
 
 .switch-item:last-child {
@@ -286,20 +430,33 @@ export default {
   padding-bottom: 0;
 }
 
+.switch-item:first-child {
+  padding-top: 0;
+}
+
 .switch-info {
   flex: 1;
 }
 
 .switch-label {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--apple-text-primary);
   margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.switch-icon {
+  font-size: 16px;
+  color: var(--apple-accent-blue);
 }
 
 .switch-desc {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--apple-text-tertiary);
+  line-height: 1.4;
 }
 
 /* 统计卡片 */
@@ -330,15 +487,16 @@ export default {
 }
 
 .stat-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 18px;
+  font-size: 20px;
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .stat-body {
@@ -346,33 +504,114 @@ export default {
 }
 
 .stat-value {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 700;
   color: var(--apple-text-primary);
   line-height: 1.2;
+  letter-spacing: -0.02em;
 }
 
 .stat-label {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--apple-text-tertiary);
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
 /* 功能列表 */
+.function-list-card {
+  overflow: hidden;
+}
+
 .func-name {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .func-icon {
-  font-size: 18px;
+  font-size: 22px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--apple-bg-secondary);
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.func-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.func-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--apple-text-primary);
+}
+
+.func-model {
+  font-size: 12px;
+  color: var(--apple-text-tertiary);
+}
+
+.func-model i {
+  font-size: 11px;
+  margin-right: 2px;
+}
+
+.status-tag {
+  border-radius: 12px;
+  padding: 0 10px;
+  height: 24px;
+  line-height: 22px;
+}
+
+.call-count {
+  font-weight: 600;
+  color: var(--apple-text-primary);
+}
+
+.call-count.zero {
+  color: var(--apple-text-tertiary);
+  font-weight: 400;
+}
+
+.disabled-table {
+  opacity: 0.65;
+  pointer-events: none;
+  filter: grayscale(0.4);
+  transition: all 0.3s ease;
+}
+
+.disabled-table >>> .el-table__body-wrapper {
+  pointer-events: none;
+}
+
+/* 覆盖禁用表格的操作按钮，使其仍可交互 */
+.disabled-table >>> .el-table__body-wrapper .el-button--text,
+.disabled-table >>> .el-table__body-wrapper .el-switch {
+  pointer-events: none;
 }
 
 /* 响应式 */
-@media (max-width: 768px) {
+@media (max-width: 992px) {
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
   }
 }
 </style>

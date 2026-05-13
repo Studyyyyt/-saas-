@@ -109,14 +109,11 @@ const menuGroups = [
     children: [
       { key: 'ai-overview', title: 'AI 总览', path: '/SystemSettings/ai/overview' },
       { key: 'ai-agent', title: '首页助手', path: '/SystemSettings/ai/agent' },
-      { key: 'ai-model', title: '模型供应商', path: '/SystemSettings/ai/model' },
-      { key: 'ai-link', title: 'Agent 链接', path: '/SystemSettings/ai/link' },
       {
         key: 'ai-pages',
         title: '页面 AI 功能',
         children: [
-          { key: 'ai-medical', title: '病历扩写', path: '/SystemSettings/ai/pages/medical' },
-          { key: 'ai-patient', title: '患者洞察', path: '/SystemSettings/ai/pages/patient' }
+          { key: 'ai-medical', title: '病历扩写', path: '/SystemSettings/ai/pages/medical' }
         ]
       }
     ]
@@ -245,6 +242,7 @@ export default {
   position: sticky;
   top: var(--apple-nav-height);
   height: calc(100vh - var(--apple-nav-height));
+  z-index: 3000;
 }
 
 .sidebar-header {

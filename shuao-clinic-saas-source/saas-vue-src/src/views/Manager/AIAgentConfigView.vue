@@ -34,7 +34,7 @@
           <span class="agent-action" title="编辑" @click="openEditor(agent)">
             <i class="el-icon-edit"></i>
           </span>
-          <span v-if="!agent.isSystemDefault" class="agent-action danger" title="删除" @click="removeAgent(agent)">
+          <span class="agent-action danger" title="删除" @click="removeAgent(agent)">
             <i class="el-icon-delete"></i>
           </span>
         </div>
@@ -52,9 +52,10 @@
     <el-dialog
       :title="editingId ? '编辑 AI 助手' : '新增 AI 助手'"
       :visible.sync="editorVisible"
-      width="600px"
+      width="680px"
       custom-class="agent-editor-dialog"
       :close-on-click-modal="false"
+      :modal-append-to-body="false"
     >
       <div class="agent-form">
         <div class="form-row">
@@ -112,25 +113,74 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">系统提示词（System Prompt）</label>
-          <el-input
-            v-model="form.systemPrompt"
-            type="textarea"
-            :rows="4"
-            placeholder="定义该 AI 助手的角色与行为准则。例如：你是一位口腔门诊经营分析专家，擅长通过数据发现问题并给出 actionable 建议..."
-          />
-          <div class="form-hint">系统提示词会作为 AI 的隐藏上下文，影响其回答风格与能力边界</div>
-        </div>
+        <!-- 外部端点配置卡片 -->
+        <div class="endpoint-card">
+          <div class="endpoint-card-title">
+            <i class="el-icon-link"></i>
+            外部端点配置
+          </div>
+          <div class="endpoint-card-hint">配置外部工作流平台（如 n8n、Dify）的调用参数，前端将按模板组装请求并发送到后端统一代理接口</div>
 
-        <div class="form-group">
-          <label class="form-label">启用的数据工具</label>
-          <el-checkbox-group v-model="form.enabledTools" size="small">
-            <el-checkbox-button v-for="tool in toolOptions" :key="tool.key" :label="tool.key">
-              {{ tool.label }}
-            </el-checkbox-button>
-          </el-checkbox-group>
-          <div class="form-hint">勾选后，该助手在对话中可以调用对应的数据查询工具来获取实时信息</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">端点地址 <span class="required">*</span></label>
+              <el-input v-model="form.endpointUrl" placeholder="https://n8n.xxx.com/webhook/xxx" />
+            </div>
+            <div class="form-group" style="width: 140px; flex-shrink: 0;">
+              <label class="form-label">请求方法</label>
+              <el-select v-model="form.method" style="width: 100%">
+                <el-option label="POST" value="POST" />
+                <el-option label="GET" value="GET" />
+              </el-select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">认证类型</label>
+              <el-select v-model="form.authType" style="width: 100%">
+                <el-option label="Bearer Token" value="bearer" />
+                <el-option label="API Key" value="apikey" />
+                <el-option label="无" value="none" />
+              </el-select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">认证密钥</label>
+              <el-input v-model="form.authToken" type="password" placeholder="sk-xxx 或 webhook 密钥" show-password />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">响应类型</label>
+              <el-select v-model="form.responseType" style="width: 100%">
+                <el-option label="SSE 流式" value="sse" />
+                <el-option label="JSON 一次性" value="json" />
+              </el-select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">超时时间（秒）</label>
+              <el-input-number v-model="form.timeoutSeconds" :min="5" :max="300" :step="5" style="width: 100%" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">请求体模板 <span class="required">*</span></label>
+            <el-input
+              v-model="form.requestTemplate"
+              type="textarea"
+              :rows="8"
+              placeholder="请输入 JSON 请求模板..."
+            />
+            <div class="template-vars">
+              <span class="template-vars-label">可用变量：</span>
+              <el-tag size="mini" class="var-tag" @click="insertTemplateVar('{{user_message}}')">{{user_message}}</el-tag>
+              <el-tag size="mini" class="var-tag" @click="insertTemplateVar('{{account_id}}')">{{account_id}}</el-tag>
+              <el-tag size="mini" class="var-tag" @click="insertTemplateVar('{{account_name}}')">{{account_name}}</el-tag>
+              <el-tag size="mini" class="var-tag" @click="insertTemplateVar('{{session_id}}')">{{session_id}}</el-tag>
+              <el-tag size="mini" class="var-tag" @click="insertTemplateVar('{{history}}')">{{history}}</el-tag>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -153,6 +203,14 @@ import { getAdminSession } from '@/utils/adminSession'
 
 const STORAGE_KEY = 'saas_ai_agents_v1'
 
+const defaultEndpointTemplate = JSON.stringify({
+  message: '{{user_message}}',
+  account_id: '{{account_id}}',
+  account_name: '{{account_name}}',
+  session_id: '{{session_id}}',
+  history: '{{history}}'
+}, null, 2)
+
 const defaultAgents = [
   {
     id: 'default',
@@ -161,8 +219,13 @@ const defaultAgents = [
     desc: '通用门诊查询与数据汇总',
     gradient: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)',
     chips: ['今日预约', '我的待办', '本月收入', '患者查询', '今日患者', '待收费'],
-    systemPrompt: '',
-    enabledTools: ['query_patients', 'query_appointments', 'query_medical_records', 'query_finances']
+    endpointUrl: '',
+    method: 'POST',
+    authType: 'none',
+    authToken: '',
+    requestTemplate: defaultEndpointTemplate,
+    responseType: 'sse',
+    timeoutSeconds: 30
   },
   {
     id: 'finance',
@@ -171,8 +234,13 @@ const defaultAgents = [
     desc: '财务、收入与经营数据分析',
     gradient: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)',
     chips: ['本月收入', '近7天趋势', '待收费', '加工费', '耗材支出', '高价值客户'],
-    systemPrompt: '',
-    enabledTools: ['query_finances', 'query_appointments', 'query_treatments', 'query_materials']
+    endpointUrl: '',
+    method: 'POST',
+    authType: 'none',
+    authToken: '',
+    requestTemplate: defaultEndpointTemplate,
+    responseType: 'sse',
+    timeoutSeconds: 30
   },
   {
     id: 'patient',
@@ -181,8 +249,13 @@ const defaultAgents = [
     desc: '患者档案、随访与病历查询',
     gradient: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
     chips: ['患者查询', '待回访', '流失风险', '转介绍', '待写病历', '今日患者'],
-    systemPrompt: '',
-    enabledTools: ['query_patients', 'query_medical_records', 'query_appointments', 'query_treatments']
+    endpointUrl: '',
+    method: 'POST',
+    authType: 'none',
+    authToken: '',
+    requestTemplate: defaultEndpointTemplate,
+    responseType: 'sse',
+    timeoutSeconds: 30
   },
   {
     id: 'schedule',
@@ -191,8 +264,13 @@ const defaultAgents = [
     desc: '预约排班、医生日程与调度',
     gradient: 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)',
     chips: ['今日预约', '明日预约', '医生排班', '待接诊', '已取消', '预约趋势'],
-    systemPrompt: '',
-    enabledTools: ['query_appointments', 'query_treatments']
+    endpointUrl: '',
+    method: 'POST',
+    authType: 'none',
+    authToken: '',
+    requestTemplate: defaultEndpointTemplate,
+    responseType: 'sse',
+    timeoutSeconds: 30
   }
 ]
 
@@ -243,23 +321,19 @@ export default {
         desc: '',
         gradient: gradientPresets[0].value,
         chips: [],
-        systemPrompt: '',
-        enabledTools: []
+        endpointUrl: '',
+        method: 'POST',
+        authType: 'none',
+        authToken: '',
+        requestTemplate: defaultEndpointTemplate,
+        responseType: 'sse',
+        timeoutSeconds: 30
       },
       customGradient: '',
       chipInput: '',
       gradientPresets,
       loading: false,
-      saveLoading: false,
-      toolOptions: [
-        { key: 'query_patients', label: '查询患者' },
-        { key: 'query_appointments', label: '查询预约' },
-        { key: 'query_medical_records', label: '查询病历' },
-        { key: 'query_finances', label: '查询财务' },
-        { key: 'query_treatments', label: '查询治疗' },
-        { key: 'query_lab_orders', label: '查询加工单' },
-        { key: 'query_materials', label: '查询耗材' }
-      ]
+      saveLoading: false
     }
   },
   computed: {
@@ -267,7 +341,7 @@ export default {
       return this.customGradient && !this.gradientPresets.some(g => g.value === this.form.gradient)
     },
     canSave() {
-      return this.form.name.trim() && this.form.icon.trim() && this.form.chips.length > 0
+      return this.form.name.trim() && this.form.icon.trim() && this.form.chips.length > 0 && this.form.endpointUrl.trim() && this.form.requestTemplate.trim()
     }
   },
   watch: {
@@ -310,8 +384,13 @@ export default {
         desc: item.description || '',
         gradient: item.gradient,
         chips: Array.isArray(item.chips) ? item.chips : [],
-        systemPrompt: item.systemPrompt || '',
-        enabledTools: Array.isArray(item.enabledTools) ? item.enabledTools : [],
+        endpointUrl: item.endpointUrl || '',
+        method: item.method || 'POST',
+        authType: item.authType || 'none',
+        authToken: item.authToken || '',
+        requestTemplate: item.requestTemplate || defaultEndpointTemplate,
+        responseType: item.responseType || 'sse',
+        timeoutSeconds: item.timeoutSeconds || 30,
         sortOrder: item.sortOrder,
         isSystemDefault: item.isSystemDefault,
         rawId: item.id
@@ -327,8 +406,13 @@ export default {
         description: agent.desc,
         gradient: agent.gradient,
         chips: agent.chips,
-        systemPrompt: agent.systemPrompt,
-        enabledTools: agent.enabledTools,
+        endpointUrl: agent.endpointUrl,
+        method: agent.method,
+        authType: agent.authType,
+        authToken: agent.authToken,
+        requestTemplate: agent.requestTemplate,
+        responseType: agent.responseType,
+        timeoutSeconds: agent.timeoutSeconds,
         sortOrder: agent.sortOrder || 0
       }
     },
@@ -341,8 +425,13 @@ export default {
           desc: agent.desc || '',
           gradient: agent.gradient,
           chips: agent.chips.slice(),
-          systemPrompt: agent.systemPrompt || '',
-          enabledTools: Array.isArray(agent.enabledTools) ? agent.enabledTools.slice() : []
+          endpointUrl: agent.endpointUrl || '',
+          method: agent.method || 'POST',
+          authType: agent.authType || 'none',
+          authToken: agent.authToken || '',
+          requestTemplate: agent.requestTemplate || defaultEndpointTemplate,
+          responseType: agent.responseType || 'sse',
+          timeoutSeconds: agent.timeoutSeconds || 30
         }
         this.customGradient = this.gradientPresets.some(g => g.value === agent.gradient) ? '' : agent.gradient
       } else {
@@ -353,8 +442,13 @@ export default {
           desc: '',
           gradient: gradientPresets[0].value,
           chips: [],
-          systemPrompt: '',
-          enabledTools: []
+          endpointUrl: '',
+          method: 'POST',
+          authType: 'none',
+          authToken: '',
+          requestTemplate: defaultEndpointTemplate,
+          responseType: 'sse',
+          timeoutSeconds: 30
         }
         this.customGradient = ''
       }
@@ -370,8 +464,13 @@ export default {
         desc: this.form.desc.trim(),
         gradient: this.form.gradient,
         chips: this.form.chips.slice(),
-        systemPrompt: this.form.systemPrompt.trim(),
-        enabledTools: this.form.enabledTools.slice()
+        endpointUrl: this.form.endpointUrl.trim(),
+        method: this.form.method,
+        authType: this.form.authType,
+        authToken: this.form.authToken.trim(),
+        requestTemplate: this.form.requestTemplate.trim(),
+        responseType: this.form.responseType,
+        timeoutSeconds: this.form.timeoutSeconds
       }
       try {
         if (this.editingId) {
@@ -404,13 +503,17 @@ export default {
       }
     },
     removeAgent(agent) {
-      this.$confirm(`确定删除「${agent.name}」吗？`, '提示', {
+      const isSystem = agent.isSystemDefault
+      const confirmMessage = isSystem
+        ? `「${agent.name}」是系统默认助手，确定删除吗？删除后可能需要重新配置。`
+        : `确定删除「${agent.name}」吗？`
+      this.$confirm(confirmMessage, '提示', {
         confirmButtonText: '删除',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(async () => {
         try {
-          if (agent.rawId && !agent.isSystemDefault) {
+          if (agent.rawId) {
             await deleteAgentConfig(agent.rawId)
           }
           this.agents = this.agents.filter(a => a.id !== agent.id)
@@ -433,6 +536,18 @@ export default {
     },
     removeChip(index) {
       this.form.chips.splice(index, 1)
+    },
+    insertTemplateVar(varName) {
+      const textarea = this.$el.querySelector('.endpoint-card textarea')
+      if (!textarea) return
+      const start = textarea.selectionStart
+      const end = textarea.selectionEnd
+      const text = this.form.requestTemplate
+      this.form.requestTemplate = text.substring(0, start) + varName + text.substring(end)
+      this.$nextTick(() => {
+        textarea.focus()
+        textarea.setSelectionRange(start + varName.length, start + varName.length)
+      })
     }
   }
 }
@@ -704,6 +819,55 @@ export default {
 
 .chips-list >>> .el-tag {
   border-radius: 8px;
+}
+
+/* 外部端点配置卡片 */
+.endpoint-card {
+  background: var(--apple-bg-primary);
+  border: 1px solid var(--apple-divider);
+  border-radius: 12px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.endpoint-card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--apple-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.endpoint-card-hint {
+  font-size: 12px;
+  color: var(--apple-text-tertiary);
+  line-height: 1.5;
+}
+
+.template-vars {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.template-vars-label {
+  font-size: 12px;
+  color: var(--apple-text-tertiary);
+}
+
+.var-tag {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.var-tag:hover {
+  color: var(--apple-accent);
+  border-color: var(--apple-accent);
 }
 
 /* 响应式 */

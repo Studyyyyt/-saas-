@@ -4,7 +4,7 @@
     <div class="page-header">
       <div class="page-header-left">
         <h1 class="page-title">病历 AI 扩写配置</h1>
-        <p class="page-subtitle">配置病历编辑页面中 AI 一键扩写的行为参数、提示词与安全策略</p>
+        <p class="page-subtitle">配置病历编辑页面中 AI 一键扩写的行为参数、字段规则与安全策略</p>
       </div>
     </div>
 
@@ -16,17 +16,6 @@
           <div class="setting-item">
             <div class="setting-label">功能开关</div>
             <el-switch v-model="config.enabled" active-text="启用" inactive-text="禁用" />
-          </div>
-          <div class="setting-item">
-            <div class="setting-label">默认温度: {{ config.temperature }}</div>
-            <el-slider v-model="config.temperature" :min="0.1" :max="1.0" :step="0.1" show-stops />
-            <div class="setting-hint">低温度（0.1-0.3）输出更稳定，高温度更具创造性</div>
-          </div>
-        </div>
-        <div class="setting-row">
-          <div class="setting-item">
-            <div class="setting-label">最大输出 Token</div>
-            <el-input-number v-model="config.maxTokens" :min="500" :max="4000" :step="500" />
           </div>
           <div class="setting-item">
             <div class="setting-label">空字段处理策略</div>
@@ -73,88 +62,79 @@
       </el-table>
     </div>
 
-    <!-- 提示词模板 -->
+    <!-- 外部扩写端点配置 -->
     <div class="section-card">
       <div class="section-header">
-        <div class="section-title">提示词模板</div>
-        <div style="display:flex;gap:8px;">
-          <el-button size="small" icon="el-icon-view" @click="previewPrompt">Prompt 预览</el-button>
-          <el-button size="small" icon="el-icon-document-copy" @click="resetPrompt">恢复默认</el-button>
-        </div>
+        <div class="section-title">外部扩写端点配置</div>
       </div>
-      <div class="prompt-section">
-        <div class="form-group">
-          <label class="form-label">系统提示词（System Prompt）</label>
+      <div class="endpoint-settings">
+        <div class="setting-row">
+          <div class="setting-item">
+            <div class="setting-label">端点地址 <span class="required">*</span></div>
+            <el-input v-model="config.endpointUrl" placeholder="https://n8n.xxx.com/webhook/xxx" />
+          </div>
+          <div class="setting-item" style="width: 140px; flex-shrink: 0;">
+            <div class="setting-label">请求方法</div>
+            <el-select v-model="config.endpointMethod" style="width: 100%">
+              <el-option label="POST" value="POST" />
+              <el-option label="GET" value="GET" />
+            </el-select>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-item">
+            <div class="setting-label">认证类型</div>
+            <el-select v-model="config.endpointAuthType" style="width: 100%">
+              <el-option label="Bearer Token" value="bearer" />
+              <el-option label="API Key" value="apikey" />
+              <el-option label="无" value="none" />
+            </el-select>
+          </div>
+          <div class="setting-item">
+            <div class="setting-label">认证密钥</div>
+            <el-input v-model="config.endpointAuthToken" type="password" placeholder="sk-xxx 或 webhook 密钥" show-password />
+          </div>
+        </div>
+        <div class="form-group" style="margin-top: 8px;">
+          <label class="form-label">请求体模板 <span class="required">*</span></label>
           <el-input
-            v-model="config.systemPrompt"
+            v-model="config.requestTemplate"
             type="textarea"
-            :rows="10"
-            placeholder="定义 AI 扩写病历时的角色与行为准则..."
+            :rows="8"
+            placeholder="请输入 JSON 请求模板..."
           />
-          <div class="prompt-actions">
-            <el-tag size="mini" type="info">可插入变量:</el-tag>
-            <el-tag size="mini" class="var-tag" @click="insertVar('{kb_content}')">{kb_content}</el-tag>
-            <el-tag size="mini" class="var-tag" @click="insertVar('{input_fields}')">{input_fields}</el-tag>
-            <el-tag size="mini" class="var-tag" @click="insertVar('{disease_type}')">{disease_type}</el-tag>
+          <div class="template-vars">
+            <span class="template-vars-label">可用变量：</span>
+            <el-tag size="mini" class="var-tag" @click="insertTemplateVar('{{fields}}')">{{fields}}</el-tag>
+            <el-tag size="mini" class="var-tag" @click="insertTemplateVar('{{scene_id}}')">{{scene_id}}</el-tag>
+            <el-tag size="mini" class="var-tag" @click="insertTemplateVar('{{scene_name}}')">{{scene_name}}</el-tag>
+            <el-tag size="mini" class="var-tag" @click="insertTemplateVar('{{operations}}')">{{operations}}</el-tag>
+            <el-tag size="mini" class="var-tag" @click="insertTemplateVar('{{account_id}}')">{{account_id}}</el-tag>
+            <el-tag size="mini" class="var-tag" @click="insertTemplateVar('{{account_name}}')">{{account_name}}</el-tag>
+            <el-tag size="mini" class="var-tag" @click="insertTemplateVar('{{enabled_fields}}')">{{enabled_fields}}</el-tag>
           </div>
-          <div class="prompt-hint" style="margin-top:6px;color:#999;font-size:12px;">
-            <i class="el-icon-info" /> 下方配置的 Few-shot 示例与诊疗场景约束将在后端自动追加到本提示词末尾，无需手动写入。可在"完整 Prompt 实时预览"中查看最终效果。
+          <div class="form-hint" style="margin-top:6px;color:#999;font-size:12px;">
+            <i class="el-icon-info" /> 后端会将模板中的变量替换为实际值后，发送到外部端点。响应需为 JSON 格式，键名与字段名一致。
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- 实时生效字段预览 -->
+    <!-- 实时生效字段预览 -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-title">实时生效 JSON 字段预览</div>
+      </div>
       <div class="prompt-live-preview">
         <div class="live-preview-header">
-          <span class="live-preview-title">实时生效 JSON 字段预览</span>
-          <span class="live-preview-hint">字段开关将实时影响 Prompt 中发送给 AI 的 JSON 字段列表</span>
+          <span class="live-preview-title">当前启用的字段列表</span>
+          <span class="live-preview-hint">字段开关将实时影响扩写时允许回填的字段范围</span>
         </div>
         <pre class="live-preview-code">{{ effectiveJsonPreview }}</pre>
         <div v-if="fieldConfigs.some(f => !f.enabled)" class="live-preview-tip">
           <i class="el-icon-warning-outline" />
           已禁用 {{ fieldConfigs.filter(f => !f.enabled).length }} 个字段，AI 将不会为其生成内容
         </div>
-      </div>
-    </div>
-
-    <!-- Few-shot 示例 -->
-    <div class="section-card">
-      <div class="section-header">
-        <div class="section-title">Few-shot 示例（{{ fewShotExamples.length }} 条）</div>
-        <el-button size="small" icon="el-icon-plus" @click="addFewShot">添加示例</el-button>
-      </div>
-      <div v-if="fewShotExamples.length === 0" class="empty-mini">
-        暂无示例，添加后 AI 会参考这些示例的格式和风格进行扩写
-      </div>
-      <div v-else class="few-shot-list">
-        <div v-for="(ex, idx) in fewShotExamples" :key="idx" class="few-shot-item">
-          <div class="few-shot-header">
-            <span class="few-shot-title">示例 {{ idx + 1 }}</span>
-            <el-button type="text" size="mini" class="danger-text" @click="removeFewShot(idx)">删除</el-button>
-          </div>
-          <div class="few-shot-body">
-            <div class="few-shot-field">
-              <label>简要输入</label>
-              <el-input v-model="ex.input" type="textarea" :rows="2" size="small" placeholder="医生填写的简要内容" />
-            </div>
-            <div class="few-shot-field">
-              <label>扩写输出</label>
-              <el-input v-model="ex.output" type="textarea" :rows="3" size="small" placeholder="AI 扩写后的专业内容" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 完整 Prompt 实时预览 -->
-    <div class="section-card">
-      <div class="section-header">
-        <div class="section-title">完整 Prompt 实时预览</div>
-        <el-tag v-if="livePromptPreviewLoading" size="mini" type="info">生成中...</el-tag>
-      </div>
-      <div class="live-prompt-preview">
-        <pre v-if="livePromptPreview">{{ livePromptPreview }}</pre>
-        <div v-else class="empty-mini">修改系统提示词或 Few-shot 示例后，此处将实时显示最终发送给 AI 的完整 Prompt</div>
       </div>
     </div>
 
@@ -287,25 +267,6 @@
       </div>
     </el-dialog>
 
-    <!-- Prompt 预览弹窗 -->
-    <el-dialog :visible.sync="promptPreviewVisible" title="Prompt 预览" width="800px" :close-on-click-modal="false" :modal="false">
-      <div style="position: relative;">
-        <textarea
-          v-model="promptPreviewContent"
-          rows="20"
-          style="width: 100%; font-family: monospace; font-size: 13px; line-height: 1.6; padding: 8px 12px; box-sizing: border-box; border: 1px solid #dcdfe6; border-radius: 4px; resize: vertical; outline: none; color: #606266;"
-        />
-        <div v-if="promptPreviewLoading" class="prompt-loading-overlay">
-          <i class="el-icon-loading" /> 正在渲染 Prompt...
-        </div>
-      </div>
-      <div slot="footer">
-        <el-button @click="promptPreviewVisible = false">关闭</el-button>
-        <el-button type="primary" icon="el-icon-document-copy" @click="copyPrompt">复制</el-button>
-        <el-button type="success" icon="el-icon-check" @click="applyPreviewToPrompt">应用到编辑区</el-button>
-      </div>
-    </el-dialog>
-
     <!-- 效果测试 -->
     <div class="section-card">
       <div class="section-header">
@@ -399,46 +360,15 @@
 <script>
 import axios from 'axios'
 
-const defaultPrompt = `你是一位资深口腔全科医生助理，擅长将简要病历记录扩写为规范的专业病历。
-
-【任务】
-根据医生填写的简要信息，为病历所有字段生成完整、规范的内容。
-- 对于医生已填写的字段：基于已有内容进行扩充、规范化和专业化
-- 对于医生未填写的字段：根据主诉和已填信息，结合口腔医学常识，智能推断并生成合理内容
-- 不允许有任何字段为空字符串，每个字段都必须有实质内容
-
-【知识库参考】（仅参考格式和术语，不编造未提及的病情）
-{kb_content}
-
-【输入信息】
-{input_fields}
-
-【输出格式要求】
-严格按以下 JSON 格式返回，不要包含任何其他内容，必须包含全部字段：
-{
-  "chiefComplaint": "主诉，≤30字，格式：部位+症状+时间",
-  "historyOfPresentIllness": "现病史，必须包含起病时间、主要症状、演变过程、诊疗经过",
-  "pastHistory": "既往史，包括全身疾病史、口腔疾病史、手术外伤史、过敏史等，无特殊可写'否认全身系统性疾病史，否认药物过敏史'",
-  "generalCondition": "一般情况，包括精神、饮食、睡眠、大小便等",
-  "examinationFindings": "口腔专科检查所见，包括视诊、叩诊、探诊、松动度、冷热测等",
-  "auxiliaryExamination": "辅助检查结果，如X线片、CBCT、血常规等，未做可写'暂缺，建议完善'",
-  "diagnosis": "诊断，必须用建议性语气（考虑/疑似/待排/可能），严禁使用确诊性词汇",
-  "treatmentPlan": "治疗计划，包括拟行治疗方案、步骤和预期效果",
-  "treatment": "治疗文稿，记录本次就诊实际进行的处置操作",
-  "medicalAdvice": "医嘱，包括注意事项、用药建议、复诊时间等",
-  "prescription": "处方，如有用药则记录药物名称和用法，无则写'暂无'",
-  "notes": "病历备注，记录特殊情况、患者诉求、沟通要点等"
-}
-
-【绝对禁止】
-1. 禁止编造患者未提及的症状、检查结果
-2. 禁止输出确诊性断言，诊断严禁使用'确诊'、'明确诊断'、'肯定'等词汇
-3. 禁止输出具体药物剂量
-4. 禁止输出"建议到上级医院"等推诿用语
-5. 禁止任何字段返回空字符串，未填写字段必须智能生成合理内容
-
-【语气要求】
-专业、客观、严谨，使用标准口腔医学术语。`
+const defaultEndpointTemplate = JSON.stringify({
+  fields: '{{fields}}',
+  scene_id: '{{scene_id}}',
+  scene_name: '{{scene_name}}',
+  operations: '{{operations}}',
+  account_id: '{{account_id}}',
+  account_name: '{{account_name}}',
+  enabled_fields: '{{enabled_fields}}'
+}, null, 2)
 
 const defaultFields = [
   { fieldKey: 'chiefComplaint', fieldName: '主诉', enabled: true, maxLength: 30, required: true, defaultValue: '', validationRule: '', validationHint: '主诉必须包含部位+症状+时间' },
@@ -483,36 +413,25 @@ export default {
       editingScene: { name: '', category: '其他', level: 1, sortOrder: 0, steps: [] },
       config: {
         enabled: true,
-        temperature: 0.2,
-        maxTokens: 2000,
         emptyFieldStrategy: 'leave',
-        systemPrompt: defaultPrompt,
         forbidAssertion: true,
         sensitiveWords: '确诊, 绝对, 保证, 100%, 肯定',
         checkDiagnosisTone: true,
         checkChiefComplaintLength: true,
-        checkHistoryTime: true
+        checkHistoryTime: true,
+        endpointUrl: '',
+        endpointMethod: 'POST',
+        endpointAuthType: 'none',
+        endpointAuthToken: '',
+        requestTemplate: defaultEndpointTemplate
       },
       fieldConfigs: JSON.parse(JSON.stringify(defaultFields)),
-      fewShotExamples: [
-        {
-          input: '主诉：牙痛3天\n现病史：3天前开始牙痛，吃了止痛药没好',
-          output: '主诉：右下后牙自发痛3天\n现病史：患者3天前无明显诱因出现右下后牙自发性疼痛，呈阵发性发作，每次持续约10-15分钟，冷热刺激可加重疼痛，夜间疼痛明显，伴同侧头面部放射痛。自行口服止痛药物（具体不详）后症状无明显缓解，为求进一步诊治来我院就诊。'
-        }
-      ],
       testForm: {},
       testUseMock: true,
       testOutput: '',
       testErrors: [],
       testTrace: null,
-      testTraceActive: [],
-      promptPreviewVisible: false,
-      promptPreviewContent: '',
-      promptPreviewLoading: false,
-      // 完整 Prompt 实时预览
-      livePromptPreview: '',
-      livePromptPreviewLoading: false,
-      livePromptPreviewDebounceTimer: null
+      testTraceActive: []
     }
   },
   computed: {
@@ -522,7 +441,7 @@ export default {
         return '// 未启用任何扩写字段，AI 将不会生成任何病历内容'
       }
       const lines = enabledFields.map((f, i) => {
-        const desc = this.getFieldDescFromPrompt(f.fieldKey) || f.fieldName
+        const desc = defaultFieldDescriptions[f.fieldKey] || f.fieldName
         const maxlen = f.maxLength ? `，≤${f.maxLength}字` : ''
         const defval = f.defaultValue ? `，默认值：${f.defaultValue}` : ''
         const last = i === enabledFields.length - 1 ? '' : ','
@@ -535,24 +454,14 @@ export default {
     fieldConfigs: {
       deep: true,
       handler() {
-        this.syncPromptJsonBlock()
         this.initTestForm()
         this.unsaved = true
-        this.scheduleLivePreviewUpdate()
       }
     },
     config: {
       deep: true,
       handler() {
         this.unsaved = true
-        this.scheduleLivePreviewUpdate()
-      }
-    },
-    fewShotExamples: {
-      deep: true,
-      handler() {
-        this.unsaved = true
-        this.scheduleLivePreviewUpdate()
       }
     }
   },
@@ -568,15 +477,17 @@ export default {
           if (data.config) {
             this.config = {
               enabled: data.config.enabled !== undefined ? data.config.enabled : true,
-              temperature: data.config.temperature !== undefined ? data.config.temperature : 0.2,
-              maxTokens: data.config.maxTokens !== undefined ? data.config.maxTokens : 2000,
               emptyFieldStrategy: data.config.emptyFieldStrategy || 'leave',
-              systemPrompt: (data.config.systemPrompt && String(data.config.systemPrompt).trim()) ? String(data.config.systemPrompt).trim() : defaultPrompt,
               forbidAssertion: data.config.forbidAssertion !== undefined ? data.config.forbidAssertion : true,
               sensitiveWords: data.config.sensitiveWords || '确诊, 绝对, 保证, 100%, 肯定',
               checkDiagnosisTone: data.config.checkDiagnosisTone !== undefined ? data.config.checkDiagnosisTone : true,
               checkChiefComplaintLength: data.config.checkChiefComplaintLength !== undefined ? data.config.checkChiefComplaintLength : true,
-              checkHistoryTime: data.config.checkHistoryTime !== undefined ? data.config.checkHistoryTime : true
+              checkHistoryTime: data.config.checkHistoryTime !== undefined ? data.config.checkHistoryTime : true,
+              endpointUrl: data.config.endpointUrl || '',
+              endpointMethod: data.config.endpointMethod || 'POST',
+              endpointAuthType: data.config.endpointAuthType || 'none',
+              endpointAuthToken: data.config.endpointAuthToken || '',
+              requestTemplate: (data.config.requestTemplate && String(data.config.requestTemplate).trim()) ? String(data.config.requestTemplate).trim() : defaultEndpointTemplate
             }
           }
           if (data.fields && data.fields.length > 0) {
@@ -592,22 +503,11 @@ export default {
             }))
           }
           this.initTestForm()
-          if (data.fewShots) {
-            this.fewShotExamples = data.fewShots.map(fs => ({
-              id: fs.id,
-              input: fs.input || '',
-              output: fs.output || ''
-            }))
-          }
         }
       } catch (e) {
         console.warn('加载配置失败', e)
       }
       this.loadScenes()
-      // 加载完成后立即刷新一次实时预览
-      this.$nextTick(() => {
-        this.updateLivePreview()
-      })
     },
     initTestForm() {
       const form = {}
@@ -724,77 +624,35 @@ export default {
         }
       }).catch(() => {})
     },
-    insertVar(varName) {
-      const textarea = this.$el.querySelector('.prompt-section textarea')
+    insertTemplateVar(varName) {
+      const textarea = this.$el.querySelector('.endpoint-settings textarea')
       if (!textarea) return
       const start = textarea.selectionStart
       const end = textarea.selectionEnd
-      const text = this.config.systemPrompt
-      this.config.systemPrompt = text.substring(0, start) + varName + text.substring(end)
+      const text = this.config.requestTemplate
+      this.config.requestTemplate = text.substring(0, start) + varName + text.substring(end)
       this.$nextTick(() => {
         textarea.focus()
         textarea.setSelectionRange(start + varName.length, start + varName.length)
       })
     },
-    syncPromptJsonBlock() {
-      const prompt = this.config.systemPrompt || ''
-      // 匹配 prompt 中多行的 JSON 对象块：\n{\n  "key": "desc",\n  ...\n}
-      const regex = /(\n\{\n)([\s\S]*?)(\n\})/
-      const match = prompt.match(regex)
-      if (!match) return
-
-      const enabledFields = this.fieldConfigs.filter(f => f.enabled)
-      if (enabledFields.length === 0) {
-        const newBlock = '\n{\n  // 未启用任何扩写字段，AI 将不会生成任何病历内容\n}'
-        this.config.systemPrompt = prompt.replace(regex, newBlock)
-        return
-      }
-
-      const lines = enabledFields.map((f, i) => {
-        let desc = this.getFieldDescFromPrompt(f.fieldKey)
-        if (!desc) {
-          desc = defaultFieldDescriptions[f.fieldKey] || f.fieldName
-        }
-        const last = i === enabledFields.length - 1 ? '' : ','
-        return `  "${f.fieldKey}": "${desc}"${last}`
-      })
-
-      const newBlock = '\n{\n' + lines.join('\n') + '\n}'
-      this.config.systemPrompt = prompt.replace(regex, newBlock)
-    },
-    resetPrompt() {
-      this.$confirm('确定恢复默认配置吗？当前修改将丢失并自动保存。', '提示', {
-        confirmButtonText: '恢复并保存',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(async () => {
-        // 恢复所有默认配置
-        this.config.systemPrompt = defaultPrompt
-        this.fieldConfigs = JSON.parse(JSON.stringify(defaultFields))
-        this.fewShotExamples = []
-        this.$message.success('已恢复默认配置')
-        // 自动保存到数据库
-        await this.saveConfig()
-      }).catch(() => {})
-    },
-    addFewShot() {
-      this.fewShotExamples.push({ input: '', output: '' })
-    },
-    removeFewShot(idx) {
-      this.fewShotExamples.splice(idx, 1)
-    },
     async saveConfig() {
       this.saveLoading = true
       const payload = {
         config: this.config,
-        fields: this.fieldConfigs,
-        fewShots: this.fewShotExamples
+        fields: this.fieldConfigs
       }
       try {
         const res = await axios.put('/api/ai-config/medical-record', payload)
         if (res.data && res.data.code === '200') {
           this.unsaved = false
           this.$message.success('配置已保存')
+          // 同时保存一份到 localStorage，供 MedicalRecordView 读取 enabled_fields
+          try {
+            localStorage.setItem('saas_medical_ai_config', JSON.stringify({ fields: this.fieldConfigs }))
+          } catch (e) {
+            console.warn('本地缓存病历 AI 配置失败', e)
+          }
         } else {
           this.$message.warning(res.data.msg || '保存失败')
         }
@@ -823,7 +681,7 @@ export default {
         if (this.testUseMock) {
           payload.testMode = true
         }
-        const res = await axios.post('/api/ai/medical-record/expand', payload)
+        const res = await axios.post('/api/ai/proxy/medical-expand', payload)
         if (res.data && res.data.code === '200') {
           const result = res.data.data || {}
           this.testOutput = JSON.stringify(result, null, 2)
@@ -882,113 +740,7 @@ export default {
         enabledFields: enabledFields.map(f => f.fieldName),
         fieldSources: fieldSources
       }
-    },
-    scheduleLivePreviewUpdate() {
-      if (this.livePromptPreviewDebounceTimer) {
-        clearTimeout(this.livePromptPreviewDebounceTimer)
-      }
-      this.livePromptPreviewDebounceTimer = setTimeout(() => {
-        this.updateLivePreview()
-      }, 800)
-    },
-    async updateLivePreview() {
-      this.livePromptPreviewLoading = true
-      try {
-        const fields = {}
-        for (const f of this.fieldConfigs.filter(x => x.enabled)) {
-          fields[f.fieldKey] = this.testForm[f.fieldKey] || ''
-        }
-        const res = await axios.post('/api/ai-config/medical-record/preview', {
-          fields: fields,
-          testMode: true,
-          systemPrompt: this.config.systemPrompt,
-          emptyFieldStrategy: this.config.emptyFieldStrategy,
-          fewShots: this.fewShotExamples.map(ex => ({ input: ex.input, output: ex.output }))
-        })
-        if (res.data && res.data.code === '200') {
-          this.livePromptPreview = res.data.data
-        } else {
-          this.livePromptPreview = '// 预览生成失败：' + (res.data.msg || '未知错误')
-        }
-      } catch (e) {
-        this.livePromptPreview = '// 预览生成失败：' + (e.message || '网络错误')
-      } finally {
-        this.livePromptPreviewLoading = false
-      }
-    },
-    async previewPrompt() {
-      this.promptPreviewVisible = true
-      this.promptPreviewLoading = true
-      this.promptPreviewContent = ''
-      try {
-        const fields = {}
-        for (const f of this.fieldConfigs.filter(x => x.enabled)) {
-          fields[f.fieldKey] = this.testForm[f.fieldKey] || ''
-        }
-        const res = await axios.post('/api/ai-config/medical-record/preview', {
-          fields: fields,
-          testMode: true,
-          systemPrompt: this.config.systemPrompt,
-          emptyFieldStrategy: this.config.emptyFieldStrategy,
-          fewShots: this.fewShotExamples.map(ex => ({ input: ex.input, output: ex.output }))
-        })
-        if (res.data && res.data.code === '200') {
-          this.promptPreviewContent = res.data.data
-        } else {
-          this.$message.warning(res.data.msg || '预览失败')
-        }
-      } catch (e) {
-        this.$message.error('预览失败：' + (e.message || '未知错误'))
-      } finally {
-        this.promptPreviewLoading = false
-      }
-    },
-    copyPrompt() {
-      if (!this.promptPreviewContent) return
-      const textarea = document.createElement('textarea')
-      textarea.value = this.promptPreviewContent
-      document.body.appendChild(textarea)
-      textarea.select()
-      document.execCommand('copy')
-      document.body.removeChild(textarea)
-      this.$message.success('已复制到剪贴板')
-    },
-    applyPreviewToPrompt() {
-      if (!this.promptPreviewContent) {
-        this.$message.warning('预览内容为空，无法应用')
-        return
-      }
-      // 去掉后端自动追加的区块，避免保存后重复渲染
-      let cleaned = this.promptPreviewContent
-      const autoBlocks = ['\n\n【扩写示例】', '\n\n【当前诊疗场景】']
-      for (const block of autoBlocks) {
-        const idx = cleaned.indexOf(block)
-        if (idx >= 0) {
-          cleaned = cleaned.substring(0, idx)
-        }
-      }
-      cleaned = cleaned.trim()
-
-      this.$confirm(
-        '预览内容包含后端自动追加的字段格式、Few-shot 示例和场景约束等，直接应用会自动去除这些部分，仅保留基础模板内容。',
-        '应用到系统提示词',
-        {
-          confirmButtonText: '应用',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }
-      ).then(() => {
-        this.config.systemPrompt = cleaned
-        this.promptPreviewVisible = false
-        this.$message.success('已应用到系统提示词编辑区')
-      }).catch(() => {})
-    },
-    getFieldDescFromPrompt(fieldKey) {
-      const prompt = this.config.systemPrompt || ''
-      const regex = new RegExp(`"${fieldKey}"\\s*:\\s*"([^"]+)"`)
-      const match = prompt.match(regex)
-      return match ? match[1] : ''
-    },
+    }
   }
 }
 </script>
@@ -1089,11 +841,34 @@ export default {
   color: var(--apple-text-primary);
 }
 
-.prompt-actions {
+.form-hint {
+  font-size: 12px;
+  color: var(--apple-text-tertiary);
+  line-height: 1.5;
+}
+
+.required {
+  color: var(--apple-danger);
+}
+
+/* 外部端点配置 */
+.endpoint-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.template-vars {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.template-vars-label {
+  font-size: 12px;
+  color: var(--apple-text-tertiary);
 }
 
 .var-tag {
@@ -1108,7 +883,6 @@ export default {
 
 /* 实时生效字段预览 */
 .prompt-live-preview {
-  margin-top: 16px;
   background: var(--apple-bg-primary);
   border: 1px solid var(--apple-divider);
   border-radius: 12px;
@@ -1158,89 +932,12 @@ export default {
   gap: 6px;
 }
 
-/* Prompt 预览弹窗 loading 遮罩 */
-.prompt-loading-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  z-index: 10;
-  color: var(--apple-text-secondary);
-  font-size: 14px;
-  gap: 8px;
-}
-
-/* 实时 Prompt 预览 */
-.live-prompt-preview {
-  background: var(--apple-bg-primary);
-  border: 1px solid var(--apple-divider);
-  border-radius: 12px;
-  padding: 16px;
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.live-prompt-preview pre {
-  margin: 0;
-  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
-  font-size: 12px;
-  line-height: 1.7;
-  color: var(--apple-text-secondary);
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
 /* Few-shot */
 .empty-mini {
   text-align: center;
   padding: 32px;
   font-size: 13px;
   color: var(--apple-text-tertiary);
-}
-
-.few-shot-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.few-shot-item {
-  border: 1px solid var(--apple-divider);
-  border-radius: 12px;
-  padding: 16px;
-  background: var(--apple-bg-primary);
-}
-
-.few-shot-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.few-shot-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--apple-text-primary);
-}
-
-.few-shot-body {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.few-shot-field label {
-  display: block;
-  font-size: 12px;
-  color: var(--apple-text-tertiary);
-  margin-bottom: 4px;
 }
 
 .danger-text {

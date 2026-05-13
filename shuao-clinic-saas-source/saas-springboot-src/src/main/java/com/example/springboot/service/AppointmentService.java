@@ -28,9 +28,6 @@ public class AppointmentService {
     private PatientMapper patientMapper;
 
     @Autowired
-    private WechatService wechatService;
-
-    @Autowired
     private AccountService accountService;
 
     @Autowired
@@ -94,7 +91,6 @@ public class AppointmentService {
                 + ", doctor=" + appointment.getDoctor_name()
                 + ", purpose=" + appointment.getAppointment_purpose());
         appointmentMapper.insert(appointment);
-        notifyPatientIfWechatBound(appointment, false, matchedPatients);
     }
 
     @Transactional
@@ -229,10 +225,8 @@ public class AppointmentService {
             }
             String status = appointment.getStatus() == null ? "" : appointment.getStatus().trim();
             if ("已取消".equals(status)) {
-                System.out.println("[WECHAT_REMINDER_SKIP] appointmentId=" + appointment.getId() + ", reason=cancelled");
                 continue;
             }
-            notifyPatientIfWechatBound(appointment, true);
         }
     }
 
@@ -385,47 +379,6 @@ public class AppointmentService {
 
     private String normalizeDoctorName(String doctorName) {
         return doctorName == null ? "" : doctorName.trim();
-    }
-
-    private void notifyPatientIfWechatBound(Appointment appointment, boolean reminderMode) {
-        notifyPatientIfWechatBound(appointment, reminderMode, null);
-    }
-
-    private void notifyPatientIfWechatBound(Appointment appointment,
-                                            boolean reminderMode,
-                                            List<Patient> matchedPatients) {
-        List<Patient> patients = matchedPatients;
-        if (patients == null) {
-            if (patientMapper == null || appointment.getPatient_id() == null || appointment.getPatient_id() <= 0) {
-                patients = List.of();
-            } else {
-                patients = patientMapper.selectById(appointment.getPatient_id());
-            }
-        }
-        System.out.println("[WECHAT_NOTIFY_LOOKUP] patientName=" + appointment.getPatient_name()
-                + ", matches=" + (patients == null ? 0 : patients.size())
-                + ", reminderMode=" + reminderMode);
-        if (patients == null || patients.isEmpty()) {
-            return;
-        }
-        for (Patient patient : patients) {
-            System.out.println("[WECHAT_NOTIFY_CANDIDATE] patientId=" + patient.getId()
-                    + ", name=" + patient.getName()
-                    + ", openid=" + patient.getWechat_openid());
-            if (patient.getWechat_openid() != null && !patient.getWechat_openid().trim().isEmpty()) {
-                System.out.println("[WECHAT_NOTIFY_TRIGGER] patientId=" + patient.getId()
-                        + ", appointmentId=" + appointment.getId()
-                        + ", patientName=" + appointment.getPatient_name()
-                        + ", reminderMode=" + reminderMode);
-                if (reminderMode) {
-                    wechatService.sendAppointmentReminderNotification(patient, appointment);
-                } else {
-                    wechatService.sendAppointmentCreatedNotification(patient, appointment);
-                }
-                return;
-            }
-        }
-        System.out.println("[WECHAT_NOTIFY_SKIP] no bound wechat openid for patientName=" + appointment.getPatient_name());
     }
 
 }

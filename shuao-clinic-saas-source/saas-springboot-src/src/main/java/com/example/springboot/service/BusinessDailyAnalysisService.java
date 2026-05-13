@@ -72,7 +72,6 @@ public class BusinessDailyAnalysisService {
     private final TreatmentMapper treatmentMapper;
     private final PatientMapper patientMapper;
     private final OpenAiAnalysisProperties openAiProperties;
-    private final BusinessWechatPushService businessWechatPushService;
     private final ObjectMapper objectMapper;
     private final HttpClient httpClient;
 
@@ -83,7 +82,6 @@ public class BusinessDailyAnalysisService {
                                         TreatmentMapper treatmentMapper,
                                         PatientMapper patientMapper,
                                         OpenAiAnalysisProperties openAiProperties,
-                                        BusinessWechatPushService businessWechatPushService,
                                         ObjectMapper objectMapper) {
         this.analysisMapper = analysisMapper;
         this.appointmentMapper = appointmentMapper;
@@ -92,7 +90,6 @@ public class BusinessDailyAnalysisService {
         this.treatmentMapper = treatmentMapper;
         this.patientMapper = patientMapper;
         this.openAiProperties = openAiProperties;
-        this.businessWechatPushService = businessWechatPushService;
         this.objectMapper = objectMapper;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(OPENAI_CONNECT_TIMEOUT)
@@ -209,7 +206,6 @@ public class BusinessDailyAnalysisService {
 
         save(entity);
         Map<String, Object> view = buildView(entity);
-        businessWechatPushService.pushDailyReportToAdmins(view);
         return view;
     }
 

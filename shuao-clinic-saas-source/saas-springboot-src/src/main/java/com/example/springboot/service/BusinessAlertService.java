@@ -21,14 +21,11 @@ public class BusinessAlertService {
 
     private final BusinessAlertLogMapper alertLogMapper;
     private final BusinessDailyAnalysisService businessDailyAnalysisService;
-    private final BusinessWechatPushService businessWechatPushService;
 
     public BusinessAlertService(BusinessAlertLogMapper alertLogMapper,
-                                BusinessDailyAnalysisService businessDailyAnalysisService,
-                                BusinessWechatPushService businessWechatPushService) {
+                                BusinessDailyAnalysisService businessDailyAnalysisService) {
         this.alertLogMapper = alertLogMapper;
         this.businessDailyAnalysisService = businessDailyAnalysisService;
-        this.businessWechatPushService = businessWechatPushService;
     }
 
     public List<Map<String, Object>> runDailyAlertScan(LocalDate analysisDate, String triggerType) {
@@ -76,7 +73,6 @@ public class BusinessAlertService {
         }
 
         List<Map<String, Object>> view = alerts.stream().map(this::buildView).toList();
-        businessWechatPushService.pushAlertSummaryToAdmins(view, targetDate.toString());
         return view;
     }
 

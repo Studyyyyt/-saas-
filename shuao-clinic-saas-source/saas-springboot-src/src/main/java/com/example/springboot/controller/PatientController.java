@@ -118,21 +118,6 @@ public class PatientController {
         }
     }
 
-    @PutMapping("/bindWechat")
-    public Result bindWechat(@RequestBody Patient patient) {
-        if (patient == null || patient.getId() <= 0) {
-            return Result.error("患者ID不能为空");
-        }
-        if (!StringUtils.hasText(patient.getWechat_openid())) {
-            return Result.error("微信openid不能为空");
-        }
-        Patient updated = patientService.bindWechatOpenid(Long.valueOf(patient.getId()), patient.getWechat_openid().trim());
-        if (updated == null) {
-            return Result.error("患者不存在");
-        }
-        return Result.success(updated);
-    }
-
     @DeleteMapping("/delete/{id}")
     public Result deletePatient(@PathVariable int id,
                                 @RequestHeader(value = OPERATOR_ACCOUNT_ID_HEADER, required = false) Long operatorAccountId,

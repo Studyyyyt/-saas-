@@ -104,7 +104,7 @@
     </div>
 
     <!-- AI 对话区 -->
-    <div class="ai-section">
+    <div v-if="isAiEnabled('home-assistant')" class="ai-section">
       <div class="ai-panel">
         <!-- 头部 Tabs -->
         <div class="ai-panel-header">
@@ -125,6 +125,9 @@
             </div>
           </div>
           <div class="ai-header-actions">
+            <div class="ai-header-action" :class="{ active: showDebugPanel }" title="调试日志" @click="toggleDebugPanel">
+              <i class="el-icon-warning-outline"></i>
+            </div>
             <div class="ai-header-action" title="清空对话" @click="clearChat">
               <i class="el-icon-delete"></i>
             </div>
@@ -182,9 +185,15 @@
             <!-- 普通消息 -->
             <template v-else>
               <div class="msg-bubble">
-                <div v-if="msg.type === 'text'" class="msg-text">
-                  {{ msg.content }}
-                  <span v-if="msg.isStreaming" class="stream-cursor" />
+                <div v-if="msg.type === 'text'" class="msg-text" :class="{ 'markdown-body': msg.role === 'assistant' && msg.content }">
+                  <template v-if="msg.content">
+                    <div v-if="msg.role === 'assistant'" v-html="renderMarkdown(msg.content)"></div>
+                    <template v-else>{{ msg.content }}</template>
+                  </template>
+                  <template v-else-if="msg.isStreaming">
+                    <span class="typing-dots"><span></span><span></span><span></span></span>
+                  </template>
+                  <span v-if="msg.isStreaming && msg.content" class="stream-cursor" />
                 </div>
                 <div v-if="msg.type === 'typing'" class="msg-text typing">
                   <span class="typing-dots"><span></span><span></span><span></span></span>
@@ -195,16 +204,32 @@
           </div>
         </div>
 
+        <!-- 调试日志面板 -->
+        <div v-if="showDebugPanel" class="ai-debug-panel">
+          <div class="debug-panel-header">
+            <span class="debug-title"><i class="el-icon-warning-outline"></i> 调试日志</span>
+            <div class="debug-actions">
+              <span class="debug-action" @click="clearDebugPanelLogs"><i class="el-icon-delete"></i> 清空</span>
+              <span class="debug-action" @click="toggleDebugPanel"><i class="el-icon-close"></i> 关闭</span>
+            </div>
+          </div>
+          <div class="debug-log-list">
+            <div v-if="debugLogs.length === 0" class="debug-empty">暂无日志，发送一条 AI 消息后将在此显示请求与响应详情。</div>
+            <div
+              v-for="(log, idx) in debugLogs"
+              :key="idx"
+              class="debug-log-item"
+              :class="log.type"
+            >
+              <span class="debug-time">{{ log.time }}</span>
+              <span class="debug-type">{{ log.type }}</span>
+              <span class="debug-data">{{ JSON.stringify(log.data) }}</span>
+            </div>
+          </div>
+        </div>
+
         <!-- 输入区 -->
         <div class="ai-input-area">
-          <div class="chips-bar">
-            <span
-              v-for="chip in currentAgent.chips"
-              :key="chip"
-              class="mini-chip"
-              @click="sendQuick(chip)"
-            >{{ chip }}</span>
-          </div>
           <div class="input-shell">
             <input
               v-model="chatInput"
@@ -227,9 +252,11 @@ import axios from 'axios'
 import * as echarts from 'echarts'
 import { ADMIN_SESSION_EVENT, getAdminSession } from '@/utils/adminSession'
 import { loadAgentsFromStorage } from '@/views/Manager/AIAgentConfigView'
-import { streamChat, fetchAgentConfigs } from '@/utils/aiStreamClient'
+import { streamChat, fetchAgentConfigs, getDebugLogs, clearDebugLogs, subscribeToDebugLogs, unsubscribeFromDebugLogs } from '@/utils/aiStreamClient'
+import { isAiEnabled as checkAiEnabled } from '@/utils/aiConfig'
 import { fetchCachedResource } from '@/utils/offline/apiClient'
 import { savePendingAppointmentPatient } from '@/utils/appointmentPrefill'
+import { marked } from 'marked'
 
 const WAITING_APPOINTMENT_STATUSES = ['待治疗', '已预约', '待就诊']
 const COMPLETED_APPOINTMENT_STATUSES = ['已就诊', '已治疗', '已完成', '已离开']
@@ -306,15 +333,9 @@ export default {
       ],
       chatStreaming: false,
       chatAbortController: null,
+      showDebugPanel: false,
+      aiDebugLogs: [],
       selectedDoctor: 'all',
-      presetQuestions: [
-        { icon: '📅', text: '今日预约', desc: '查看今日所有患者预约安排' },
-        { icon: '📋', text: '我的待办', desc: '待接诊、待写病历、待回访' },
-        { icon: '💰', text: '本月收入', desc: '查看本月经营收入趋势' },
-        { icon: '🔍', text: '患者查询', desc: '搜索患者档案与就诊记录' },
-        { icon: '📊', text: '今日患者', desc: '今日到诊患者治疗项目汇总' },
-        { icon: '💳', text: '待收费', desc: '查看今日待收费患者明细' }
-      ],
       demoAppointments: [
         { id: 1, time: '08:00', patient_name: '张三', project: '种植牙复诊', status: 'waiting', status_label: '待接诊', doctor: '李医生' },
         { id: 2, time: '08:30', patient_name: '李四', project: '拔牙', status: 'completed', status_label: '已完成', doctor: '李医生' },
@@ -377,6 +398,9 @@ export default {
     },
     showPresetQuestions() {
       return this.chatMessages.length === 1 && this.chatMessages[0].role === 'assistant'
+    },
+    debugLogs() {
+      return this.aiDebugLogs
     }
   },
   mounted() {
@@ -384,12 +408,23 @@ export default {
     this.updateTime()
     this.loadDashboard()
     this.loadAgents()
+    this.loadChatMessages()
     this.configureDashboardRefresh()
     this.timer = setInterval(this.updateTime, 1000)
     window.addEventListener(ADMIN_SESSION_EVENT, this.handleIdentityRefresh)
     window.addEventListener('focus', this.handleIdentityRefresh)
     window.addEventListener('online', this.handleVisibilityRefresh)
     document.addEventListener('visibilitychange', this.handleVisibilityRefresh)
+    this._debugLogHandler = (log) => {
+      if (log === null) {
+        this.aiDebugLogs = []
+      } else {
+        this.aiDebugLogs.unshift(log)
+        if (this.aiDebugLogs.length > 100) this.aiDebugLogs.pop()
+      }
+    }
+    subscribeToDebugLogs(this._debugLogHandler)
+    this.aiDebugLogs = getDebugLogs()
   },
   beforeDestroy() {
     clearInterval(this.timer)
@@ -398,8 +433,23 @@ export default {
     window.removeEventListener('focus', this.handleIdentityRefresh)
     window.removeEventListener('online', this.handleVisibilityRefresh)
     document.removeEventListener('visibilitychange', this.handleVisibilityRefresh)
+    if (this._debugLogHandler) {
+      unsubscribeFromDebugLogs(this._debugLogHandler)
+    }
   },
   methods: {
+    isAiEnabled(key) {
+      return checkAiEnabled(key)
+    },
+    renderMarkdown(text) {
+      if (!text) return ''
+      const renderer = new marked.Renderer()
+      // 禁用多行代码块，不渲染为 pre/code
+      renderer.code = () => ''
+      // 内联代码渲染为普通文本，不加背景
+      renderer.codespan = (code) => code
+      return marked.parse(text, { breaks: true, gfm: true, renderer })
+    },
     handleIdentityRefresh() {
       this.syncUserFromStorage()
       this.configureDashboardRefresh()
@@ -890,14 +940,7 @@ export default {
       if (!text || this.chatStreaming) return
       this.chatMessages.push({ role: 'user', type: 'text', content: text, time: this.formatChatTime() })
       this.chatInput = ''
-      this.$nextTick(() => {
-        this.scrollChatToBottom()
-        this.callAIStream(text)
-      })
-    },
-    sendQuick(text) {
-      if (this.chatStreaming) return
-      this.chatMessages.push({ role: 'user', type: 'text', content: text, time: this.formatChatTime() })
+      this.saveChatMessages()
       this.$nextTick(() => {
         this.scrollChatToBottom()
         this.callAIStream(text)
@@ -905,25 +948,74 @@ export default {
     },
     callAIStream(text) {
       this.chatStreaming = true
-      const msgIndex = this.chatMessages.length
-      this.chatMessages.push({ role: 'assistant', type: 'text', content: '', time: this.formatChatTime(), isStreaming: true })
+      const typingIndex = this.chatMessages.length
+      // 先显示 typing 等待动画，收到首个 token 后再替换为正式消息
+      this.chatMessages.push({ role: 'assistant', type: 'typing', content: '', time: this.formatChatTime() })
       this.$nextTick(() => this.scrollChatToBottom())
+
+      let hasReceivedToken = false
 
       const { abort } = streamChat({
         message: text,
         agentKey: this.currentAgent.id || 'default',
+        functionKey: 'home-assistant',
         onToken: (token) => {
-          this.$set(this.chatMessages[msgIndex], 'content', this.chatMessages[msgIndex].content + token)
+          if (!hasReceivedToken) {
+            hasReceivedToken = true
+            this.$set(this.chatMessages, typingIndex, {
+              role: 'assistant',
+              type: 'text',
+              content: token,
+              time: this.formatChatTime(),
+              isStreaming: true
+            })
+          } else {
+            const current = this.chatMessages[typingIndex].content
+            // 针对 DeepSeek 等供应商不按 SSE 规范发送换行符的情况：
+            // 如果当前内容不以换行结尾，且新 token 看起来像块级元素开头，则补一个换行
+            const isBlockStart = /^\s*(#{1,6}\s|[-*]\s|\d+\.\s|>\s|```|\|)/.test(token)
+            const separator = current && !current.endsWith('\n') && isBlockStart ? '\n' : ''
+            this.$set(this.chatMessages[typingIndex], 'content', current + separator + token)
+          }
           this.$nextTick(() => this.scrollChatToBottom())
         },
         onDone: () => {
           this.chatStreaming = false
-          this.$set(this.chatMessages[msgIndex], 'isStreaming', false)
+          const msg = this.chatMessages[typingIndex]
+          if (msg) {
+            if (msg.type === 'typing') {
+              // AI 未返回任何内容，将 typing 替换为提示文本
+              this.$set(this.chatMessages, typingIndex, {
+                role: 'assistant',
+                type: 'text',
+                content: '（AI 未返回任何内容，请检查模型配置或后端日志）',
+                time: this.formatChatTime(),
+                isStreaming: false
+              })
+            } else {
+              this.$set(msg, 'isStreaming', false)
+            }
+          }
+          this.saveChatMessages()
         },
         onError: (errMsg) => {
           this.chatStreaming = false
-          this.$set(this.chatMessages[msgIndex], 'isStreaming', false)
-          this.$set(this.chatMessages[msgIndex], 'content', this.chatMessages[msgIndex].content + '\n\n[系统提示：' + errMsg + ']')
+          const msg = this.chatMessages[typingIndex]
+          if (msg) {
+            if (msg.type === 'typing') {
+              this.$set(this.chatMessages, typingIndex, {
+                role: 'assistant',
+                type: 'text',
+                content: '[系统提示：' + errMsg + ']',
+                time: this.formatChatTime(),
+                isStreaming: false
+              })
+            } else {
+              this.$set(msg, 'isStreaming', false)
+              this.$set(msg, 'content', msg.content + '\n\n[系统提示：' + errMsg + ']')
+            }
+          }
+          this.saveChatMessages()
         }
       })
 
@@ -943,6 +1035,32 @@ export default {
           time: this.formatChatTime()
         }
       ]
+      this.saveChatMessages()
+    },
+    saveChatMessages() {
+      try {
+        const key = 'home_chat_messages_' + (this.user.id || 'guest')
+        localStorage.setItem(key, JSON.stringify(this.chatMessages))
+      } catch (e) { /* 忽略存储错误 */ }
+    },
+    loadChatMessages() {
+      try {
+        const key = 'home_chat_messages_' + (this.user.id || 'guest')
+        const raw = localStorage.getItem(key)
+        if (raw) {
+          const parsed = JSON.parse(raw)
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            this.chatMessages = parsed
+          }
+        }
+      } catch (e) { /* 忽略读取错误 */ }
+    },
+    toggleDebugPanel() {
+      this.showDebugPanel = !this.showDebugPanel
+    },
+    clearDebugPanelLogs() {
+      clearDebugLogs()
+      this.aiDebugLogs = []
     },
     async loadAgents() {
       try {
@@ -985,6 +1103,7 @@ export default {
         content: `已切换到【${agent.name}】。${agent.desc}，请问有什么可以帮您的？`,
         time: this.formatChatTime()
       })
+      this.saveChatMessages()
       this.$nextTick(() => this.scrollChatToBottom())
     },
     formatChatTime() {
@@ -1123,7 +1242,7 @@ export default {
 
 <style scoped>
 /* === e看牙 医疗 SaaS 风格 === */
-:root {
+.home-wrap {
   --primary: #00a6c9;
   --primary-hover: #0095b5;
   --primary-light: rgba(0, 166, 201, 0.08);
@@ -1469,7 +1588,7 @@ export default {
 }
 
 .msg-bubble {
-  max-width: 80%;
+  max-width: 95%;
   padding: 10px 14px;
   border-radius: var(--radius-md);
   font-size: 14px;
@@ -1478,10 +1597,10 @@ export default {
 }
 
 .msg-item.assistant .msg-bubble {
-  background: var(--bg-card);
+  background: #fff;
   color: var(--text-regular);
   border-radius: var(--radius-md) var(--radius-md) var(--radius-md) var(--radius-sm);
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
   border: 1px solid var(--border-light);
 }
 
@@ -1512,7 +1631,102 @@ export default {
 }
 
 .msg-text {
-  white-space: pre-wrap;
+  min-height: 20px;
+  display: block;
+}
+
+/* Markdown 渲染样式 */
+.markdown-body {
+  line-height: 1.7;
+}
+
+.markdown-body :first-child {
+  margin-top: 0;
+}
+
+.markdown-body :last-child {
+  margin-bottom: 0;
+}
+
+.markdown-body p {
+  margin: 0 0 8px 0;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4 {
+  margin: 12px 0 6px 0;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.markdown-body h1 { font-size: 16px; }
+.markdown-body h2 { font-size: 15px; }
+.markdown-body h3 { font-size: 14px; }
+.markdown-body h4 { font-size: 13px; }
+
+.markdown-body ul,
+.markdown-body ol {
+  margin: 6px 0;
+  padding-left: 20px;
+}
+
+.markdown-body li {
+  margin: 3px 0;
+}
+
+.markdown-body strong {
+  font-weight: 600;
+}
+
+.markdown-body code {
+  background: rgba(0, 0, 0, 0.05);
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+}
+
+.markdown-body pre {
+  background: rgba(0, 0, 0, 0.04);
+  padding: 10px 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+
+.markdown-body pre code {
+  background: none;
+  padding: 0;
+  font-size: 12px;
+}
+
+.markdown-body blockquote {
+  margin: 8px 0;
+  padding: 6px 12px;
+  border-left: 3px solid var(--primary);
+  background: rgba(37, 99, 235, 0.04);
+  border-radius: 0 6px 6px 0;
+}
+
+.markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0;
+  font-size: 13px;
+}
+
+.markdown-body th,
+.markdown-body td {
+  border: 1px solid var(--border-light);
+  padding: 6px 10px;
+  text-align: left;
+}
+
+.markdown-body th {
+  background: var(--bg-hover);
+  font-weight: 600;
 }
 
 .msg-time {
@@ -1687,38 +1901,6 @@ export default {
   border-top: 1px solid var(--border-light);
 }
 
-.chips-bar {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  margin-bottom: 6px;
-  padding-bottom: 2px;
-  scrollbar-width: none;
-}
-
-.chips-bar::-webkit-scrollbar {
-  display: none;
-}
-
-.mini-chip {
-  padding: 3px 10px;
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-regular);
-  background: var(--bg-hover);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.2s ease;
-  border: 1px solid transparent;
-}
-
-.mini-chip:hover {
-  background: var(--border-light);
-  color: var(--text-primary);
-  border-color: var(--border-color);
-}
-
 .input-shell {
   display: flex;
   align-items: center;
@@ -1772,6 +1954,111 @@ export default {
   cursor: not-allowed;
 }
 
+/* 调试日志面板 */
+.ai-debug-panel {
+  background: #1e1e1e;
+  border-top: 1px solid #333;
+  color: #d4d4d4;
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  max-height: 200px;
+}
+
+.debug-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: #2d2d2d;
+  border-bottom: 1px solid #333;
+  flex-shrink: 0;
+}
+
+.debug-title {
+  font-weight: 600;
+  color: #f0f0f0;
+}
+
+.debug-title i {
+  color: #f59e0b;
+  margin-right: 4px;
+}
+
+.debug-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.debug-action {
+  cursor: pointer;
+  color: #aaa;
+  transition: color 0.2s;
+}
+
+.debug-action:hover {
+  color: #fff;
+}
+
+.debug-action i {
+  margin-right: 2px;
+}
+
+.debug-log-list {
+  overflow-y: auto;
+  padding: 8px 12px;
+  flex: 1;
+}
+
+.debug-empty {
+  color: #666;
+  text-align: center;
+  padding: 16px 0;
+}
+
+.debug-log-item {
+  display: flex;
+  gap: 8px;
+  padding: 3px 0;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.debug-log-item .debug-time {
+  color: #858585;
+  flex-shrink: 0;
+  width: 64px;
+}
+
+.debug-log-item .debug-type {
+  flex-shrink: 0;
+  width: 56px;
+  text-align: center;
+  border-radius: 3px;
+  font-size: 11px;
+  padding: 0 4px;
+  line-height: 1.6;
+}
+
+.debug-log-item.request .debug-type { background: #3b82f6; color: #fff; }
+.debug-log-item.response .debug-type { background: #10b981; color: #fff; }
+.debug-log-item.token .debug-type { background: #8b5cf6; color: #fff; }
+.debug-log-item.error .debug-type { background: #ef4444; color: #fff; }
+.debug-log-item.done .debug-type { background: #6b7280; color: #fff; }
+.debug-log-item.abort .debug-type { background: #f59e0b; color: #fff; }
+
+.debug-log-item .debug-data {
+  color: #ccc;
+  flex: 1;
+  white-space: pre-wrap;
+}
+
+.ai-header-action.active {
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+}
+
 /* ========== 动画 ========== */
 @keyframes fade-in-up {
   from {
@@ -1817,7 +2104,7 @@ export default {
   }
 
   .msg-bubble {
-    max-width: 90%;
+    max-width: 95%;
     font-size: 14px;
   }
 

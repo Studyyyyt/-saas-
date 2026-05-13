@@ -9,7 +9,7 @@
           <p>维护合作加工厂；点击“产品库维护”可直接进入外加工产品价格库和账单模板配置。</p>
         </div>
         <div class="hero-actions">
-          <el-button type="primary" plain icon="el-icon-magic-stick" @click="openAiPanel">
+          <el-button v-if="isAiEnabled('lab-factory-analysis')" type="primary" plain icon="el-icon-magic-stick" @click="openAiPanel">
             AI 加工分析
           </el-button>
           <el-button v-if="canManage" type="primary" icon="el-icon-plus" @click="openCreateDialog">
@@ -205,6 +205,7 @@ import axios from 'axios'
 import { getAdminSession } from '@/utils/adminSession'
 import { LAB_FACTORY_STATUS_OPTIONS, canManageLabFactory, normalizeLabRole } from '@/utils/labConstants'
 import { showApiError } from '@/utils/errorMessage'
+import { isAiEnabled as checkAiEnabled } from '@/utils/aiConfig'
 
 function defaultItem() {
   return {
@@ -355,6 +356,9 @@ export default {
     },
     closeAiPanel() {
       this.aiPanelVisible = false
+    },
+    isAiEnabled(key) {
+      return checkAiEnabled(key)
     }
   }
 }

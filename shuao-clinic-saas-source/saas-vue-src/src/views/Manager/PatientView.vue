@@ -233,7 +233,7 @@
             <template slot-scope="scope">
               <div class="action-links">
                 <el-button type="text" class="primary-link" @click="go360(scope.row)">档案</el-button>
-                <el-button type="text" class="ai-link" @click="openAiPanel(scope.row)">
+                <el-button v-if="isAiEnabled('patient-insight')" type="text" class="ai-link" @click="openAiPanel(scope.row)">
                   <i class="el-icon-magic-stick"></i>AI
                 </el-button>
                 <el-dropdown size="small" trigger="click" @command="cmd => handleRowCommand(cmd, scope.row)">
@@ -287,7 +287,7 @@
 
     <!-- AI 侧边浮层面板 -->
     <transition name="ai-panel-slide">
-      <div v-if="aiPanelVisible" class="ai-panel-overlay" @click.self="closeAiPanel">
+      <div v-if="aiPanelVisible && isAiEnabled('patient-insight')" class="ai-panel-overlay" @click.self="closeAiPanel">
         <div class="ai-panel">
           <div class="ai-panel-head">
             <div class="ai-panel-title">
@@ -493,6 +493,7 @@ import { getAdminSession } from '@/utils/adminSession'
 import { getPatientAge, rememberRecentPatient } from '@/utils/patientList'
 import { fetchCachedResource, savePatient } from '@/utils/offline/apiClient'
 import { showApiError } from '@/utils/errorMessage'
+import { isAiEnabled as checkAiEnabled } from '@/utils/aiConfig'
 
 const PATIENT_PHONE_REGEX = /^\d{11}$/
 const QUICK_SCOPE_OPTIONS = [
@@ -671,6 +672,9 @@ export default {
     this.loadPatients()
   },
   methods: {
+    isAiEnabled(key) {
+      return checkAiEnabled(key)
+    },
     applyRouteFilters() {
       const query = this.$route && this.$route.query ? this.$route.query : {}
       const nextGroupKey = normalizeText(query.groupKey)

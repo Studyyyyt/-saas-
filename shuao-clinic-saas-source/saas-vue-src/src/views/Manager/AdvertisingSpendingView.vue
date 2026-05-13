@@ -9,7 +9,7 @@
           <p>统一录入平台投放，自动同步财务支出，并在同页查看平台级 ROI。</p>
         </div>
         <div class="hero-actions">
-          <el-button type="primary" plain icon="el-icon-magic-stick" @click="openAiPanel">
+          <el-button v-if="isAiEnabled('ad-spending-analysis')" type="primary" plain icon="el-icon-magic-stick" @click="openAiPanel">
             AI 投放分析
           </el-button>
           <el-button v-if="canCreate" type="primary" icon="el-icon-plus" @click="openCreateDialog">新增投放</el-button>
@@ -290,6 +290,7 @@ import * as echarts from 'echarts'
 import { ADVERTISING_PLATFORM_OPTIONS } from '@/utils/consultationOptions'
 import { getAdminSession } from '@/utils/adminSession'
 import { showApiError } from '@/utils/errorMessage'
+import { isAiEnabled as checkAiEnabled } from '@/utils/aiConfig'
 
 const PLATFORM_COLORS = {
   '抖音': '#1a1a1a',
@@ -681,6 +682,9 @@ export default {
     },
     closeAiPanel() {
       this.aiPanelVisible = false
+    },
+    isAiEnabled(key) {
+      return checkAiEnabled(key)
     }
   }
 }

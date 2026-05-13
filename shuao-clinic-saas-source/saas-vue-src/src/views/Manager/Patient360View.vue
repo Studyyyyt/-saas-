@@ -51,7 +51,7 @@
             <span>当前欠费 <strong>¥{{ formatMoney(data.arrearsAmount) }}</strong></span>
           </div>
           <!-- AI 患者智能助手 -->
-          <div class="ai-patient-panel">
+          <div v-if="isAiEnabled('patient-insight')" class="ai-patient-panel">
             <div class="ai-patient-header">
               <div class="ai-patient-icon">
                 <i class="el-icon-cpu"></i>
@@ -1334,6 +1334,7 @@
 <script>
 import axios from 'axios'
 import { streamChat } from '@/utils/aiStreamClient'
+import { isAiEnabled as checkAiEnabled } from '@/utils/aiConfig'
 import ReferralSelector from '@/components/ReferralSelector.vue'
 import ToothSelector from '@/components/ToothSelector.vue'
 import TimelineItem from '@/components/design-system/TimelineItem.vue'
@@ -1767,6 +1768,9 @@ export default {
     }
   },
   methods: {
+    isAiEnabled(key) {
+      return checkAiEnabled(key)
+    },
     async tryResolveLocalPatientRoute() {
       const localPatientId = String(this.patientId || '').trim()
       if (!isLocalEntityId(localPatientId)) {
@@ -3223,6 +3227,7 @@ export default {
       this.aiChatAbortController = streamChat({
         message: fullMessage,
         agentKey: 'default',
+        functionKey: 'patient-insight',
         onToken: (token) => {
           assistantMsg.content += token
           this.scrollAiChatToBottom()

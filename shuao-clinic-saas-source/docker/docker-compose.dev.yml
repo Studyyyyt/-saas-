@@ -94,6 +94,23 @@ services:
     networks:
       - clinic-network
 
+  mcp-server:
+    image: node:18
+    container_name: clinic-mcp-server
+    working_dir: /app
+    command: >
+      sh -c "npm install && npm run build && npm start"
+    environment:
+      API_BASE_URL: http://backend:8080
+      API_AUTH_TOKEN: ${MCP_API_TOKEN:-}
+      PORT: 3001
+    ports:
+      - "3001:3001"
+    volumes:
+      - ../mcp-server:/app
+    networks:
+      - clinic-network
+
 networks:
   clinic-network:
     driver: bridge

@@ -27,8 +27,6 @@ public class Patient360Controller {
     @Autowired private PatientImageService imageService;
     @Autowired private TreatmentService treatmentService;
     @Autowired private AppointmentService appointmentService;
-    @Autowired private WechatOAuthService wechatOAuthService;
-    @Autowired private WechatPatientBindSceneService wechatPatientBindSceneService;
     @Autowired private TreatmentBillingService treatmentBillingService;
     @Autowired private PatientConsentService patientConsentService;
     @Autowired private PatientInsightSummaryService patientInsightSummaryService;
@@ -72,21 +70,6 @@ public class Patient360Controller {
                 .filter(Objects::nonNull)
                 .min(Comparator.naturalOrder()).orElse(null);
 
-        boolean wechatBound = patient.getWechat_openid() != null && !patient.getWechat_openid().trim().isEmpty();
-        String patientPortalBindUrl = wechatOAuthService.buildBindEntryUrl(patientId, wechatOAuthService.buildPatientBindRedirectUrl(patientId));
-        String wechatFollowQrUrl = "";
-        if (!wechatBound && wechatPatientBindSceneService != null) {
-            try {
-                PatientWechatBindScene scene = wechatPatientBindSceneService.ensureSceneForPatient(patientId);
-                if (scene != null && scene.getQr_url() != null && !scene.getQr_url().trim().isEmpty()) {
-                    wechatFollowQrUrl = scene.getQr_url().trim();
-                    patientPortalBindUrl = "";
-                }
-            } catch (Exception ex) {
-                log.warn("Failed to build official wechat follow qr for patientId={}, fallback to bind url: {}", patientId, ex.getMessage());
-            }
-        }
-
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("patient", patient);
         result.put("visitCount", patientInsight == null || patientInsight.getTotal_visit_count() == null ? records.size() : patientInsight.getTotal_visit_count());
@@ -113,16 +96,12 @@ public class Patient360Controller {
         result.put("images", images);
         result.put("consents", consents);
         result.put("consultations", consultations);
-        result.put("wechatBound", wechatBound);
-        result.put("wechatBindStatusLabel", wechatBound ? "已绑定微信" : "未绑定微信");
-        result.put("wechatBindUrl", wechatBound ? "" : patientPortalBindUrl);
-        result.put("wechatFollowQrUrl", wechatBound ? "" : wechatFollowQrUrl);
 
         return Result.success(result);
     }
 
     /**
-     * 患者基础信息 + 费用统计 + 微信绑定状态
+     * 患者基础信息 + 费用统计
      */
     @GetMapping("/basic/{patientId}")
     public Result getBasic(@PathVariable Long patientId) {
@@ -143,21 +122,6 @@ public class Patient360Controller {
                 .mapToDouble(Double::doubleValue)
                 .sum();
 
-        boolean wechatBound = patient.getWechat_openid() != null && !patient.getWechat_openid().trim().isEmpty();
-        String patientPortalBindUrl = wechatOAuthService.buildBindEntryUrl(patientId, wechatOAuthService.buildPatientBindRedirectUrl(patientId));
-        String wechatFollowQrUrl = "";
-        if (!wechatBound && wechatPatientBindSceneService != null) {
-            try {
-                PatientWechatBindScene scene = wechatPatientBindSceneService.ensureSceneForPatient(patientId);
-                if (scene != null && scene.getQr_url() != null && !scene.getQr_url().trim().isEmpty()) {
-                    wechatFollowQrUrl = scene.getQr_url().trim();
-                    patientPortalBindUrl = "";
-                }
-            } catch (Exception ex) {
-                log.warn("Failed to build official wechat follow qr for patientId={}: {}", patientId, ex.getMessage());
-            }
-        }
-
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("patient", patient);
         result.put("visitCount", patientInsight == null || patientInsight.getTotal_visit_count() == null ? 0 : patientInsight.getTotal_visit_count());
@@ -165,10 +129,6 @@ public class Patient360Controller {
         result.put("totalFee", totalFee);
         result.put("hasArrears", arrearsAmount > 0.0001);
         result.put("arrearsAmount", arrearsAmount);
-        result.put("wechatBound", wechatBound);
-        result.put("wechatBindStatusLabel", wechatBound ? "已绑定微信" : "未绑定微信");
-        result.put("wechatBindUrl", wechatBound ? "" : patientPortalBindUrl);
-        result.put("wechatFollowQrUrl", wechatBound ? "" : wechatFollowQrUrl);
         return Result.success(result);
     }
 
