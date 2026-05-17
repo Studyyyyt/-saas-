@@ -114,7 +114,7 @@
         <el-table-column label="下次回访" width="160">
           <template slot-scope="scope">{{ formatDateTime(scope.row.next_followup_date) || '-' }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="320" fixed="right">
+        <el-table-column label="操作" width="360" fixed="right">
           <template slot-scope="scope">
             <el-button
               size="mini"
@@ -122,7 +122,7 @@
               plain
               @click="openEditDialog(scope.row)"
             >{{ isFollowupCompleted(scope.row) ? '编辑结果' : '填写结果' }}</el-button>
-            <el-button size="mini" type="success" plain @click="goPatient360(scope.row)">患者详情</el-button>
+            <el-button size="mini" type="success" plain @click="goPatientDetail(scope.row)">患者详情</el-button>
             <el-button size="mini" type="danger" plain @click="handleDelete(scope.row)">删除</el-button>
           </template>
         </el-table-column>
@@ -439,7 +439,7 @@ export default {
       })
     },
     loadAll() {
-      axios.get('/followup/selectAllDetail').then(response => {
+      axios.get('/followups/selectAllDetail').then(response => {
         const list = Array.isArray(response.data.data) ? response.data.data : []
         this.rows = list.map(this.normalizeFollowup)
         this.applyFilters()
@@ -633,8 +633,8 @@ export default {
         next_followup_date: this.form.next_followup_date
       }
       const request = this.isEditing
-        ? axios.put('/followup/edit', payload)
-        : axios.post('/followup/add', payload)
+        ? axios.put('/followups/edit', payload)
+        : axios.post('/followups/add', payload)
       request.then(response => {
         if (response.data.code === '200') {
           this.$message.success(this.isEditing ? '保存成功' : '新增成功')
@@ -647,16 +647,16 @@ export default {
         this.$message.error((error.response && error.response.data && error.response.data.msg) || (this.isEditing ? '保存失败' : '新增失败'))
       })
     },
-    goPatient360(row) {
+    goPatientDetail(row) {
       if (!row || !row.patient_id) {
         this.$message.warning('当前记录缺少患者ID')
         return
       }
-      this.$router.push({ path: '/Patient360', query: { id: row.patient_id } })
+      this.$router.push({ path: '/PatientDetail', query: { id: row.patient_id } })
     },
     handleDelete(row) {
       this.$confirm(`确认删除 ${row.patient_name || '该患者'} 的回访记录？`, '提示', { type: 'warning' }).then(() => {
-        axios.delete(`/followup/delete/${row.id}`).then(response => {
+        axios.delete(`/followups/delete/${row.id}`).then(response => {
           if (response.data.code === '200') {
             this.$message.success('删除成功')
             this.loadAll()

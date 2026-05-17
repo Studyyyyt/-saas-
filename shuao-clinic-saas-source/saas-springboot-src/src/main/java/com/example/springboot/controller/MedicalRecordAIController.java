@@ -2,19 +2,15 @@ package com.example.springboot.controller;
 
 import com.example.springboot.common.Result;
 import com.example.springboot.entity.MedicalRecordAIConfigDTO;
-import com.example.springboot.entity.MedicalRecordExpandDTO;
 import com.example.springboot.entity.TreatmentSceneExpandRequest;
 import com.example.springboot.service.MedicalRecordAIService;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 /**
  * 病历 AI 扩写配置与调用控制器
  */
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "http://localhost:7070")
 public class MedicalRecordAIController {
 
     private final MedicalRecordAIService medicalRecordAIService;
@@ -34,18 +30,16 @@ public class MedicalRecordAIController {
         return Result.success("保存成功");
     }
 
+    /**
+     * 病历 AI 扩写旧接口（已废弃）
+     * 前端已统一走 /api/ai/proxy/medical-expand 统一代理
+     * 返回 410 Gone，提示调用方迁移到新接口
+     */
+    @Deprecated
     @PostMapping("/ai/medical-record/expand")
-    public Result expand(@RequestBody TreatmentSceneExpandRequest dto) {
-        try {
-            Map<String, String> result = medicalRecordAIService.expand(dto);
-            return Result.success(result);
-        } catch (IllegalStateException e) {
-            return Result.error(e.getMessage());
-        } catch (IllegalArgumentException e) {
-            return Result.error(e.getMessage());
-        } catch (Exception e) {
-            return Result.error("AI 扩写失败：" + e.getMessage());
-        }
+    @ResponseStatus(org.springframework.http.HttpStatus.GONE)
+    public Result expand() {
+        return Result.error("410", "该接口已废弃，请使用 POST /api/ai/proxy/medical-expand");
     }
 
     @PostMapping("/ai-config/medical-record/preview")

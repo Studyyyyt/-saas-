@@ -24,8 +24,15 @@ public class AiAgentConfig {
     private String responseType;
     /** 超时秒数，默认60 */
     private Integer timeoutSeconds;
-    private Integer sortOrder;
+    /** 展示模式: json/chat/card/table */
+    private String uiMode;
+    /** 前端UI配置JSON */
+    private String uiConfigJson;
+    /** 用途/位置标注，如"新增病历页"、"咨询分析" */
+    private String usageLocation;
+    /** 是否为系统默认配置 */
     private Boolean isSystemDefault;
+    private Integer sortOrder;
     private Date createdAt;
     private Date updatedAt;
 
@@ -71,11 +78,20 @@ public class AiAgentConfig {
     public Integer getTimeoutSeconds() { return timeoutSeconds; }
     public void setTimeoutSeconds(Integer timeoutSeconds) { this.timeoutSeconds = timeoutSeconds; }
 
-    public Integer getSortOrder() { return sortOrder; }
-    public void setSortOrder(Integer sortOrder) { this.sortOrder = sortOrder; }
+    public String getUiMode() { return uiMode; }
+    public void setUiMode(String uiMode) { this.uiMode = uiMode; }
+
+    public String getUiConfigJson() { return uiConfigJson; }
+    public void setUiConfigJson(String uiConfigJson) { this.uiConfigJson = uiConfigJson; }
+
+    public String getUsageLocation() { return usageLocation; }
+    public void setUsageLocation(String usageLocation) { this.usageLocation = usageLocation; }
 
     public Boolean getIsSystemDefault() { return isSystemDefault; }
     public void setIsSystemDefault(Boolean isSystemDefault) { this.isSystemDefault = isSystemDefault; }
+
+    public Integer getSortOrder() { return sortOrder; }
+    public void setSortOrder(Integer sortOrder) { this.sortOrder = sortOrder; }
 
     public Date getCreatedAt() { return createdAt; }
     public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }

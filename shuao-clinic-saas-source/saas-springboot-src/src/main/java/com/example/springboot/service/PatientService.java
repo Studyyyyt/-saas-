@@ -142,6 +142,12 @@ public class PatientService {
 
     @Transactional
     public void addPatient(Patient patient) {
+        if (StringUtils.hasText(patient.getPhone())) {
+            List<Patient> existing = patientMapper.selectByPhoneExact(patient.getPhone().trim());
+            if (existing != null && !existing.isEmpty()) {
+                throw new IllegalArgumentException("该手机号已存在，请勿重复创建患者");
+            }
+        }
         normalizePatientCustomerSource(patient, true);
         normalizePatientSearchTokens(patient);
         patientMapper.addPatient(patient);

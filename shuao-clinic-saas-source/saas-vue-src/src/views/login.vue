@@ -48,7 +48,7 @@ export default {
   },
   methods: {
     handleLogin() {
-      axios.post('/loginController/login', this.loginForm)
+      axios.post('/auth/login', this.loginForm)
           .then(response => {
             const {code, msg, data} = response.data;
             if (code == 200) {

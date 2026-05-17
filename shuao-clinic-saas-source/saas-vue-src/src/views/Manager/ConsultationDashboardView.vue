@@ -82,6 +82,11 @@
         <el-table-column prop="avg_ticket" label="平均客单价" min-width="140" align="right">
           <template slot-scope="scope">¥{{ formatMoney(scope.row.avg_ticket) }}</template>
         </el-table-column>
+        <el-table-column label="操作" width="100" align="center">
+          <template slot-scope="scope">
+            <span>-</span>
+          </template>
+        </el-table-column>
       </el-table>
     </el-card>
 

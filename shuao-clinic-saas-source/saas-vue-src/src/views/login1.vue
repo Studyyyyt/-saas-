@@ -88,7 +88,7 @@ export default {
           username: String(this.user.username || '').trim(),
           password: String(this.user.password || '').trim()
         };
-        axios.post('/loginController/login', payload)
+        axios.post('/auth/login', payload)
           .then(response => {
             this.isLoading = false;
             if (response.data.code == 200) {

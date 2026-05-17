@@ -13,7 +13,7 @@ public class SpaForwardController {
             "/Patient",
             "/Person",
             "/MedicalRecord",
-            "/Patient360",
+            "/PatientDetail",
             "/Appointment",
             "/Appointment2",
             "/Treatment",
@@ -61,15 +61,25 @@ public class SpaForwardController {
             "/staff-h5/appointments",
             "/staff-h5/consultations",
             "/staff-h5/patients",
-            "/staff-h5/patient360",
+            "/staff-h5/patientDetail",
             "/staff-h5/records",
             "/staff-h5/finance",
             "/staff-h5/inventory",
             "/staff-portal-bind",
             "/staff-portal-auth-error",
-            "/admin-report-h5"
+            "/admin-report-h5",
+            "/patient-details",
+            "/followups",
+            "/purchases",
+            "/insurances",
+            "/treatment-plans"
     })
     public String forward() {
+        return "forward:/index.html";
+    }
+
+    @GetMapping("/SystemSettings/ai/pages/config/{agentKey}")
+    public String forwardAgentConfig() {
         return "forward:/index.html";
     }
 }

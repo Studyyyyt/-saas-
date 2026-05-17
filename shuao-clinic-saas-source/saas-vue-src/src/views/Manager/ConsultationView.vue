@@ -159,7 +159,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="created_by_name" label="录入人" min-width="120" />
-        <el-table-column label="操作" width="180" fixed="right">
+        <el-table-column label="操作" width="220" fixed="right">
           <template slot-scope="scope">
             <el-button type="text" size="mini" @click="openDetailDialog(scope.row)">查看详情</el-button>
             <el-button

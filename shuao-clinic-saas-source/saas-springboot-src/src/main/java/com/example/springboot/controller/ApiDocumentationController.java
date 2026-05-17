@@ -16,7 +16,6 @@ import java.util.Map;
  * API 文档接口
  * 列出所有可供外部工作流调用的业务 API
  */
-@CrossOrigin(origins = "http://localhost:7070")
 @RestController
 @RequestMapping("/api/docs")
 public class ApiDocumentationController {
@@ -378,12 +377,12 @@ public class ApiDocumentationController {
                 "{\"code\":\"200\",\"msg\":\"新增成功\",\"data\":null}"
         ));
 
-        // ==================== 患者360 ====================
+        // ==================== 患者详情 ====================
         apis.add(buildApi(
-                "患者360",
-                "获取患者360全景视图",
+                "患者详情",
+                "获取患者详情全景视图",
                 "GET",
-                "/patient360/overview/{patientId}",
+                "/patientDetail/overview/{patientId}",
                 Arrays.asList(
                         param("patientId", "long", true, "患者ID（路径参数）")
                 ),

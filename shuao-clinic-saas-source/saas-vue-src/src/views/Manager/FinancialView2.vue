@@ -1,17 +1,19 @@
 <template>
   <div style="height: 100%; width: 100%">
     <!-- 查询框 -->
-    <div>
-      <el-select v-model="searchType" placeholder="请选择查询条件" style="width: 150px;">
-        <el-option label="编号" value="id"></el-option>
-        <el-option label="名称" value="name"></el-option>
-        <el-option label="金额" value="amount"></el-option>
-        <el-option label="日期" value="date"></el-option>
-        <el-option label="类型" value="type"></el-option>
-      </el-select>
-      <el-input v-model="keyword" style="width: 300px; margin-left: 10px; margin-right: 10px" placeholder="请输入关键词"></el-input>
-      <el-button type="primary" @click="fetchDataByMonth">查询</el-button>
-      <el-button type="info" @click="reset">重置</el-button>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <el-select v-model="searchType" placeholder="请选择查询条件" style="width: 150px;">
+          <el-option label="编号" value="id"></el-option>
+          <el-option label="名称" value="name"></el-option>
+          <el-option label="金额" value="amount"></el-option>
+          <el-option label="日期" value="date"></el-option>
+          <el-option label="类型" value="type"></el-option>
+        </el-select>
+        <el-input v-model="keyword" style="width: 300px; margin-left: 10px; margin-right: 10px" placeholder="请输入关键词"></el-input>
+        <el-button type="primary" @click="fetchDataByMonth">查询</el-button>
+        <el-button type="info" @click="reset">重置</el-button>
+      </div>
     </div>
 
     <!-- 月份选择器 -->
@@ -33,12 +35,22 @@
         <el-table-column type="selection" width="55" align="center"></el-table-column>
         <el-table-column prop="id" label="编号" width="70" align="center"></el-table-column>
         <el-table-column prop="name" label="名称"></el-table-column>
-        <el-table-column prop="amount" label="金额"></el-table-column>
+        <el-table-column prop="amount" label="金额" align="right">
+          <template slot-scope="scope">
+            <span :style="{ color: parseFloat(scope.row.amount) >= 0 ? '#67C23A' : '#F56C6C' }">
+              {{ scope.row.amount }}
+            </span>
+          </template>
+        </el-table-column>
         <el-table-column prop="date" label="日期"></el-table-column>
-        <el-table-column prop="type" label="类型"></el-table-column>
+        <el-table-column prop="type" label="类型">
+          <template slot-scope="scope">
+            {{ scope.row.type === 'income' ? '收入' : scope.row.type === 'expense' ? '支出' : scope.row.type }}
+          </template>
+        </el-table-column>
         <el-table-column prop="payment_channel_name" label="收款渠道"></el-table-column>
         <el-table-column prop="remark" label="备注"></el-table-column>
-        <el-table-column label="操作" align="center" width="180">
+        <el-table-column label="操作" align="center" width="220">
           <template slot-scope="scope">
             <el-button size="mini" type="primary" plain @click="handleEdit(scope.row)">编辑</el-button>
             <el-button size="mini" type="danger" plain @click="handleDelete(scope.row.id)">删除</el-button>
@@ -70,8 +82,8 @@
           </el-form-item>
           <el-form-item label="类型" prop="type">
             <el-select v-model="editItem.type" placeholder="请选择类型">
-              <el-option label="收入" value="收入"></el-option>
-              <el-option label="支出" value="支出"></el-option>
+              <el-option label="收入" value="income"></el-option>
+              <el-option label="支出" value="expense"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item label="备注" prop="remark">
@@ -103,11 +115,16 @@ export default {
       keyword: '',
       dialogVisible: false,
       editItem: {
+        id: null,
         name: '',
         amount: '',
         date: '',
         type: '',
-        remark: ''
+        remark: '',
+        patient_id: null,
+        treatment_id: null,
+        payment_channel_id: null,
+        payment_channel_name: ''
       },
       isEditing: false,
       chart: null,
@@ -130,7 +147,8 @@ export default {
     fetchDataByMonth() {
       let url = `/finances/selectByMonth`;
       if (this.keyword) {
-        url = `/finances/select1By${this.searchType}?${this.searchType}=${this.keyword}`;
+        url = `/finances/selectBy${this.searchType.charAt(0).toUpperCase() + this.searchType.slice(1)}`;
+        params[this.searchType] = this.keyword;
       }
 
       const normalizedMonth = typeof this.selectedMonth === 'string' && /^\d{4}-\d{2}$/.test(this.selectedMonth)
@@ -148,14 +166,16 @@ export default {
 
       axios.get(url, { params })
           .then(response => {
-            this.finances = response.data.data;
+            this.finances = response.data.data || [];
             console.log(this.finances)
-            if (this.finances) {
-              this.updateChart();
-            }
+            this.updateChart();
           })
           .catch(error => {
             console.error('Error fetching data by month:', error);
+            this.finances = [];
+            this.totalIncome = 0;
+            this.totalExpense = 0;
+            this.netTotal = 0;
             this.$message.error('月份参数异常，已自动切回当前月份');
           });
     },
@@ -163,6 +183,20 @@ export default {
       const dateMap = {};
       let income = 0;
       let expense = 0;
+
+      if (!Array.isArray(this.finances) || this.finances.length === 0) {
+        this.totalIncome = 0;
+        this.totalExpense = 0;
+        this.netTotal = 0;
+        this.chart.setOption({
+          title: { text: '财务金额图' },
+          tooltip: {},
+          xAxis: { type: 'category', data: [] },
+          yAxis: {},
+          series: [{ name: '金额', type: 'bar', data: [] }]
+        });
+        return;
+      }
 
       // Aggregate data by date and calculate total income and expense
       this.finances.forEach(finance => {
@@ -172,9 +206,10 @@ export default {
         }
         dateMap[date] += parseFloat(finance.amount);
 
-        if (finance.type === '收入') {
+        const t = finance.type;
+        if (t === 'income' || t === '收入') {
           income += parseFloat(finance.amount);
-        } else if (finance.type === '支出') {
+        } else if (t === 'expense' || t === '支出') {
           expense += parseFloat(finance.amount);
         }
       });
@@ -184,9 +219,9 @@ export default {
       const amounts = dates.map(date => dateMap[date]);
 
       // Update totals
-      this.totalIncome = income;
-      this.totalExpense = expense;
-      this.netTotal = (income + expense).toFixed(2);
+      this.totalIncome = income.toFixed(2);
+      this.totalExpense = expense.toFixed(2);
+      this.netTotal = (income - expense).toFixed(2);
 
       const option = {
         title: {
@@ -232,11 +267,16 @@ export default {
     showAddDialog() {
       this.isEditing = false;
       this.editItem = {
+        id: null,
         name: '',
         amount: '',
         date: '',
         type: '',
-        remark: ''
+        remark: '',
+        patient_id: null,
+        treatment_id: null,
+        payment_channel_id: null,
+        payment_channel_name: ''
       };
       this.dialogVisible = true;
     },
@@ -258,8 +298,20 @@ export default {
       console.log(this.editItem);
     },
     handleEdit(row) {
-      this.editItem = Object.assign({}, row);
       this.isEditing = true;
+      const typeMap = { '收入': 'income', '支出': 'expense' };
+      this.editItem = {
+        id: row.id,
+        name: row.name || '',
+        amount: row.amount !== undefined ? String(row.amount) : '',
+        date: row.date || '',
+        type: typeMap[row.type] || row.type || '',
+        remark: row.remark || '',
+        patient_id: row.patient_id,
+        treatment_id: row.treatment_id,
+        payment_channel_id: row.payment_channel_id,
+        payment_channel_name: row.payment_channel_name || ''
+      };
       this.dialogVisible = true;
     },
     handleSaveEdit() {
@@ -341,8 +393,7 @@ export default {
 
       // Generate Excel file and trigger download
       XLSX.writeFile(workbook, "finances.xlsx");
-    },
-
+    }
   }
 };
 </script>

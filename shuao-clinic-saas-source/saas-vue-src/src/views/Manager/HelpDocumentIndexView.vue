@@ -55,7 +55,7 @@
               :key="item.key"
               class="index-item"
               :class="{ pending: item.status === 'pending' }"
-              @click="goTo(item.path)"
+              @click="item.status !== 'pending' && goTo(item.path)"
             >
               <span>{{ item.title }}</span>
               <el-tag v-if="item.status === 'pending'" size="mini" type="info">待补充</el-tag>

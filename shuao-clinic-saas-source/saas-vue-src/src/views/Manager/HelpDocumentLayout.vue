@@ -193,6 +193,9 @@ export default {
       return this.$route.path === path
     },
     goTo(item) {
+      if (item.status === 'pending') {
+        return
+      }
       if (this.$route.path !== item.path) {
         this.$router.push(item.path)
       }
@@ -342,10 +345,12 @@ export default {
 
 .menu-item.pending {
   color: var(--apple-text-tertiary);
+  cursor: default;
 }
 
 .menu-item.pending:hover {
-  color: var(--apple-text-secondary);
+  color: var(--apple-text-tertiary);
+  background: transparent;
 }
 
 .menu-item-text {

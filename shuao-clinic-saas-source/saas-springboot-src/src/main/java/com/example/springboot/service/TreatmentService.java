@@ -53,6 +53,9 @@ public class TreatmentService {
     private MedicalRecordMapper medicalRecordMapper;
 
     @Autowired
+    private com.example.springboot.mapper.FinanceMapper financeMapper;
+
+    @Autowired
     private AppointmentService appointmentService;
 
     @Autowired
@@ -214,6 +217,23 @@ public class TreatmentService {
         if (isBlank(treatment.getDoctor_name())) {
             throw new IllegalArgumentException("医生不能为空");
         }
+        // 校验：已存在财务流水的处置禁止直接修改金额或状态
+        if (treatment.getId() != null && treatment.getId() > 0 && financeMapper != null) {
+            List<Treatment> existingList = treatmentMapper.selectById(treatment.getId());
+            if (existingList != null && !existingList.isEmpty() && existingList.get(0) != null) {
+                Treatment existing = existingList.get(0);
+                List<com.example.springboot.entity.Finance> linkedFinances = financeMapper.getFinancesByTreatmentId(existing.getId());
+                boolean hasFinances = linkedFinances != null && !linkedFinances.isEmpty() &&
+                        linkedFinances.stream().anyMatch(f -> f != null && f.getId() > 0);
+                if (hasFinances) {
+                    boolean feeChanged = isAmountChanged(existing.getTreatment_fee(), treatment.getTreatment_fee());
+                    boolean statusChanged = isTextChanged(existing.getStatus(), treatment.getStatus());
+                    if (feeChanged || statusChanged) {
+                        throw new IllegalArgumentException("该处置已存在收费记录，禁止直接修改金额或状态，请通过收费/退款功能操作");
+                    }
+                }
+            }
+        }
         treatmentMapper.editTreatment(treatment);
         if (treatmentOperationAllocationService != null) {
             treatmentOperationAllocationService.replaceByTreatment(
@@ -329,6 +349,18 @@ public class TreatmentService {
         return value == null || value.trim().isEmpty();
     }
 
+    private boolean isAmountChanged(String oldValue, String newValue) {
+        double oldAmount = parseAmountToDouble(oldValue);
+        double newAmount = parseAmountToDouble(newValue);
+        return Math.abs(oldAmount - newAmount) > 0.0001;
+    }
+
+    private boolean isTextChanged(String oldValue, String newValue) {
+        String oldText = oldValue == null ? "" : oldValue.trim();
+        String newText = newValue == null ? "" : newValue.trim();
+        return !oldText.equals(newText);
+    }
+
     private String trimToEmpty(String value) {
         return value == null ? "" : value.trim();
     }
@@ -426,7 +458,7 @@ public class TreatmentService {
         if (!isToday(treatmentDate)) {
             return;
         }
-        Time appointmentTime = resolveAutoAppointmentTime(treatmentDate, medicalRecordId);
+        String appointmentTime = resolveAutoAppointmentTime(treatmentDate, medicalRecordId);
         Map<String, List<Treatment>> groupedTreatments = new LinkedHashMap<>();
         for (Treatment treatment : treatments) {
             if (treatment == null || !isToday(treatment.getTreatment_date())) {
@@ -462,18 +494,19 @@ public class TreatmentService {
         return date != null && LocalDate.now().equals(date.toLocalDate());
     }
 
-    private Time resolveAutoAppointmentTime(Date treatmentDate, Long medicalRecordId) {
+    private String resolveAutoAppointmentTime(Date treatmentDate, Long medicalRecordId) {
         LocalDate targetDate = treatmentDate == null ? LocalDate.now() : treatmentDate.toLocalDate();
+        LocalTime localTime = LocalTime.now().withSecond(0).withNano(0);
         if (medicalRecordMapper != null && medicalRecordId != null && medicalRecordId > 0) {
             MedicalRecord record = medicalRecordMapper.selectById(medicalRecordId);
             if (record != null && record.getVisit_date() != null) {
                 LocalDateTime visitDateTime = LocalDateTime.ofInstant(record.getVisit_date().toInstant(), ZoneId.systemDefault());
                 if (targetDate.equals(visitDateTime.toLocalDate())) {
-                    return Time.valueOf(visitDateTime.toLocalTime().withSecond(0).withNano(0));
+                    localTime = visitDateTime.toLocalTime().withSecond(0).withNano(0);
                 }
             }
         }
-        return Time.valueOf(LocalTime.now().withSecond(0).withNano(0));
+        return localTime.toString().substring(0, 5);
     }
 
     private String buildTreatmentDoctorKey(Treatment treatment) {

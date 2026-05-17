@@ -2,6 +2,8 @@ package com.example.springboot.controller;
 
 import com.example.springboot.common.Result;
 import com.example.springboot.entity.Doctor;
+import com.example.springboot.entity.ShiftTemplate;
+import com.example.springboot.mapper.ShiftTemplateMapper;
 import com.example.springboot.service.DoctorService;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
@@ -10,13 +12,15 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@CrossOrigin(origins = "http://localhost:7070")
 @RestController
 @RequestMapping("/doctors")
 public class DoctorController {
 
     @Autowired
     private DoctorService doctorService;
+
+    @Autowired
+    private ShiftTemplateMapper shiftTemplateMapper;
 
     @GetMapping("/selectAll")
     public Result selectAll(@RequestParam int page, @RequestParam int size) {
@@ -100,6 +104,12 @@ public class DoctorController {
     @GetMapping("/schedules")
     public Result getSchedulesByDateRange(@RequestParam String startDate, @RequestParam String endDate) {
         return Result.success(doctorService.getSchedulesByDateRange(startDate, endDate));
+    }
+
+    // 查询排班模板
+    @GetMapping("/shiftTemplates")
+    public Result getShiftTemplates() {
+        return Result.success(shiftTemplateMapper.selectAll());
     }
 
     // 批量保存排班

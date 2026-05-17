@@ -56,7 +56,7 @@ export default {
         this.$message.warning('患者ID不能为空')
         return
       }
-      axios.post('/insurance/mock/settlement-payload', this.form).then(res => {
+      axios.post('/insurances/mock/settlement-payload', this.form).then(res => {
         if (res.data.code === '200') {
           this.payloadText = JSON.stringify(res.data.data || {}, null, 2)
         } else {

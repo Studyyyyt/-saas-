@@ -103,11 +103,23 @@ services:
     environment:
       API_BASE_URL: http://backend:8080
       API_AUTH_TOKEN: ${MCP_API_TOKEN:-}
+      MCP_API_KEY: ${MCP_API_KEY:-}
       PORT: 3001
     ports:
       - "3001:3001"
     volumes:
       - ../mcp-server:/app
+    networks:
+      - clinic-network
+
+  mock-webhook:
+    build: ./mock-webhook
+    container_name: clinic-mock-webhook
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./mock-webhook:/app
     networks:
       - clinic-network
 

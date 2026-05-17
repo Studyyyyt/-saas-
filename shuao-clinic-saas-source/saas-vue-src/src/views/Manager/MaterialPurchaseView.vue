@@ -64,7 +64,7 @@
         <el-table-column label="明细数" width="80" align="right">
           <template slot-scope="scope">{{ Array.isArray(scope.row.items) ? scope.row.items.length : 0 }}</template>
         </el-table-column>
-        <el-table-column label="操作" fixed="right" width="250">
+        <el-table-column label="操作" fixed="right" width="290">
           <template slot-scope="scope">
             <el-button type="text" size="mini" @click="openDetail(scope.row)">详情</el-button>
             <el-button v-if="canCreate && canEditPurchase(scope.row)" type="text" size="mini" @click="openDialog(scope.row)">编辑</el-button>
@@ -110,7 +110,6 @@ import { getAdminSession } from '@/utils/adminSession'
 import MaterialPurchaseDialog from '@/components/MaterialPurchaseDialog.vue'
 import { MATERIAL_PURCHASE_STATUS_OPTIONS, canCreateMaterialPurchases, canVoidMaterialPurchases, formatMaterialMoney, normalizeMaterialRole, purchaseStatusTagType } from '@/utils/materialConstants'
 import { showApiError } from '@/utils/errorMessage'
-
 export default {
   name: 'MaterialPurchaseView',
   components: { MaterialPurchaseDialog },
@@ -222,7 +221,7 @@ export default {
       return createdDate === `${y}-${m}-${d}`
     },
     voidPurchase(row) {
-      this.$confirm(`确认作废采购单“${row.supplier_name || '未填写供应商'} / ${this.formatDate(row.purchase_date)}”吗？`, '提示', { type: 'warning' }).then(async () => {
+      this.$confirm(`确认作废采购单”${row.supplier_name || '未填写供应商'} / ${this.formatDate(row.purchase_date)}”吗？`, '提示', { type: 'warning' }).then(async () => {
         const res = await axios.post(`/material-purchases/void/${row.id}`, {
           voided_by: this.currentUser && this.currentUser.id ? Number(this.currentUser.id) : null,
           voided_by_name: this.currentUser && this.currentUser.name ? this.currentUser.name : '',
@@ -235,7 +234,7 @@ export default {
           this.$message.error(res.data.msg || '作废失败')
         }
       }).catch(() => {})
-    }
+    },
   }
 }
 </script>

@@ -46,7 +46,7 @@ export default {
   },
   methods: {
     loadLogs() {
-      axios.get('/insurance/logs', { params: { limit: 50 } }).then(res => {
+      axios.get('/insurances/logs', { params: { limit: 50 } }).then(res => {
         if (res.data.code === '200') {
           this.logs = res.data.data || []
         } else {

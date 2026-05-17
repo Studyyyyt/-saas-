@@ -101,7 +101,7 @@ export default {
   },
   methods: {
     loadOverview() {
-      axios.get('/insurance/overview').then(res => {
+      axios.get('/insurances/overview').then(res => {
         if (res.data.code === '200') {
           this.overview = res.data.data || {}
         } else {

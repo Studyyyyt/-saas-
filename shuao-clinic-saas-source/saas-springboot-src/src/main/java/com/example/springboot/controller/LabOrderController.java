@@ -8,7 +8,6 @@ import com.example.springboot.util.PagingSupport;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-@CrossOrigin(origins = "http://localhost:7070")
 @RestController
 @RequestMapping("/lab-orders")
 public class LabOrderController {

@@ -16,7 +16,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Date;
-import java.sql.Time;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +50,7 @@ class BusinessDailyAnalysisServiceTest {
                 treatmentMapper,
                 patientMapper,
                 properties,
-                mock(BusinessWechatPushService.class),
+                mock(com.example.springboot.service.AiModelProviderService.class),
                 new ObjectMapper()
         );
 
@@ -60,7 +59,7 @@ class BusinessDailyAnalysisServiceTest {
         appointment.setPatient_id(1L);
         appointment.setPatient_name("张三");
         appointment.setAppointment_date(Date.valueOf(targetDate));
-        appointment.setAppointment_time(Time.valueOf("10:00:00"));
+        appointment.setAppointment_time("10:00");
         appointment.setDoctor_name("王医生");
         appointment.setStatus("待治疗");
         appointment.setAppointment_purpose("洁牙");
@@ -129,7 +128,7 @@ class BusinessDailyAnalysisServiceTest {
                 mock(TreatmentMapper.class),
                 mock(PatientMapper.class),
                 properties,
-                mock(BusinessWechatPushService.class),
+                mock(com.example.springboot.service.AiModelProviderService.class),
                 new ObjectMapper()
         );
 

@@ -10,9 +10,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@CrossOrigin(origins = "http://localhost:7070")
 @RestController
-@RequestMapping("/Inventory")
+@RequestMapping("/inventory")
 public class InventoryController {
 
     @Autowired
@@ -162,7 +161,7 @@ public class InventoryController {
         return Result.success(pageInfo);
     }
 
-    @GetMapping("/select1Byid")
+    @GetMapping("/selectById")
     public Result select1Byid(@RequestParam Long id,@RequestParam int page, @RequestParam int size) {
         PageHelper.startPage(page, size);
         List<Inventory> inventoryList = inventoryService.select1Byid(id);
@@ -170,7 +169,7 @@ public class InventoryController {
         return Result.success(pageInfo);
     }
 
-    @GetMapping("/select1Byname")
+    @GetMapping("/selectByName")
     public Result select1ByProductName(@RequestParam String name,@RequestParam int page, @RequestParam int size) {
         PageHelper.startPage(page, size);
         List<Inventory> inventoryList = inventoryService.select1ByProductName(name);

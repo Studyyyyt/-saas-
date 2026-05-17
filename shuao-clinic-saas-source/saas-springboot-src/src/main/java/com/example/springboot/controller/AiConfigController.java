@@ -21,17 +21,20 @@ public class AiConfigController {
 
     @GetMapping("/overview")
     public Result getOverview() {
+        // TODO: 补充登录态校验，当前因前端未传accountId暂保留
         return Result.success(aiConfigService.getOverview());
     }
 
     @GetMapping("/functions")
     public Result getFunctions() {
+        // TODO: 补充登录态校验，当前因前端未传accountId暂保留
         List<AiFunctionConfig> functions = aiConfigService.getFunctionList();
         return Result.success(functions);
     }
 
     @PutMapping("/global")
     public Result updateGlobalConfig(@RequestBody GlobalConfigDTO dto) {
+        // TODO: 补充登录态校验，当前因前端未传accountId暂保留
         aiConfigService.updateGlobalConfig(dto);
         return Result.success("保存成功");
     }
@@ -39,6 +42,7 @@ public class AiConfigController {
     @PutMapping("/functions/{key}")
     public Result updateFunctionStatus(@PathVariable String key,
                                        @RequestBody FunctionStatusDTO dto) {
+        // TODO: 补充登录态校验，当前因前端未传accountId暂保留
         aiConfigService.updateFunctionStatus(key, dto.getEnabled());
         return Result.success("更新成功");
     }

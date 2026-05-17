@@ -20,13 +20,16 @@ public class AiConfigService {
     private final AiFunctionConfigMapper functionMapper;
     private final AiOperationLogMapper logMapper;
     private final AiGlobalConfigMapper globalConfigMapper;
+    private final com.example.springboot.mapper.AiAgentConfigMapper aiAgentConfigMapper;
 
     public AiConfigService(AiFunctionConfigMapper functionMapper,
                            AiOperationLogMapper logMapper,
-                           AiGlobalConfigMapper globalConfigMapper) {
+                           AiGlobalConfigMapper globalConfigMapper,
+                           com.example.springboot.mapper.AiAgentConfigMapper aiAgentConfigMapper) {
         this.functionMapper = functionMapper;
         this.logMapper = logMapper;
         this.globalConfigMapper = globalConfigMapper;
+        this.aiAgentConfigMapper = aiAgentConfigMapper;
     }
 
     /**
@@ -100,14 +103,25 @@ public class AiConfigService {
     /**
      * 断言指定 AI 功能可用：先检查全局开关，再检查功能开关
      * 任一关闭则抛出 IllegalStateException，阻止后续 AI 调用
+     *
+     * 【设计说明】
+     * 1. ai_function_config 表中的记录对应系统预定义功能（如病历扩写、经营分析等），
+     *    管理员可在 AI 智能中心总览页统一开启/关闭。
+     * 2. 用户自定义 Agent（配置在 ai_agent_config 表）不受 ai_function_config 开关限制，
+     *    只要全局开关开启且 Agent 在白名单中即视为可用。
      */
     public void assertAiEnabled(String functionKey) {
         if (!getGlobalEnabled()) {
             throw new IllegalStateException("AI 功能已全局关闭，请在「系统设置 - AI 智能中心」开启后再试");
         }
-        if (!getFunctionEnabled(functionKey)) {
+        AiFunctionConfig funcConfig = functionMapper.selectByKey(functionKey);
+        if (funcConfig != null && Boolean.TRUE.equals(funcConfig.getIsEnabled())) {
+            return;
+        }
+        if (funcConfig != null && !Boolean.TRUE.equals(funcConfig.getIsEnabled())) {
             throw new IllegalStateException("该 AI 功能已禁用，请在「系统设置 - AI 智能中心」开启后再试");
         }
+        // funcConfig == null：ai_function_config 无此功能记录，说明是用户自定义 Agent，直接放行
     }
 
     /**

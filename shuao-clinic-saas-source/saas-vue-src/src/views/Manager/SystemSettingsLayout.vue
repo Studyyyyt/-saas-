@@ -93,46 +93,50 @@ const menuGroups = [
     key: 'basic',
     title: '基础设置',
     icon: 'el-icon-s-tools',
+    sortOrder: 1,
     children: [
-      { key: 'treatment', title: '项目与治疗', path: '/SystemSettings/basic/treatment' },
-      { key: 'payment', title: '财务与收费', path: '/SystemSettings/basic/payment' },
-      { key: 'consent', title: '知情同意书', path: '/SystemSettings/basic/consent' },
-      { key: 'lab', title: '义齿加工', path: '/SystemSettings/basic/lab' },
-      { key: 'material', title: '耗材管理', path: '/SystemSettings/basic/material' },
-      { key: 'account', title: '账号与权限', path: '/SystemSettings/basic/account' }
+      { key: 'treatment', title: '项目与治疗', path: '/SystemSettings/basic/treatment', sortOrder: 1 },
+      { key: 'payment', title: '财务与收费', path: '/SystemSettings/basic/payment', sortOrder: 2 },
+      { key: 'consent', title: '知情同意书', path: '/SystemSettings/basic/consent', sortOrder: 3 },
+      { key: 'account', title: '账号与权限', path: '/SystemSettings/basic/account', sortOrder: 4 }
     ]
   },
   {
     key: 'ai',
     title: 'AI 智能中心',
     icon: 'el-icon-cpu',
+    sortOrder: 2,
     children: [
-      { key: 'ai-overview', title: 'AI 总览', path: '/SystemSettings/ai/overview' },
-      { key: 'ai-agent', title: '首页助手', path: '/SystemSettings/ai/agent' },
-      {
-        key: 'ai-pages',
-        title: '页面 AI 功能',
-        children: [
-          { key: 'ai-medical', title: '病历扩写', path: '/SystemSettings/ai/pages/medical' }
-        ]
-      }
+      { key: 'ai-overview', title: 'AI 总览', path: '/SystemSettings/ai/overview', sortOrder: 1 }
     ]
   },
   {
     key: 'help',
     title: '帮助中心',
     icon: 'el-icon-question',
+    sortOrder: 3,
     children: [
-      { key: 'help-document', title: '帮助文档', path: '/SystemSettings/help/index' }
+      { key: 'help-document', title: '帮助文档', path: '/SystemSettings/help/index', sortOrder: 1 }
     ]
   }
 ]
+
+function sortMenuItems(items) {
+  if (!Array.isArray(items)) return items
+  const sorted = [...items].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+  sorted.forEach(item => {
+    if (item.children) {
+      item.children = sortMenuItems(item.children)
+    }
+  })
+  return sorted
+}
 
 export default {
   name: 'SystemSettingsLayout',
   data() {
     return {
-      menuGroups,
+      menuGroups: sortMenuItems(menuGroups),
       expandedGroups: ['basic', 'ai'],
       expandedSubGroups: ['ai-pages']
     }

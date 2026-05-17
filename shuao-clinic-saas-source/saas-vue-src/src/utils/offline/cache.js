@@ -221,7 +221,7 @@ function matchesPatientId(targetId, payload) {
   return payloadId && payloadId === String(targetId)
 }
 
-function mergePatient360Raw(rawData, queueItems, patientId) {
+function mergePatientDetailRaw(rawData, queueItems, patientId) {
   const source = rawData && typeof rawData === 'object' ? deepClone(rawData) : {}
   const patientQueueItems = queueItems.filter(item => item.entityType === 'patient' && matchesPatientId(patientId, item.payload))
   const appointmentQueueItems = queueItems.filter(item => item.entityType === 'appointment' && matchesPatientId(patientId, item.payload))
@@ -268,7 +268,7 @@ function mergePatient360Raw(rawData, queueItems, patientId) {
 }
 
 async function queueItemsForScopes(scope) {
-  if (scope === 'patientsWorkbench' || scope === 'patientsH5' || scope === 'patient360') {
+  if (scope === 'patientsWorkbench' || scope === 'patientsH5' || scope === 'patientDetail') {
     return listQueueItems({ statuses: ['pending', 'failed'] })
   }
   if (scope === 'appointmentsBoard' || scope === 'appointmentsH5') {
@@ -378,8 +378,8 @@ export async function augmentCachedData(scope, rawData, context = {}) {
     })
   }
 
-  if (scope === 'patient360') {
-    return mergePatient360Raw(rawData, queueItems, context.patientId)
+  if (scope === 'patientDetail') {
+    return mergePatientDetailRaw(rawData, queueItems, context.patientId)
   }
 
   return deepClone(rawData)

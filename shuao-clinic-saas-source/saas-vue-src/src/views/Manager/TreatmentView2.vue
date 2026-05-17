@@ -1,14 +1,16 @@
 <template>
   <div style="height: 100%; width: 100%">
     <!-- 查询框 -->
-    <div>
-      <el-select v-model="searchType" placeholder="请选择查询条件" style="width: 150px;">
-        <el-option label="序号" value="id"></el-option>
-        <el-option label="姓名" value="name"></el-option>
-      </el-select>
-      <el-input v-model="keyword" style="width: 300px; margin-left: 10px; margin-right: 10px" placeholder="请输入关键词"></el-input>
-      <el-button type="primary" @click="search">查询</el-button>
-      <el-button type="info" @click="reset">重置</el-button>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <el-select v-model="searchType" placeholder="请选择查询条件" style="width: 150px;">
+          <el-option label="序号" value="id"></el-option>
+          <el-option label="姓名" value="name"></el-option>
+        </el-select>
+        <el-input v-model="keyword" style="width: 300px; margin-left: 10px; margin-right: 10px" placeholder="请输入关键词"></el-input>
+        <el-button type="primary" @click="search">查询</el-button>
+        <el-button type="info" @click="reset">重置</el-button>
+      </div>
     </div>
 
     <!-- 表格 -->
@@ -24,7 +26,7 @@
         <el-table-column prop="treatment_date" label="治疗日期"></el-table-column>
         <el-table-column prop="treatment_content" label="治疗内容"></el-table-column>
         <el-table-column prop="treatment_fee" label="治疗金额"></el-table-column>
-        <el-table-column label="操作" align="center" width="180">
+        <el-table-column label="操作" align="center" width="220">
           <template slot-scope="scope">
             <el-button size="mini" type="primary" plain @click="handleEdit(scope.row)">查看</el-button>
             <el-button size="mini" type="danger" plain @click="handleDelete(scope.row.id)">删除</el-button>
@@ -142,10 +144,8 @@ export default {
       };
 
       if (this.keyword) {
-        // 如果输入了关键词，则根据选择的查询条件发送相应的请求
-        // 构建带查询参数的URL
-        // console.log(this.keyword);
-        url = `/treatments/selectBy${this.searchType}?${this.searchType}=${this.keyword}`;
+        url = `/treatments/selectBy${this.searchType}`;
+        params[this.searchType] = this.keyword;
       }
 
       axios.get(url, { params })
@@ -265,8 +265,7 @@ export default {
       }).catch(() => {
         this.$message.info('已取消删除');
       });
-    },
-
+    }
   }
 };
 </script>

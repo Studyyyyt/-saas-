@@ -318,6 +318,16 @@
   color: #94a3b8;
 }
 
+/* ---------- 弹窗遮罩层交互修复 ---------- */
+/* 防止 el-dialog__wrapper 全屏覆盖层拦截点击事件，导致弹窗内容无法交互 */
+.el-dialog__wrapper {
+  pointer-events: none;
+}
+.el-dialog__wrapper .el-dialog,
+.el-dialog__wrapper .el-dialog * {
+  pointer-events: auto;
+}
+
 /* ---------- 表格全局居中 + 行高舒适 + 内容不换行 ---------- */
 .el-table .cell {
   text-align: center;

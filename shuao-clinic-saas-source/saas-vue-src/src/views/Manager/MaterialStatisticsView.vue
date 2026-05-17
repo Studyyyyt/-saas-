@@ -88,6 +88,10 @@
               <el-table-column prop="current_stock" label="当前库存" width="90" align="right" />
               <el-table-column prop="min_stock_alert" label="阈值" width="80" align="right" />
               <el-table-column prop="alert_gap" label="差额" width="80" align="right" />
+              <el-table-column label="操作" width="80" align="center">
+                <template slot-scope="scope">
+                </template>
+              </el-table-column>
             </el-table>
           </el-card>
         </el-col>
@@ -102,9 +106,9 @@ import * as echarts from 'echarts'
 import { getAdminSession } from '@/utils/adminSession'
 import { canViewMaterialStatistics, formatMaterialMoney, normalizeMaterialRole } from '@/utils/materialConstants'
 import { showApiError } from '@/utils/errorMessage'
-
 export default {
   name: 'MaterialStatisticsView',
+  components: {},
   data() {
     return {
       currentUser: getAdminSession() || {},
@@ -243,7 +247,7 @@ export default {
         }
       })
     },
-    formatMaterialMoney
+    formatMaterialMoney,
   }
 }
 </script>

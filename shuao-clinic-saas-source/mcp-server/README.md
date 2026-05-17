@@ -10,6 +10,15 @@
 - **MCP 端点**: `POST /mcp`
 - **健康检查**: `GET /health`
 
+## 鉴权说明
+
+MCP `/mcp` 端点已启用 **API Key 鉴权**。
+
+- 请求时必须携带请求头：`Authorization: Bearer <your_api_key>`
+- API Key 通过环境变量 `MCP_API_KEY` 配置
+- 若 `MCP_API_KEY` 未配置，鉴权将跳过（仅用于开发环境）
+- `/health` 健康检查端点**不需要**鉴权
+
 ## 启动方式
 
 ### 本地开发
@@ -41,16 +50,17 @@ docker run -p 3001:3001 \
 
 ## 环境变量
 
-| 变量名 | 说明 | 默认值 |
-|--------|------|--------|
-| `API_BASE_URL` | 系统后端 API 地址 | `http://backend:8080` |
-| `API_AUTH_TOKEN` | 访问后端 API 的 Bearer Token | （空） |
-| `PORT` | MCP 服务监听端口 | `3001` |
+| 变量名          | 说明                                       | 默认值                 |
+| --------------- | ------------------------------------------ | ---------------------- |
+| `API_BASE_URL`  | 系统后端 API 地址                          | `http://backend:8080`  |
+| `API_AUTH_TOKEN`| 访问后端 API 的 Bearer Token               | （空）                 |
+| `MCP_API_KEY`   | MCP 服务端点鉴权密钥（强烈建议生产环境配置） | （空）                 |
+| `PORT`          | MCP 服务监听端口                           | `3001`                 |
 
 ## Tools 列表
 
 | Tool 名称 | 对应系统 API | 说明 |
-|-----------|-------------|------|
+| --- | --- | --- |
 | `query_patients` | `GET /patients/search` | 查询患者列表，支持姓名/手机号模糊搜索 |
 | `query_appointments` | `GET /appointments/selectAll` | 查询预约列表，支持按状态过滤 |
 | `query_medical_records` | `GET /medical-records/selectByPatientId` | 根据患者ID查询病历记录 |

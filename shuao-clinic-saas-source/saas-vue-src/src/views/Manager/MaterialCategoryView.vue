@@ -76,7 +76,6 @@ import axios from 'axios'
 import { getAdminSession } from '@/utils/adminSession'
 import { MATERIAL_CATEGORY_STATUS_OPTIONS, canManageMaterialCategories, normalizeMaterialRole } from '@/utils/materialConstants'
 import { showApiError } from '@/utils/errorMessage'
-
 function defaultForm() {
   return {
     id: null,
@@ -89,6 +88,7 @@ function defaultForm() {
 
 export default {
   name: 'MaterialCategoryView',
+  components: {},
   data() {
     return {
       MATERIAL_CATEGORY_STATUS_OPTIONS,
@@ -158,7 +158,7 @@ export default {
       }
     },
     deleteCategory(row) {
-      this.$confirm(`确认删除分类“${row.name}”吗？`, '提示', { type: 'warning' }).then(async () => {
+      this.$confirm(`确认删除分类”${row.name}”吗？`, '提示', { type: 'warning' }).then(async () => {
         const res = await axios.delete(`/material-categories/delete/${row.id}`)
         if (res.data.code === '200') {
           this.$message.success('删除成功')
@@ -167,7 +167,7 @@ export default {
           this.$message.error(res.data.msg || '删除失败')
         }
       }).catch(() => {})
-    }
+    },
   }
 }
 </script>

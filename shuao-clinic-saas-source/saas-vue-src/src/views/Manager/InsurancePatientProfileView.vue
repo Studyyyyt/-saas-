@@ -93,7 +93,7 @@ export default {
         this.$message.warning('请先输入患者ID')
         return
       }
-      axios.get(`/insurance/patient-profile/${this.patientId}`).then(res => {
+      axios.get(`/insurances/patient-profile/${this.patientId}`).then(res => {
         if (res.data.code === '200') {
           this.form = Object.assign(emptyForm(), res.data.data || {}, { patient_id: this.patientId })
           if (!res.data.data) {
@@ -112,7 +112,7 @@ export default {
         return
       }
       const payload = Object.assign({}, this.form, { patient_id: Number(this.patientId) })
-      axios.post('/insurance/patient-profile', payload).then(res => {
+      axios.post('/insurances/patient-profile', payload).then(res => {
         if (res.data.code === '200') {
           this.$message.success('医保档案保存成功')
           this.form = Object.assign(emptyForm(), res.data.data || {}, { patient_id: Number(this.patientId) })

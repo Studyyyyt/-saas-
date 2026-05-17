@@ -103,144 +103,110 @@
       </template>
     </div>
 
-    <!-- AI 对话区 -->
-    <div v-if="isAiEnabled('home-assistant')" class="ai-section">
+    <!-- AI 中心对话区 -->
+    <div class="ai-section">
       <div class="ai-panel">
-        <!-- 头部 Tabs -->
+        <!-- AI 面板头部 -->
         <div class="ai-panel-header">
-          <div class="ai-tabs">
-            <div
-              v-for="agent in agents"
-              :key="agent.id"
-              class="ai-tab"
-              :class="{ active: currentAgent.id === agent.id }"
-              @click="switchAgent(agent)"
-            >
-              <span class="ai-tab-dot" :style="{ background: agent.gradient }"></span>
-              <span class="ai-tab-name">{{ agent.name }}</span>
-            </div>
-            <div class="ai-tab ai-tab-add" title="管理 AI 助手" @click="goPage('/AIAgentConfig')">
-              <span class="ai-tab-dot" style="background: #e5e7eb;"></span>
-              <span class="ai-tab-name"><i class="el-icon-setting"></i> 管理</span>
-            </div>
+          <div class="ai-header-title">
+            <i class="el-icon-cpu" style="color: #409eff; margin-right: 6px;"></i>
+            <span>AI 智能中心</span>
+            <el-tag v-if="currentAgent" size="mini" type="primary" style="margin-left: 8px;">
+              {{ currentAgent.name }}
+            </el-tag>
           </div>
           <div class="ai-header-actions">
-            <div class="ai-header-action" :class="{ active: showDebugPanel }" title="调试日志" @click="toggleDebugPanel">
-              <i class="el-icon-warning-outline"></i>
-            </div>
-            <div class="ai-header-action" title="清空对话" @click="clearChat">
+            <el-select
+              v-model="currentAgentKey"
+              size="mini"
+              placeholder="选择 AI Agent"
+              style="width: 150px; margin-right: 8px;"
+            >
+              <el-option
+                v-for="agent in enabledAgents"
+                :key="agent.agentKey"
+                :label="agent.name"
+                :value="agent.agentKey"
+              />
+            </el-select>
+            <div class="ai-header-action" title="清空对话" @click="clearAiChat">
               <i class="el-icon-delete"></i>
             </div>
           </div>
         </div>
 
-        <!-- 消息区 -->
-        <div class="ai-messages" ref="chatBody">
+        <!-- 消息展示区 -->
+        <div class="ai-messages" ref="aiChatBody">
+          <!-- 欢迎消息（无消息时显示） -->
+          <div v-if="aiMessages.length === 0" class="ai-welcome">
+            <div class="ai-welcome-avatar">
+              <i class="el-icon-cpu"></i>
+            </div>
+            <div class="ai-welcome-title">{{ greeting }}，我是 AI 智能助手</div>
+            <div class="ai-welcome-desc">我可以帮您分析经营数据、统计回访情况、辅助病历撰写，或分析患者信息</div>
+          </div>
+
+          <!-- 消息列表 -->
           <div
-            v-for="(msg, index) in chatMessages"
+            v-for="(msg, index) in aiMessages"
             :key="index"
             class="msg-item"
-            :class="[msg.role, { 'rich-media': msg.type === 'chart' || msg.type === 'appointments' }]"
+            :class="msg.role"
           >
-            <!-- 富媒体 -->
-            <template v-if="msg.type === 'chart' || msg.type === 'appointments'">
-              <div class="msg-card">
-                <div v-if="msg.content" class="msg-card-text">{{ msg.content }}</div>
-
-                <div v-if="msg.type === 'appointments'" class="msg-appointments">
-                  <div class="doctor-filter">
-                    <span
-                      v-for="doc in doctorOptions"
-                      :key="doc.value"
-                      class="filter-tag"
-                      :class="{ active: selectedDoctor === doc.value }"
-                      @click="selectedDoctor = doc.value"
-                    >
-                      {{ doc.label }}
-                    </span>
-                  </div>
-                  <div class="appointment-grid">
-                    <div
-                      v-for="appt in filteredAppointments"
-                      :key="appt.id"
-                      class="appointment-card"
-                      :class="appt.status"
-                    >
-                      <div class="apptime">{{ appt.time }}</div>
-                      <div class="appname">{{ appt.patient_name }}</div>
-                      <div class="appproject">{{ appt.project || '未填写项目' }}</div>
-                      <div class="appstatus">{{ appt.status_label }}</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div v-if="msg.type === 'chart'" class="msg-chart">
-                  <div :id="'ai-chart-' + index" class="ai-chart-container" />
-                </div>
-
-                <div v-if="msg.time" class="msg-time">{{ msg.time }}</div>
+            <div class="msg-avatar-wrap" v-if="msg.role === 'assistant'">
+              <div class="msg-avatar-ai">
+                <i class="el-icon-cpu"></i>
               </div>
-            </template>
-
-            <!-- 普通消息 -->
-            <template v-else>
-              <div class="msg-bubble">
-                <div v-if="msg.type === 'text'" class="msg-text" :class="{ 'markdown-body': msg.role === 'assistant' && msg.content }">
-                  <template v-if="msg.content">
-                    <div v-if="msg.role === 'assistant'" v-html="renderMarkdown(msg.content)"></div>
-                    <template v-else>{{ msg.content }}</template>
-                  </template>
-                  <template v-else-if="msg.isStreaming">
-                    <span class="typing-dots"><span></span><span></span><span></span></span>
-                  </template>
-                  <span v-if="msg.isStreaming && msg.content" class="stream-cursor" />
-                </div>
-                <div v-if="msg.type === 'typing'" class="msg-text typing">
-                  <span class="typing-dots"><span></span><span></span><span></span></span>
-                </div>
-                <div v-if="msg.time" class="msg-time">{{ msg.time }}</div>
+            </div>
+            <div class="msg-bubble" :class="msg.role === 'user' ? 'msg-bubble--user' : 'msg-bubble--assistant'">
+              <div class="msg-text">
+                <template v-if="msg.role === 'assistant'">
+                  <div v-if="msg.rawData && typeof msg.rawData === 'object'" class="json-card" v-html="renderJsonCard(msg.rawData)"></div>
+                  <span v-else v-html="simpleMarkdown(msg.content)"></span>
+                </template>
+                <span v-else>{{ msg.content }}</span>
+                <span v-if="msg.streaming" class="stream-cursor"></span>
               </div>
-            </template>
+              <div v-if="msg.time" class="msg-time">{{ msg.time }}</div>
+            </div>
           </div>
         </div>
 
-        <!-- 调试日志面板 -->
-        <div v-if="showDebugPanel" class="ai-debug-panel">
-          <div class="debug-panel-header">
-            <span class="debug-title"><i class="el-icon-warning-outline"></i> 调试日志</span>
-            <div class="debug-actions">
-              <span class="debug-action" @click="clearDebugPanelLogs"><i class="el-icon-delete"></i> 清空</span>
-              <span class="debug-action" @click="toggleDebugPanel"><i class="el-icon-close"></i> 关闭</span>
-            </div>
-          </div>
-          <div class="debug-log-list">
-            <div v-if="debugLogs.length === 0" class="debug-empty">暂无日志，发送一条 AI 消息后将在此显示请求与响应详情。</div>
-            <div
-              v-for="(log, idx) in debugLogs"
-              :key="idx"
-              class="debug-log-item"
-              :class="log.type"
-            >
-              <span class="debug-time">{{ log.time }}</span>
-              <span class="debug-type">{{ log.type }}</span>
-              <span class="debug-data">{{ JSON.stringify(log.data) }}</span>
-            </div>
-          </div>
+        <!-- 快捷指令胶囊 -->
+        <div class="ai-quick-chips">
+          <el-tag
+            v-for="(chip, index) in displayChips"
+            :key="index"
+            class="quick-chip"
+            :class="{ active: chip.agentKey === currentAgentKey }"
+            effect="plain"
+            size="small"
+            @click="selectAgentChip(chip)"
+          >
+            <i :class="chip.icon"></i>
+            {{ chip.label }}
+          </el-tag>
         </div>
 
         <!-- 输入区 -->
         <div class="ai-input-area">
-          <div class="input-shell">
-            <input
-              v-model="chatInput"
-              class="input-field"
-              placeholder="有什么可以帮您的？"
-              @keyup.enter="sendChat"
-            />
-            <button class="input-send" :disabled="!chatInput.trim()" @click="sendChat">
-              <i class="el-icon-s-promotion"></i>
-            </button>
-          </div>
+          <el-input
+            v-model="aiInput"
+            type="textarea"
+            :rows="2"
+            placeholder="请输入您的问题，按回车发送..."
+            resize="none"
+            @keyup.enter.native="handleAiEnter"
+          />
+          <el-button
+            type="primary"
+            icon="el-icon-s-promotion"
+            :disabled="!aiInput.trim() || aiLoading"
+            :loading="aiLoading"
+            @click="sendAiMessage"
+          >
+            发送
+          </el-button>
         </div>
       </div>
     </div>
@@ -249,14 +215,9 @@
 
 <script>
 import axios from 'axios'
-import * as echarts from 'echarts'
 import { ADMIN_SESSION_EVENT, getAdminSession } from '@/utils/adminSession'
-import { loadAgentsFromStorage } from '@/views/Manager/AIAgentConfigView'
-import { streamChat, fetchAgentConfigs, getDebugLogs, clearDebugLogs, subscribeToDebugLogs, unsubscribeFromDebugLogs } from '@/utils/aiStreamClient'
-import { isAiEnabled as checkAiEnabled } from '@/utils/aiConfig'
 import { fetchCachedResource } from '@/utils/offline/apiClient'
 import { savePendingAppointmentPatient } from '@/utils/appointmentPrefill'
-import { marked } from 'marked'
 
 const WAITING_APPOINTMENT_STATUSES = ['待治疗', '已预约', '待就诊']
 const COMPLETED_APPOINTMENT_STATUSES = ['已就诊', '已治疗', '已完成', '已离开']
@@ -314,39 +275,21 @@ export default {
       stats: buildEmptyStats(),
       doctorTodos: buildEmptyDoctorTodos(),
       missingNextAppointmentPatients: [],
-      // AI 相关
-      chatInput: '',
-      showAgentMenu: false,
-      currentAgent: { id: 'default', name: '智能助手', gradient: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)' },
-      agents: [],
-      chatMessages: [
-        {
-          role: 'assistant',
-          type: 'text',
-          content: '早上好！我是您的门诊智能助手。您可以问我今日预约、待办事项、收入情况，或者让我帮您查找患者信息。',
-          time: (() => {
-            const now = new Date()
-            const pad = n => String(n).padStart(2, '0')
-            return `${pad(now.getHours())}:${pad(now.getMinutes())}`
-          })()
-        }
-      ],
-      chatStreaming: false,
-      chatAbortController: null,
-      showDebugPanel: false,
-      aiDebugLogs: [],
-      selectedDoctor: 'all',
-      demoAppointments: [
-        { id: 1, time: '08:00', patient_name: '张三', project: '种植牙复诊', status: 'waiting', status_label: '待接诊', doctor: '李医生' },
-        { id: 2, time: '08:30', patient_name: '李四', project: '拔牙', status: 'completed', status_label: '已完成', doctor: '李医生' },
-        { id: 3, time: '09:00', patient_name: '王五', project: '初诊检查', status: 'waiting', status_label: '待接诊', doctor: '李医生' },
-        { id: 4, time: '09:30', patient_name: '赵六', project: '根管治疗', status: 'waiting', status_label: '待接诊', doctor: '李医生' },
-        { id: 5, time: '10:00', patient_name: '钱七', project: '洗牙', status: 'cancelled', status_label: '已取消', doctor: '李医生' },
-        { id: 6, time: '10:30', patient_name: '孙八', project: '正畸复诊', status: 'waiting', status_label: '待接诊', doctor: '张医生' },
-        { id: 7, time: '11:00', patient_name: '周九', project: '补牙', status: 'completed', status_label: '已完成', doctor: '张医生' },
-        { id: 8, time: '14:00', patient_name: '吴十', project: '种植牙手术', status: 'waiting', status_label: '待接诊', doctor: '王医生' },
-        { id: 9, time: '14:30', patient_name: '郑一', project: '牙周治疗', status: 'waiting', status_label: '待接诊', doctor: '王医生' },
-        { id: 10, time: '15:00', patient_name: '陈二', project: '取模', status: 'waiting', status_label: '待接诊', doctor: '李医生' }
+      // AI 中心数据模型
+      aiMessages: [],
+      aiInput: '',
+      aiLoading: false,
+      aiSessionId: '',
+      // 动态 Agent 列表（从后端或本地加载）
+      agentList: [],
+      currentAgentKey: '',
+      aiAgentsLoaded: false,
+      // 默认快捷指令兜底（当后端未配置 Agent 时显示）
+      defaultChips: [
+        { label: '经营分析', icon: 'el-icon-data-line', value: '请帮我分析本月门诊经营情况', agentKey: 'business-analysis' },
+        { label: '回访统计', icon: 'el-icon-phone-outline', value: '统计一下近期的回访完成情况', agentKey: 'followup-generate' },
+        { label: '病历辅助', icon: 'el-icon-document', value: '请帮我辅助撰写一份病历模板', agentKey: 'medical-expand' },
+        { label: '患者分析', icon: 'el-icon-user', value: '分析一下高价值患者和流失风险患者', agentKey: 'patient-insight' }
       ]
     }
   },
@@ -384,47 +327,42 @@ export default {
       if (hour < 18) return '下午好'
       return '晚上好'
     },
-    doctorOptions() {
-      const doctors = new Set(this.demoAppointments.map(a => a.doctor))
-      const list = Array.from(doctors).map(doc => ({ label: doc, value: doc }))
-      return [{ label: '全部医生', value: 'all' }, ...list]
+    /** 已启用的 Agent 列表（ai_agent_config 无 isEnabled 字段，所有返回配置均视为启用） */
+    enabledAgents() {
+      return this.agentList || []
     },
-    filteredAppointments() {
-      if (this.selectedDoctor === 'all') return this.demoAppointments
-      return this.demoAppointments.filter(a => a.doctor === this.selectedDoctor)
+    /** 当前选中的 Agent 对象 */
+    currentAgent() {
+      return (this.agentList || []).find(a => a.agentKey === this.currentAgentKey) || null
     },
-    todayAppointmentsPreview() {
-      return this.demoAppointments.slice(0, 5)
-    },
-    showPresetQuestions() {
-      return this.chatMessages.length === 1 && this.chatMessages[0].role === 'assistant'
-    },
-    debugLogs() {
-      return this.aiDebugLogs
+    /** 用于展示的快捷 chips（优先从后端 Agent 配置生成） */
+    displayChips() {
+      const agents = this.enabledAgents
+      if (agents.length > 0) {
+        return agents.map(agent => ({
+          label: agent.name || agent.agentKey,
+          icon: 'el-icon-cpu',
+          value: (agent.chips && agent.chips[0]) || `请使用「${agent.name}」Agent`,
+          agentKey: agent.agentKey
+        }))
+      }
+      return this.defaultChips
     }
   },
   mounted() {
     this.syncUserFromStorage()
     this.updateTime()
     this.loadDashboard()
-    this.loadAgents()
-    this.loadChatMessages()
     this.configureDashboardRefresh()
     this.timer = setInterval(this.updateTime, 1000)
     window.addEventListener(ADMIN_SESSION_EVENT, this.handleIdentityRefresh)
     window.addEventListener('focus', this.handleIdentityRefresh)
     window.addEventListener('online', this.handleVisibilityRefresh)
     document.addEventListener('visibilitychange', this.handleVisibilityRefresh)
-    this._debugLogHandler = (log) => {
-      if (log === null) {
-        this.aiDebugLogs = []
-      } else {
-        this.aiDebugLogs.unshift(log)
-        if (this.aiDebugLogs.length > 100) this.aiDebugLogs.pop()
-      }
-    }
-    subscribeToDebugLogs(this._debugLogHandler)
-    this.aiDebugLogs = getDebugLogs()
+    // 初始化 AI 会话 ID
+    this.initAiSessionId()
+    // 加载 AI Agent 列表
+    this.loadAiAgents()
   },
   beforeDestroy() {
     clearInterval(this.timer)
@@ -433,22 +371,76 @@ export default {
     window.removeEventListener('focus', this.handleIdentityRefresh)
     window.removeEventListener('online', this.handleVisibilityRefresh)
     document.removeEventListener('visibilitychange', this.handleVisibilityRefresh)
-    if (this._debugLogHandler) {
-      unsubscribeFromDebugLogs(this._debugLogHandler)
-    }
   },
   methods: {
-    isAiEnabled(key) {
-      return checkAiEnabled(key)
-    },
-    renderMarkdown(text) {
+    /**
+     * 简单 Markdown 渲染（仅支持加粗和换行）
+     * @param {string} text - 原始文本
+     * @returns {string} HTML 字符串
+     */
+    simpleMarkdown(text) {
       if (!text) return ''
-      const renderer = new marked.Renderer()
-      // 禁用多行代码块，不渲染为 pre/code
-      renderer.code = () => ''
-      // 内联代码渲染为普通文本，不加背景
-      renderer.codespan = (code) => code
-      return marked.parse(text, { breaks: true, gfm: true, renderer })
+      // 将 **文本** 替换为 <strong>文本</strong>
+      let html = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      // 将换行符替换为 <br>
+      html = html.replace(/\n/g, '<br>')
+      return html
+    },
+    /**
+     * 将 JSON 对象渲染为卡片式 HTML
+     * 优先按病历字段顺序展示，其他字段追加到末尾
+     * @param {Object} data - 后端返回的原始数据对象
+     * @returns {string} HTML 字符串
+     */
+    renderJsonCard(data) {
+      if (!data || typeof data !== 'object') return ''
+      // 病历字段中文映射（按临床习惯排序）
+      const fieldOrder = [
+        { key: 'chief_complaint', label: '主诉' },
+        { key: 'present_illness_history', label: '现病史' },
+        { key: 'past_medical_history', label: '既往史' },
+        { key: 'infectious_history', label: '传染病史' },
+        { key: 'allergy_history', label: '过敏史' },
+        { key: 'general_condition', label: '一般情况' },
+        { key: 'examination_findings', label: '检查所见' },
+        { key: 'auxiliary_examination', label: '辅助检查' },
+        { key: 'diagnosis', label: '诊断' },
+        { key: 'treatment_plan', label: '治疗方案' },
+        { key: 'treatment', label: '治疗记录' },
+        { key: 'medical_advice', label: '医嘱' },
+        { key: 'prescription', label: '处方' },
+        { key: 'record_tags', label: '标签' },
+        { key: 'image_summary', label: '影像摘要' },
+        { key: 'notes', label: '备注' }
+      ]
+      let html = '<div class="json-card-inner">'
+      const renderedKeys = new Set()
+      // 先渲染已知字段（按固定顺序）
+      fieldOrder.forEach(item => {
+        if (data[item.key] != null) {
+          html += `<div class="json-card-row"><div class="json-card-label">${this.escapeHtml(item.label)}</div><div class="json-card-value">${this.escapeHtml(String(data[item.key]))}</div></div>`
+          renderedKeys.add(item.key)
+        }
+      })
+      // 再渲染其他未匹配的字段
+      Object.keys(data).forEach(key => {
+        if (!renderedKeys.has(key) && data[key] != null) {
+          html += `<div class="json-card-row"><div class="json-card-label">${this.escapeHtml(key)}</div><div class="json-card-value">${this.escapeHtml(String(data[key]))}</div></div>`
+        }
+      })
+      html += '</div>'
+      return html
+    },
+    /**
+     * HTML 转义，防止 XSS
+     * @param {string} text - 原始文本
+     * @returns {string} 转义后的文本
+     */
+    escapeHtml(text) {
+      if (text == null) return ''
+      const div = document.createElement('div')
+      div.textContent = text
+      return div.innerHTML
     },
     handleIdentityRefresh() {
       this.syncUserFromStorage()
@@ -531,8 +523,9 @@ export default {
     goPage(path) {
       this.$router.push(path)
     },
-    goPatientGroup(groupKey, sortMode, extraQuery = {}) {
-      this.$router.push({ path: '/Patient', query: Object.assign({ groupKey, sortMode }, extraQuery || {}) })
+    goPatientGroup(groupKey, sortMode, extraQuery) {
+      extraQuery = extraQuery || {}
+      this.$router.push({ path: '/Patient', query: Object.assign({ groupKey, sortMode }, extraQuery) })
     },
     goPendingLabOrders() {
       this.$router.push({ path: '/lab-orders', query: { pendingLab: '1' } })
@@ -575,7 +568,8 @@ export default {
       const patientName = String((item && item.patient_name) || '').trim()
       return patientName ? `name:${patientName}` : ''
     },
-    visitRefKey(item, fallbackDate = '') {
+    visitRefKey(item, fallbackDate) {
+      fallbackDate = fallbackDate || ''
       const patientRef = this.patientRefKey(item)
       const visitDate = fallbackDate || this.dateKey(item && (item.visit_date || item.appointment_date))
       if (!patientRef || !visitDate) return ''
@@ -665,7 +659,10 @@ export default {
         }
       }
     },
-    async buildManagementStatsPayload({ today, year, monthValue }) {
+    async buildManagementStatsPayload(params) {
+      const today = params.today
+      const year = params.year
+      const monthValue = params.monthValue
       const monthStart = `${year}-${monthValue}-01`
       const [appointmentsRes, patientsRes, recordsRes, financeRes, labBillsRes, materialPurchasesRes, materialAlertsRes, pendingLabRes, patientInsightRes] = await Promise.all([
         axios.get('/appointments/selectAll', { params: { page: 1, size: 1000 } }),
@@ -686,7 +683,7 @@ export default {
             endDate: today
           }
         }).catch(() => ({ data: { data: { list: [] } } })),
-        axios.get('/materials/search', {
+        axios.get('/materials/selectAll', {
           params: {
             page: 1,
             size: 1000,
@@ -755,7 +752,9 @@ export default {
     async loadManagementStats() {
       const today = this.formatDate(new Date())
       const month = this.formatMonth(new Date())
-      const [year, monthValue] = month.split('-')
+      const parts = month.split('-')
+      const year = parts[0]
+      const monthValue = parts[1]
       try {
         const result = await fetchCachedResource({
           cacheKey: 'page:home:management-dashboard',
@@ -783,11 +782,13 @@ export default {
         return { success: false }
       }
     },
-    async buildDoctorDashboardPayload({ today, tomorrow }) {
+    async buildDoctorDashboardPayload(params) {
+      const today = params.today
+      const tomorrow = params.tomorrow
       const [appointmentsRes, recordsRes, followupsRes, treatmentsRes, dismissedReminderRes] = await Promise.all([
         axios.get('/appointments/selectAll', { params: { page: 1, size: 1000 } }),
         axios.get('/medical-records/selectAll', { params: { page: 1, size: 1000 } }),
-        axios.get('/followup/selectAll', { params: { page: 1, size: 1000 } }).catch(() => ({ data: { data: { list: [] } } })),
+        axios.get('/followups/selectAll', { params: { page: 1, size: 1000 } }).catch(() => ({ data: { data: { list: [] } } })),
         axios.get('/treatments/selectAll', { params: { page: 1, size: 1000 } }).catch(() => ({ data: { data: { list: [] } } })),
         this.loadDismissedReminderKeys().then(data => ({ data })).catch(() => ({ data: new Set() }))
       ])
@@ -934,307 +935,250 @@ export default {
         return { success: false }
       }
     },
-    // AI 对话方法
-    sendChat() {
-      const text = this.chatInput.trim()
-      if (!text || this.chatStreaming) return
-      this.chatMessages.push({ role: 'user', type: 'text', content: text, time: this.formatChatTime() })
-      this.chatInput = ''
-      this.saveChatMessages()
-      this.$nextTick(() => {
-        this.scrollChatToBottom()
-        this.callAIStream(text)
-      })
-    },
-    callAIStream(text) {
-      this.chatStreaming = true
-      const typingIndex = this.chatMessages.length
-      // 先显示 typing 等待动画，收到首个 token 后再替换为正式消息
-      this.chatMessages.push({ role: 'assistant', type: 'typing', content: '', time: this.formatChatTime() })
-      this.$nextTick(() => this.scrollChatToBottom())
-
-      let hasReceivedToken = false
-
-      const { abort } = streamChat({
-        message: text,
-        agentKey: this.currentAgent.id || 'default',
-        functionKey: 'home-assistant',
-        onToken: (token) => {
-          if (!hasReceivedToken) {
-            hasReceivedToken = true
-            this.$set(this.chatMessages, typingIndex, {
-              role: 'assistant',
-              type: 'text',
-              content: token,
-              time: this.formatChatTime(),
-              isStreaming: true
-            })
-          } else {
-            const current = this.chatMessages[typingIndex].content
-            // 针对 DeepSeek 等供应商不按 SSE 规范发送换行符的情况：
-            // 如果当前内容不以换行结尾，且新 token 看起来像块级元素开头，则补一个换行
-            const isBlockStart = /^\s*(#{1,6}\s|[-*]\s|\d+\.\s|>\s|```|\|)/.test(token)
-            const separator = current && !current.endsWith('\n') && isBlockStart ? '\n' : ''
-            this.$set(this.chatMessages[typingIndex], 'content', current + separator + token)
-          }
-          this.$nextTick(() => this.scrollChatToBottom())
-        },
-        onDone: () => {
-          this.chatStreaming = false
-          const msg = this.chatMessages[typingIndex]
-          if (msg) {
-            if (msg.type === 'typing') {
-              // AI 未返回任何内容，将 typing 替换为提示文本
-              this.$set(this.chatMessages, typingIndex, {
-                role: 'assistant',
-                type: 'text',
-                content: '（AI 未返回任何内容，请检查模型配置或后端日志）',
-                time: this.formatChatTime(),
-                isStreaming: false
-              })
-            } else {
-              this.$set(msg, 'isStreaming', false)
-            }
-          }
-          this.saveChatMessages()
-        },
-        onError: (errMsg) => {
-          this.chatStreaming = false
-          const msg = this.chatMessages[typingIndex]
-          if (msg) {
-            if (msg.type === 'typing') {
-              this.$set(this.chatMessages, typingIndex, {
-                role: 'assistant',
-                type: 'text',
-                content: '[系统提示：' + errMsg + ']',
-                time: this.formatChatTime(),
-                isStreaming: false
-              })
-            } else {
-              this.$set(msg, 'isStreaming', false)
-              this.$set(msg, 'content', msg.content + '\n\n[系统提示：' + errMsg + ']')
-            }
-          }
-          this.saveChatMessages()
-        }
-      })
-
-      this.chatAbortController = { abort }
-    },
-    clearChat() {
-      if (this.chatAbortController) {
-        this.chatAbortController.abort()
-        this.chatAbortController = null
-      }
-      this.chatStreaming = false
-      this.chatMessages = [
-        {
-          role: 'assistant',
-          type: 'text',
-          content: `对话已清空。我是${this.currentAgent.name}，${this.currentAgent.desc}，有什么可以帮您的？`,
-          time: this.formatChatTime()
-        }
-      ]
-      this.saveChatMessages()
-    },
-    saveChatMessages() {
+    // ========== AI 中心交互方法 ==========
+    /**
+     * 初始化 AI 会话 ID，从 localStorage 读取或生成新的 UUID
+     */
+    initAiSessionId() {
       try {
-        const key = 'home_chat_messages_' + (this.user.id || 'guest')
-        localStorage.setItem(key, JSON.stringify(this.chatMessages))
-      } catch (e) { /* 忽略存储错误 */ }
-    },
-    loadChatMessages() {
-      try {
-        const key = 'home_chat_messages_' + (this.user.id || 'guest')
-        const raw = localStorage.getItem(key)
-        if (raw) {
-          const parsed = JSON.parse(raw)
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            this.chatMessages = parsed
-          }
-        }
-      } catch (e) { /* 忽略读取错误 */ }
-    },
-    toggleDebugPanel() {
-      this.showDebugPanel = !this.showDebugPanel
-    },
-    clearDebugPanelLogs() {
-      clearDebugLogs()
-      this.aiDebugLogs = []
-    },
-    async loadAgents() {
-      try {
-        const accountId = this.user.id || null
-        const res = await fetchAgentConfigs(accountId)
-        if (res.code === '200' && Array.isArray(res.data) && res.data.length > 0) {
-          this.agents = res.data.map(item => ({
-            id: item.agentKey || String(item.id),
-            name: item.name,
-            icon: item.icon,
-            desc: item.description || '',
-            gradient: item.gradient,
-            chips: Array.isArray(item.chips) ? item.chips : [],
-            systemPrompt: item.systemPrompt || '',
-            enabledTools: Array.isArray(item.enabledTools) ? item.enabledTools : []
-          }))
+        const stored = localStorage.getItem('ai_session_id')
+        if (stored) {
+          this.aiSessionId = stored
         } else {
-          const { loadAgentsFromStorage } = await import('@/views/Manager/AIAgentConfigView')
-          this.agents = loadAgentsFromStorage()
-        }
-        if (this.agents.length > 0 && (!this.currentAgent || this.currentAgent.id === 'default')) {
-          this.currentAgent = this.agents[0]
+          this.aiSessionId = this.generateUUID()
+          localStorage.setItem('ai_session_id', this.aiSessionId)
         }
       } catch (e) {
-        console.warn('加载 AI Agent 配置失败', e)
-        const { loadAgentsFromStorage } = await import('@/views/Manager/AIAgentConfigView')
-        this.agents = loadAgentsFromStorage()
-        if (this.agents.length > 0) {
-          this.currentAgent = this.agents[0]
-        }
+        this.aiSessionId = this.generateUUID()
       }
     },
-    switchAgent(agent) {
-      if (this.currentAgent.id === agent.id) return
-      this.currentAgent = agent
-      this.showAgentMenu = false
-      this.chatMessages.push({
-        role: 'assistant',
-        type: 'text',
-        content: `已切换到【${agent.name}】。${agent.desc}，请问有什么可以帮您的？`,
-        time: this.formatChatTime()
+    /**
+     * 生成简易 UUID
+     * @returns {string} UUID 字符串
+     */
+    generateUUID() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0
+        const v = c === 'x' ? r : (r & 0x3 | 0x8)
+        return v.toString(16)
       })
-      this.saveChatMessages()
-      this.$nextTick(() => this.scrollChatToBottom())
     },
-    formatChatTime() {
+    /**
+     * 获取当前时间字符串（HH:mm）
+     * @returns {string} 时间字符串
+     */
+    formatAiTime() {
       const now = new Date()
-      const pad = n => String(n).padStart(2, '0')
-      return `${pad(now.getHours())}:${pad(now.getMinutes())}`
+      const pad = function(n) { return String(n).padStart(2, '0') }
+      return pad(now.getHours()) + ':' + pad(now.getMinutes())
     },
-    scrollChatToBottom() {
-      const body = this.$refs.chatBody
-      if (body) body.scrollTop = body.scrollHeight
+    /**
+     * 处理输入框回车事件（支持 Shift+Enter 换行）
+     * @param {Event} e - 键盘事件
+     */
+    handleAiEnter(e) {
+      if (e.shiftKey) {
+        return
+      }
+      e.preventDefault()
+      this.sendAiMessage()
     },
-    simulateAIResponse(text) {
-      // 已废弃，保留做兜底
-      const lower = String(text || '').toLowerCase()
-      const typingIndex = this.chatMessages.length
-      this.chatMessages.push({ role: 'assistant', type: 'typing', content: '' })
-      this.$nextTick(() => this.scrollChatToBottom())
-
-      setTimeout(() => {
-        this.chatMessages.splice(typingIndex, 1)
-        let response = null
-
-        if (lower.includes('预约')) {
-          response = {
-            role: 'assistant',
-            type: 'appointments',
-            content: '今日共有 10 位患者预约，其中 5 位待接诊，2 位已完成，1 位已取消。',
-            time: this.formatChatTime()
+    /**
+     * 从后端加载 AI Agent 配置列表（已切换为 /api/ai-agent-configs）
+     */
+    async loadAiAgents() {
+      try {
+        const session = getAdminSession()
+        const accountId = session && session.id ? session.id : ''
+        const res = await axios.get('/api/ai-agent-configs', { params: { accountId } })
+        if (res.data && res.data.code === '200' && Array.isArray(res.data.data)) {
+          this.agentList = res.data.data
+          // 默认选中第一个 Agent
+          const firstAgent = this.agentList[0]
+          if (firstAgent && firstAgent.agentKey) {
+            this.currentAgentKey = firstAgent.agentKey
           }
-        } else if (lower.includes('待办') || lower.includes('工作')) {
-          const todo = this.isDoctor ? this.doctorTodos : this.stats
-          if (this.isDoctor) {
-            response = {
-              role: 'assistant',
-              type: 'text',
-              content: `您当前有 ${todo.pendingConsultations} 位待接诊患者、${todo.pendingRecords} 份待写病历、${todo.pendingFollowups} 位待回访患者，明日还有 ${todo.tomorrowAppointments} 条预约待确认。`,
-              time: this.formatChatTime()
-            }
-          } else {
-            response = {
-              role: 'assistant',
-              type: 'text',
-              content: `今日预约 ${todo.todayAppointments} 条，患者总数 ${todo.totalPatients} 人，本月已收费 ¥${todo.monthIncome}，待登记加工 ${todo.pendingLabRegistrations} 条。`,
-              time: this.formatChatTime()
-            }
-          }
-        } else if (lower.includes('收入') || lower.includes('收费')) {
-          response = {
-            role: 'assistant',
-            type: 'chart',
-            content: '本月收入趋势如下：',
-            time: this.formatChatTime()
-          }
-        } else if (lower.includes('患者') || lower.includes('查询')) {
-          response = {
-            role: 'assistant',
-            type: 'text',
-            content: '目前系统共有 ' + (this.stats.totalPatients || 0) + ' 位患者。您可以告诉我患者姓名或手机号，我帮您查找。',
-            time: this.formatChatTime()
-          }
-        } else if (lower.includes('今日患者')) {
-          response = {
-            role: 'assistant',
-            type: 'text',
-            content: `今日已到诊 ${this.stats.todayAppointments || 0} 位患者。主要治疗项目包括：种植牙复诊 3 人、拔牙 2 人、初诊检查 2 人、根管治疗 1 人。`,
-            time: this.formatChatTime()
-          }
-        } else if (lower.includes('待收费') || lower.includes('未收费')) {
-          response = {
-            role: 'assistant',
-            type: 'text',
-            content: '今日有 3 位患者待收费，总计约 ¥5,800。包括：张三（种植牙二期 ¥3,200）、李四（拔牙+缝合 ¥1,600）、王五（洗牙套餐 ¥1,000）。',
-            time: this.formatChatTime()
-          }
+          this.aiAgentsLoaded = true
         } else {
-          response = {
-            role: 'assistant',
-            type: 'text',
-            content: '收到您的提问。我目前可以帮您查询：今日预约、我的待办、收入情况、患者信息、今日患者、待收费。请问您想了解哪方面？',
-            time: this.formatChatTime()
+          // 后端接口不存在，使用 localStorage 中可能缓存的配置
+          this.loadAgentsFromLocalStorage()
+        }
+      } catch (error) {
+        console.warn('[HomeView] 加载 Agent 列表失败，回退到本地缓存:', error)
+        this.loadAgentsFromLocalStorage()
+      }
+    },
+    /**
+     * 从 localStorage 读取缓存的 Agent 配置
+     */
+    loadAgentsFromLocalStorage() {
+      try {
+        const cached = localStorage.getItem('ai_agents_config')
+        if (cached) {
+          const list = JSON.parse(cached)
+          if (Array.isArray(list)) {
+            this.agentList = list
+            const firstEnabled = list.find(a => a.isEnabled !== false)
+            if (firstEnabled && firstEnabled.agentKey) {
+              this.currentAgentKey = firstEnabled.agentKey
+            }
           }
         }
-
-        this.chatMessages.push(response)
-        this.$nextTick(() => {
-          if (response.type === 'chart') {
-            this.renderAIChart()
-          }
-          this.scrollChatToBottom()
-        })
-      }, 800)
-    },
-    renderAIChart() {
-      const index = this.chatMessages.length - 1
-      const chartDom = document.getElementById('ai-chart-' + index)
-      if (!chartDom || !echarts) return
-      const chart = echarts.init(chartDom)
-      const option = {
-        tooltip: { trigger: 'axis' },
-        grid: { left: '3%', right: '4%', bottom: '3%', top: '10%', containLabel: true },
-        xAxis: {
-          type: 'category',
-          boundaryGap: false,
-          data: ['5/1', '5/2', '5/3', '5/4', '5/5', '5/6', '今日'],
-          axisLine: { lineStyle: { color: '#e2e8f0' } },
-          axisLabel: { color: '#94a3b8' }
-        },
-        yAxis: {
-          type: 'value',
-          axisLine: { show: false },
-          splitLine: { lineStyle: { color: '#f1f5f9' } },
-          axisLabel: { color: '#94a3b8' }
-        },
-        series: [{
-          name: '收入',
-          type: 'line',
-          smooth: true,
-          symbol: 'circle',
-          symbolSize: 8,
-          lineStyle: { width: 3, color: '#2563eb' },
-          itemStyle: { color: '#2563eb', borderColor: '#fff', borderWidth: 2 },
-          areaStyle: {
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: 'rgba(37, 99, 235, 0.25)' },
-              { offset: 1, color: 'rgba(37, 99, 235, 0.02)' }
-            ])
-          },
-          data: [8200, 9320, 9010, 9340, 12900, 13300, 13200]
-        }]
+      } catch (e) {
+        console.warn('[HomeView] 读取本地 Agent 缓存失败:', e)
       }
-      chart.setOption(option)
+    },
+    /**
+     * 发送 AI 消息（用户输入）
+     * 使用当前选中的 currentAgentKey 路由到对应 Agent
+     */
+    sendAiMessage() {
+      const text = this.aiInput.trim()
+      if (!text || this.aiLoading) return
+      // 添加用户消息到列表
+      this.aiMessages.push({
+        role: 'user',
+        content: text,
+        time: this.formatAiTime()
+      })
+      this.aiInput = ''
+      this.$nextTick(function() {
+        this.scrollAiChatToBottom()
+      })
+      // 调用 SSE 流式接口，使用当前选中的 AgentKey
+      const key = this.currentAgentKey || 'default'
+      this.callAiStream(text, key)
+    },
+    /**
+     * 点击快捷指令 chip：切换到对应 Agent，不自动发送消息
+     * @param {Object} chip - chip 对象，包含 agentKey、label、value 等
+     */
+    selectAgentChip(chip) {
+      if (!chip || !chip.agentKey) return
+      this.currentAgentKey = chip.agentKey
+      // 可选：把快捷指令文本填入输入框，方便用户直接发送或修改
+      if (chip.value && chip.value !== `请使用「${chip.label}」Agent`) {
+        this.aiInput = chip.value
+      }
+    },
+    /**
+     * 调用 AI 代理接口（JSON 同步模式，带 loading 动画）
+     * @param {string} text - 用户发送的文本
+     * @param {string} agentKey - Agent 标识，默认 'default'
+     */
+    async callAiStream(text, agentKey) {
+      const self = this
+      self.aiLoading = true
+      const typingIndex = self.aiMessages.length
+      // 先添加一个空的 AI 消息占位，显示加载中
+      self.aiMessages.push({
+        role: 'assistant',
+        content: '',
+        streaming: true,
+        time: self.formatAiTime()
+      })
+      self.$nextTick(function() {
+        self.scrollAiChatToBottom()
+      })
+
+      const session = getAdminSession()
+      const accountId = session && session.id ? String(session.id) : ''
+      const accountName = session && session.name ? String(session.name) : ''
+      const key = agentKey || 'default'
+
+      try {
+        const res = await axios.post('/api/ai/proxy/' + encodeURIComponent(key), {
+          message: text,
+          session_id: self.aiSessionId || '',
+          account_id: accountId,
+          account_name: accountName,
+          clinic_id: '1'
+        })
+
+        // 后端返回 HTTP 200 但业务码非 200 时，按错误处理
+        const bizCode = res && res.data && res.data.code
+        if (bizCode !== '200' && bizCode !== 200) {
+          const errMsg = (res.data && res.data.msg) || 'AI 请求失败，请稍后重试'
+          const msg = self.aiMessages[typingIndex]
+          if (msg) {
+            self.$set(msg, 'content', '[ERROR]' + errMsg)
+            self.$set(msg, 'streaming', false)
+          }
+          return
+        }
+
+        const resultData = res && res.data && res.data.data
+        const replyContent = self.extractReplyContent(resultData)
+
+        const msg = self.aiMessages[typingIndex]
+        if (msg) {
+          self.$set(msg, 'content', replyContent)
+          self.$set(msg, 'streaming', false)
+          // 保存原始对象用于卡片式美化渲染
+          if (resultData != null && typeof resultData === 'object') {
+            self.$set(msg, 'rawData', resultData)
+          }
+        }
+      } catch (err) {
+        const errMsg = err && err.response && err.response.data && err.response.data.msg
+          ? err.response.data.msg
+          : 'AI 请求失败，请稍后重试'
+        const msg = self.aiMessages[typingIndex]
+        if (msg) {
+          self.$set(msg, 'content', '[ERROR]' + errMsg)
+          self.$set(msg, 'streaming', false)
+        }
+      } finally {
+        self.aiLoading = false
+        self.$nextTick(function() {
+          self.scrollAiChatToBottom()
+        })
+      }
+    },
+    /**
+     * 从 AI 响应数据中提取可展示的文本内容
+     * 支持多种常见字段名和类型
+     * @param {any} data - 后端返回的 data 字段
+     * @return {string} 提取出的文本
+     */
+    extractReplyContent(data) {
+      if (data == null) {
+        return '（AI 未返回内容）'
+      }
+      // 字符串类型直接返回
+      if (typeof data === 'string') {
+        return data
+      }
+      // 对象类型：尝试常见字段名
+      if (typeof data === 'object') {
+        const candidateKeys = ['content', 'reply', 'message', 'text', 'answer', 'result', 'output']
+        for (const k of candidateKeys) {
+          if (data[k] != null) {
+            return String(data[k])
+          }
+        }
+        // 没有常见字段时，返回格式化 JSON
+        try {
+          return JSON.stringify(data, null, 2)
+        } catch (e) {
+          return String(data)
+        }
+      }
+      return String(data)
+    },
+    /**
+     * 清空 AI 对话
+     */
+    clearAiChat() {
+      this.aiLoading = false
+      this.aiMessages = []
+    },
+    /**
+     * 滚动 AI 消息区到底部
+     */
+    scrollAiChatToBottom() {
+      const body = this.$refs.aiChatBody
+      if (body) body.scrollTop = body.scrollHeight
     }
   }
 }
@@ -1457,120 +1401,68 @@ export default {
 }
 
 .ai-panel {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-card);
-  height: 520px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  padding: 20px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
-/* 头部 Tabs */
+/* AI 面板头部 */
 .ai-panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 10px 8px 14px;
-  border-bottom: 1px solid var(--border-light);
+  margin-bottom: 16px;
   flex-shrink: 0;
 }
 
-.ai-tabs {
-  display: flex;
-  gap: 4px;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.ai-tabs::-webkit-scrollbar {
-  display: none;
-}
-
-.ai-tab {
+.ai-header-title {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  flex-shrink: 0;
-  font-size: 13px;
-  color: var(--text-secondary);
-  border: 1px solid transparent;
-  user-select: none;
-}
-
-.ai-tab:hover {
-  background: var(--bg-hover);
-  color: var(--text-regular);
-}
-
-.ai-tab.active {
-  background: var(--primary-light);
-  color: var(--primary);
+  font-size: 16px;
   font-weight: 600;
-  border-color: rgba(0, 166, 201, 0.25);
-}
-
-.ai-tab-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.ai-tab-name {
-  line-height: 1;
+  color: var(--text-primary);
 }
 
 .ai-header-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
 }
 
 .ai-header-action {
-  width: 30px;
-  height: 30px;
-  border-radius: var(--radius-sm);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   color: var(--text-muted);
   transition: all 0.2s ease;
-  flex-shrink: 0;
+  background: var(--bg-hover);
 }
 
 .ai-header-action:hover {
-  background: var(--bg-hover);
+  background: var(--border-light);
   color: var(--danger);
-}
-
-.ai-tab-add {
-  color: var(--text-muted);
-  border: 1px dashed var(--border-color);
-}
-
-.ai-tab-add:hover {
-  background: var(--bg-hover);
-  color: var(--text-regular);
-  border-style: solid;
 }
 
 /* 消息区 */
 .ai-messages {
-  flex: 1;
+  min-height: 300px;
+  max-height: 500px;
   overflow-y: auto;
+  background: #f8f9fa;
+  border-radius: 8px;
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background: var(--bg-page);
+  margin-bottom: 16px;
 }
 
 /* 消息项 */
@@ -1581,152 +1473,55 @@ export default {
 
 .msg-item.assistant {
   justify-content: flex-start;
+  align-items: flex-start;
+  gap: 10px;
 }
 
 .msg-item.user {
   justify-content: flex-end;
 }
 
+.msg-avatar-wrap {
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.msg-avatar-ai {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #409eff, #66b1ff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 14px;
+}
+
 .msg-bubble {
-  max-width: 95%;
+  max-width: 80%;
   padding: 10px 14px;
-  border-radius: var(--radius-md);
   font-size: 14px;
   line-height: 1.6;
   word-break: break-word;
 }
 
-.msg-item.assistant .msg-bubble {
+.msg-bubble--assistant {
   background: #fff;
+  border-radius: 12px 12px 12px 0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   color: var(--text-regular);
-  border-radius: var(--radius-md) var(--radius-md) var(--radius-md) var(--radius-sm);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
-  border: 1px solid var(--border-light);
 }
 
-.msg-item.user .msg-bubble {
-  background: var(--primary);
+.msg-bubble--user {
+  background: #409eff;
   color: #fff;
-  border-radius: var(--radius-md) var(--radius-md) var(--radius-sm) var(--radius-md);
-}
-
-.msg-item.assistant.rich-media {
-  width: 100%;
-}
-
-.msg-card {
-  width: 100%;
-  background: var(--bg-card);
-  border-radius: var(--radius-md);
-  padding: 14px;
-  box-shadow: var(--shadow-card);
-  border: 1px solid var(--border-light);
-}
-
-.msg-card-text {
-  font-size: 14px;
-  color: var(--text-regular);
-  line-height: 1.6;
-  margin-bottom: 10px;
+  border-radius: 12px 12px 0 12px;
 }
 
 .msg-text {
   min-height: 20px;
   display: block;
-}
-
-/* Markdown 渲染样式 */
-.markdown-body {
-  line-height: 1.7;
-}
-
-.markdown-body :first-child {
-  margin-top: 0;
-}
-
-.markdown-body :last-child {
-  margin-bottom: 0;
-}
-
-.markdown-body p {
-  margin: 0 0 8px 0;
-}
-
-.markdown-body h1,
-.markdown-body h2,
-.markdown-body h3,
-.markdown-body h4 {
-  margin: 12px 0 6px 0;
-  font-weight: 600;
-  line-height: 1.4;
-}
-
-.markdown-body h1 { font-size: 16px; }
-.markdown-body h2 { font-size: 15px; }
-.markdown-body h3 { font-size: 14px; }
-.markdown-body h4 { font-size: 13px; }
-
-.markdown-body ul,
-.markdown-body ol {
-  margin: 6px 0;
-  padding-left: 20px;
-}
-
-.markdown-body li {
-  margin: 3px 0;
-}
-
-.markdown-body strong {
-  font-weight: 600;
-}
-
-.markdown-body code {
-  background: rgba(0, 0, 0, 0.05);
-  padding: 2px 5px;
-  border-radius: 4px;
-  font-size: 13px;
-  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
-}
-
-.markdown-body pre {
-  background: rgba(0, 0, 0, 0.04);
-  padding: 10px 12px;
-  border-radius: 8px;
-  overflow-x: auto;
-  margin: 8px 0;
-}
-
-.markdown-body pre code {
-  background: none;
-  padding: 0;
-  font-size: 12px;
-}
-
-.markdown-body blockquote {
-  margin: 8px 0;
-  padding: 6px 12px;
-  border-left: 3px solid var(--primary);
-  background: rgba(37, 99, 235, 0.04);
-  border-radius: 0 6px 6px 0;
-}
-
-.markdown-body table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 8px 0;
-  font-size: 13px;
-}
-
-.markdown-body th,
-.markdown-body td {
-  border: 1px solid var(--border-light);
-  padding: 6px 10px;
-  text-align: left;
-}
-
-.markdown-body th {
-  background: var(--bg-hover);
-  font-weight: 600;
 }
 
 .msg-time {
@@ -1744,319 +1539,103 @@ export default {
   background: var(--primary);
   margin-left: 2px;
   vertical-align: text-bottom;
-  animation: blink-cursor 1s step-end infinite;
+  animation: blink 1s step-end infinite;
 }
 
-@keyframes blink-cursor {
+@keyframes blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
 }
 
-/* 打字中 */
-.typing-dots {
-  display: inline-flex;
-  gap: 4px;
+/* ========== AI 中心欢迎态 ========== */
+.ai-welcome {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  height: 20px;
+  justify-content: center;
+  padding: 40px 20px;
+  animation: fade-in-up 0.4s ease forwards;
 }
 
-.typing-dots span {
-  width: 6px;
-  height: 6px;
+.ai-welcome-avatar {
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  background: var(--border-color);
-  animation: typing-bounce 1.4s infinite ease-in-out both;
-}
-
-.typing-dots span:nth-child(1) { animation-delay: -0.32s; }
-.typing-dots span:nth-child(2) { animation-delay: -0.16s; }
-
-@keyframes typing-bounce {
-  0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
-  40% { transform: scale(1); opacity: 1; }
-}
-
-/* ========== 富媒体：预约卡片 ========== */
-.msg-appointments {
-  width: 100%;
-}
-
-.doctor-filter {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 10px;
-  flex-wrap: wrap;
-}
-
-.filter-tag {
-  padding: 3px 10px;
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  background: var(--bg-hover);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: 1px solid transparent;
-}
-
-.filter-tag:hover {
-  background: var(--border-light);
-  color: var(--text-regular);
-}
-
-.filter-tag.active {
-  background: var(--primary);
-  color: #fff;
-}
-
-.appointment-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-}
-
-.appointment-card {
-  background: var(--bg-card);
-  border-radius: var(--radius-sm);
-  padding: 10px;
-  border: 1px solid var(--border-light);
-  transition: border-color 0.2s ease;
-  cursor: pointer;
-}
-
-.appointment-card:hover {
-  border-color: var(--border-color);
-  box-shadow: var(--shadow-card);
-}
-
-.appointment-card.completed {
-  border-left: 3px solid var(--success);
-  background: rgba(82, 196, 26, 0.02);
-}
-
-.appointment-card.cancelled {
-  border-left: 3px solid var(--border-color);
-  opacity: 0.6;
-}
-
-.appointment-card.waiting {
-  border-left: 3px solid var(--primary);
-}
-
-.apptime {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--primary);
-  margin-bottom: 2px;
-}
-
-.appname {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 2px;
-}
-
-.appproject {
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin-bottom: 4px;
-}
-
-.appstatus {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: var(--radius-sm);
-  font-size: 11px;
-  font-weight: 500;
-  background: var(--bg-hover);
-  color: var(--text-secondary);
-}
-
-.appointment-card.completed .appstatus {
-  background: rgba(82, 196, 26, 0.1);
-  color: var(--success);
-}
-
-/* 图表 */
-.msg-chart {
-  width: 100%;
-  background: var(--bg-card);
-  border-radius: var(--radius-sm);
-  padding: 6px;
-  border: 1px solid var(--border-light);
-}
-
-.ai-chart-container {
-  width: 100%;
-  height: 200px;
-}
-
-/* ========== 底部输入区 ========== */
-.ai-input-area {
-  padding: 8px 14px 12px;
-  flex-shrink: 0;
-  background: var(--bg-card);
-  border-top: 1px solid var(--border-light);
-}
-
-.input-shell {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--bg-hover);
-  border-radius: var(--radius-md);
-  padding: 4px 4px 4px 12px;
-  transition: all 0.2s ease;
-}
-
-.input-shell:focus-within {
-  background: var(--bg-card);
-  box-shadow: 0 0 0 2px rgba(0, 166, 201, 0.15);
-}
-
-.input-field {
-  flex: 1;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-size: 14px;
-  color: var(--text-primary);
-  height: 36px;
-}
-
-.input-field::placeholder {
-  color: var(--text-muted);
-}
-
-.input-send {
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-sm);
-  border: none;
-  background: var(--primary);
-  color: #fff;
+  background: linear-gradient(135deg, #409eff, #66b1ff);
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: background 0.2s ease;
-  flex-shrink: 0;
+  color: #fff;
+  font-size: 24px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
 }
 
-.input-send:hover:not(:disabled) {
-  background: var(--primary-hover);
-}
-
-.input-send:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-/* 调试日志面板 */
-.ai-debug-panel {
-  background: #1e1e1e;
-  border-top: 1px solid #333;
-  color: #d4d4d4;
-  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
-  font-size: 12px;
-  display: flex;
-  flex-direction: column;
-  max-height: 200px;
-}
-
-.debug-panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 12px;
-  background: #2d2d2d;
-  border-bottom: 1px solid #333;
-  flex-shrink: 0;
-}
-
-.debug-title {
+.ai-welcome-title {
+  font-size: 16px;
   font-weight: 600;
-  color: #f0f0f0;
+  color: var(--text-primary);
+  margin-bottom: 8px;
 }
 
-.debug-title i {
-  color: #f59e0b;
+.ai-welcome-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* ========== 快捷指令胶囊 ========== */
+.ai-quick-chips {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.quick-chip {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.quick-chip:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.2);
+}
+
+.quick-chip.active {
+  background: #ecf5ff;
+  border-color: #409eff;
+  color: #409eff;
+  font-weight: 600;
+}
+
+.quick-chip i {
   margin-right: 4px;
 }
 
-.debug-actions {
+/* ========== Element UI 输入区 ========== */
+.ai-input-area {
   display: flex;
-  gap: 12px;
+  align-items: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
-.debug-action {
-  cursor: pointer;
-  color: #aaa;
-  transition: color 0.2s;
-}
-
-.debug-action:hover {
-  color: #fff;
-}
-
-.debug-action i {
-  margin-right: 2px;
-}
-
-.debug-log-list {
-  overflow-y: auto;
-  padding: 8px 12px;
+.ai-input-area .el-textarea {
   flex: 1;
 }
 
-.debug-empty {
-  color: #666;
-  text-align: center;
-  padding: 16px 0;
+.ai-input-area .el-textarea__inner {
+  border-radius: 8px;
+  resize: none;
 }
 
-.debug-log-item {
-  display: flex;
-  gap: 8px;
-  padding: 3px 0;
-  line-height: 1.5;
-  word-break: break-all;
-}
-
-.debug-log-item .debug-time {
-  color: #858585;
-  flex-shrink: 0;
-  width: 64px;
-}
-
-.debug-log-item .debug-type {
-  flex-shrink: 0;
-  width: 56px;
-  text-align: center;
-  border-radius: 3px;
-  font-size: 11px;
-  padding: 0 4px;
-  line-height: 1.6;
-}
-
-.debug-log-item.request .debug-type { background: #3b82f6; color: #fff; }
-.debug-log-item.response .debug-type { background: #10b981; color: #fff; }
-.debug-log-item.token .debug-type { background: #8b5cf6; color: #fff; }
-.debug-log-item.error .debug-type { background: #ef4444; color: #fff; }
-.debug-log-item.done .debug-type { background: #6b7280; color: #fff; }
-.debug-log-item.abort .debug-type { background: #f59e0b; color: #fff; }
-
-.debug-log-item .debug-data {
-  color: #ccc;
-  flex: 1;
-  white-space: pre-wrap;
-}
-
-.ai-header-action.active {
-  color: #f59e0b;
-  background: rgba(245, 158, 11, 0.1);
+.ai-input-area .el-button {
+  margin-bottom: 1px;
+  border-radius: 8px;
+  padding: 10px 18px;
 }
 
 /* ========== 动画 ========== */
@@ -2095,21 +1674,61 @@ export default {
   }
 
   .ai-panel {
-    height: 480px;
-    border-radius: var(--radius-md);
+    padding: 12px;
   }
 
   .ai-messages {
+    min-height: 200px;
+    max-height: 350px;
     padding: 12px;
   }
 
   .msg-bubble {
-    max-width: 95%;
+    max-width: 90%;
     font-size: 14px;
   }
+}
+</style>
 
-  .appointment-grid {
-    grid-template-columns: 1fr;
-  }
+<style>
+/* JSON 卡片美化展示 - 全局样式（对 v-html 内容生效） */
+.json-card {
+  width: 100%;
+}
+.json-card-inner {
+  background: #f0f5ff;
+  border: 1px solid #d6e4ff;
+  border-radius: 8px;
+  padding: 12px 16px;
+  max-width: 520px;
+}
+.json-card-row {
+  display: flex;
+  padding: 8px 0;
+  border-bottom: 1px dashed #bfdbfe;
+  align-items: flex-start;
+}
+.json-card-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.json-card-row:first-child {
+  padding-top: 0;
+}
+.json-card-label {
+  flex-shrink: 0;
+  width: 72px;
+  font-weight: 600;
+  color: #1e40af;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.json-card-value {
+  flex: 1;
+  margin-left: 12px;
+  color: #1e293b;
+  font-size: 13px;
+  line-height: 1.6;
+  word-break: break-word;
 }
 </style>

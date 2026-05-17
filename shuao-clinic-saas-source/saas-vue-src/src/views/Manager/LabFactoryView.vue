@@ -9,9 +9,6 @@
           <p>维护合作加工厂；点击“产品库维护”可直接进入外加工产品价格库和账单模板配置。</p>
         </div>
         <div class="hero-actions">
-          <el-button v-if="isAiEnabled('lab-factory-analysis')" type="primary" plain icon="el-icon-magic-stick" @click="openAiPanel">
-            AI 加工分析
-          </el-button>
           <el-button v-if="canManage" type="primary" icon="el-icon-plus" @click="openCreateDialog">
             新增加工厂
           </el-button>
@@ -104,7 +101,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="address" label="地址" min-width="200" show-overflow-tooltip />
-        <el-table-column label="操作" fixed="right" width="260">
+        <el-table-column label="操作" fixed="right" width="300">
           <template slot-scope="scope">
             <el-button type="text" size="mini" class="primary-link" @click="goDetail(scope.row)">
               <i class="el-icon-s-operation"></i> 产品库维护
@@ -158,45 +155,6 @@
       </span>
     </el-dialog>
 
-    <!-- AI 侧边浮层面板 -->
-    <transition name="ai-panel-slide">
-      <div v-if="aiPanelVisible" class="ai-panel-overlay" @click.self="closeAiPanel">
-        <div class="ai-panel">
-          <div class="ai-panel-head">
-            <div class="ai-panel-title">
-              <i class="el-icon-magic-stick"></i>
-              AI 加工分析
-            </div>
-            <button class="ai-panel-close" @click="closeAiPanel">
-              <i class="el-icon-close"></i>
-            </button>
-          </div>
-          <div class="ai-panel-body">
-            <div class="ai-section">
-              <div class="ai-section-title"><i class="el-icon-s-data"></i> 加工厂评估</div>
-              <div class="ai-section-content">
-                <p class="ai-placeholder">基于交货周期、价格、质量综合评估加工厂合作价值</p>
-                <div class="ai-coming-soon">功能即将上线，敬请期待</div>
-              </div>
-            </div>
-            <div class="ai-section">
-              <div class="ai-section-title"><i class="el-icon-s-opportunity"></i> 价格异常检测</div>
-              <div class="ai-section-content">
-                <p class="ai-placeholder">识别价格波动异常的产品项</p>
-                <div class="ai-coming-soon">功能即将上线，敬请期待</div>
-              </div>
-            </div>
-            <div class="ai-section">
-              <div class="ai-section-title"><i class="el-icon-s-marketing"></i> 采购趋势预测</div>
-              <div class="ai-section-content">
-                <p class="ai-placeholder">基于历史订单预测未来加工需求</p>
-                <div class="ai-coming-soon">功能即将上线，敬请期待</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </transition>
   </div>
 </template>
 
@@ -205,8 +163,6 @@ import axios from 'axios'
 import { getAdminSession } from '@/utils/adminSession'
 import { LAB_FACTORY_STATUS_OPTIONS, canManageLabFactory, normalizeLabRole } from '@/utils/labConstants'
 import { showApiError } from '@/utils/errorMessage'
-import { isAiEnabled as checkAiEnabled } from '@/utils/aiConfig'
-
 function defaultItem() {
   return {
     id: null,
@@ -221,6 +177,7 @@ function defaultItem() {
 
 export default {
   name: 'LabFactoryView',
+  components: {},
   data() {
     return {
       LAB_FACTORY_STATUS_OPTIONS,
@@ -237,8 +194,7 @@ export default {
       },
       dialogVisible: false,
       editItem: defaultItem(),
-      overview: {},
-      aiPanelVisible: false
+      overview: {}
     }
   },
   computed: {
@@ -350,15 +306,6 @@ export default {
     },
     goDetail(row) {
       this.$router.push({ path: `/lab-factories/${row.id}` }).catch(() => {})
-    },
-    openAiPanel() {
-      this.aiPanelVisible = true
-    },
-    closeAiPanel() {
-      this.aiPanelVisible = false
-    },
-    isAiEnabled(key) {
-      return checkAiEnabled(key)
     }
   }
 }
@@ -496,127 +443,6 @@ export default {
 
 .danger-link {
   color: #ef4444;
-}
-
-/* AI 面板 */
-.ai-panel-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 2000;
-  background: rgba(0, 0, 0, 0.35);
-  display: flex;
-  justify-content: flex-end;
-}
-
-.ai-panel {
-  width: 420px;
-  max-width: 90vw;
-  height: 100vh;
-  background: #f8fafc;
-  display: flex;
-  flex-direction: column;
-  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.12);
-}
-
-.ai-panel-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 18px;
-  background: #fff;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.ai-panel-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: #0f172a;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.ai-panel-title i {
-  color: #a855f7;
-  font-size: 18px;
-}
-
-.ai-panel-close {
-  width: 32px;
-  height: 32px;
-  border: 0;
-  background: transparent;
-  border-radius: 8px;
-  cursor: pointer;
-  color: #64748b;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.ai-panel-close:hover {
-  background: #f1f5f9;
-  color: #0f172a;
-}
-
-.ai-panel-body {
-  flex: 1;
-  overflow: auto;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.ai-section {
-  background: #fff;
-  border-radius: 14px;
-  padding: 16px;
-  border: 1px solid #e2e8f0;
-}
-
-.ai-section-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #0f172a;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-
-.ai-section-title i {
-  color: #a855f7;
-}
-
-.ai-placeholder {
-  font-size: 13px;
-  color: #64748b;
-  margin: 0 0 10px;
-}
-
-.ai-coming-soon {
-  font-size: 12px;
-  color: #94a3b8;
-  background: #f8fafc;
-  padding: 8px 12px;
-  border-radius: 8px;
-  text-align: center;
-}
-
-.ai-panel-slide-enter-active,
-.ai-panel-slide-leave-active {
-  transition: all 0.25s ease;
-}
-
-.ai-panel-slide-enter,
-.ai-panel-slide-leave-to {
-  opacity: 0;
-}
-
-.ai-panel-slide-enter .ai-panel,
-.ai-panel-slide-leave-to .ai-panel {
-  transform: translateX(100%);
 }
 
 @media (max-width: 768px) {

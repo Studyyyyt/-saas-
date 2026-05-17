@@ -146,17 +146,15 @@ export default {
   },
   methods: {
     search() {
-      let url = '/Inventory/selectAll';
+      let url = '/inventory/selectAll';
       let params = {
         page: this.currentPage,
         size: this.pageSize
       };
 
       if (this.keyword) {
-        // 如果输入了关键词，则根据选择的查询条件发送相应的请求
-        // 构建带查询参数的URL
-        // console.log(this.keyword);
-        url = `/Inventory/selectBy${this.searchType}?${this.searchType}=${this.keyword}`;
+        url = `/inventory/selectBy${this.searchType.charAt(0).toUpperCase() + this.searchType.slice(1)}`;
+        params[this.searchType] = this.keyword;
       }
 
       axios.get(url, { params })
@@ -209,7 +207,7 @@ export default {
     },
     handleAdd() {
       // 实现新增功能的逻辑
-      axios.post("/Inventory/add", this.editItem)
+      axios.post("/inventory/add", this.editItem)
           .then(response => {
             // 处理新增成功逻辑
             this.$message.success("新增成功");
@@ -234,7 +232,7 @@ export default {
       // 发送编辑/新增请求到后端
       if (this.isEditing) {
         // 编辑状态下发送编辑请求
-        axios.put("/Inventory/edit", this.editItem)
+        axios.put("/inventory/edit", this.editItem)
             .then(response => {
               // 处理编辑成功逻辑
               this.$message.success("编辑成功");
@@ -257,7 +255,7 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        axios.delete(`/Inventory/delete/${id}`)
+        axios.delete(`/inventory/delete/${id}`)
             .then(response => {
               this.$message.success('删除成功');
               this.search(); // 刷新数据
@@ -278,7 +276,7 @@ export default {
         type: 'warning'
       }).then(() => {
         // 批量删除操作
-        axios.delete(`/Inventory/deleteBatch`, {  data: this.selectedRows })
+        axios.delete(`/inventory/deleteBatch`, {  data: this.selectedRows })
             .then(response => {
               this.$message.success('批量删除成功');
               this.search(); // 刷新数据
@@ -314,7 +312,7 @@ export default {
       console.log(filteredData)
 
       // 发送批量新增请求
-      axios.post('/Inventory/addBatch', filteredData)
+      axios.post('/inventory/addBatch', filteredData)
           .then(response => {
             this.$message.success('批量导入成功');
             this.search(); // 刷新数据

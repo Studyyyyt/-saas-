@@ -14,7 +14,6 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "http://localhost:7070")
 public class TreatmentSceneController {
 
     private final TreatmentSceneService sceneService;

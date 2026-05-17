@@ -147,7 +147,7 @@ async function refreshDirtyCaches(dirtyScopes, dirtyPatientIds) {
     const meta = entry && entry.meta ? entry.meta : {}
     const scope = String(meta.scope || entry.scope || '')
     if (dirtyScopes.has(scope)) return true
-    if (scope === 'patient360' && dirtyPatientIds.size) {
+    if (scope === 'patientDetail' && dirtyPatientIds.size) {
       return dirtyPatientIds.has(Number(meta.patientId || 0))
     }
     return false

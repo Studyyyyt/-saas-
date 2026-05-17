@@ -20,20 +20,20 @@ public interface AppointmentMapper {
     List<Appointment> selectByAppointmentDate(@Param("appointmentDate") Date appointmentDate);
 
 
-    @Select("select id, patient_id, patient_name, appointment_date, appointment_time, duration_minutes, doctor_account_id, doctor_name, appointment_purpose, cancel_reason, status from appointment where id = #{id}")
+    @Select("select id, patient_id, patient_name, appointment_date, appointment_time, duration_minutes, doctor_account_id, doctor_name, appointment_purpose, cancel_reason, status, clinic_status, check_in_time from appointment where id = #{id}")
     List<Appointment> selectById(@Param("id") Long id);
 
-    @Select("select id, patient_id, patient_name, appointment_date, appointment_time, duration_minutes, doctor_account_id, doctor_name, appointment_purpose, cancel_reason, status from appointment where id = #{id} and status = #{status}")
+    @Select("select id, patient_id, patient_name, appointment_date, appointment_time, duration_minutes, doctor_account_id, doctor_name, appointment_purpose, cancel_reason, status, clinic_status, check_in_time from appointment where id = #{id} and status = #{status}")
     List<Appointment> findByIdAndStatus(Long id, String status);
 
 
-    @Select("select id, patient_id, patient_name, appointment_date, appointment_time, duration_minutes, doctor_account_id, doctor_name, appointment_purpose, cancel_reason, status from appointment where patient_name LIKE CONCAT('%', #{name}, '%')")
+    @Select("select id, patient_id, patient_name, appointment_date, appointment_time, duration_minutes, doctor_account_id, doctor_name, appointment_purpose, cancel_reason, status, clinic_status, check_in_time from appointment where patient_name LIKE CONCAT('%', #{name}, '%')")
     List<Appointment> selectByName(@Param("name") String name);
 
-    @Select("select id, patient_id, patient_name, appointment_date, appointment_time, duration_minutes, doctor_account_id, doctor_name, appointment_purpose, cancel_reason, status from appointment where patient_name LIKE CONCAT('%', #{name}, '%') and status = #{status}")
+    @Select("select id, patient_id, patient_name, appointment_date, appointment_time, duration_minutes, doctor_account_id, doctor_name, appointment_purpose, cancel_reason, status, clinic_status, check_in_time from appointment where patient_name LIKE CONCAT('%', #{name}, '%') and status = #{status}")
     List<Appointment> findByNameAndStatus(@Param("name") String name, @Param("status") String status);
 
-    @Select("select id, patient_id, patient_name, appointment_date, appointment_time, duration_minutes, doctor_account_id, doctor_name, appointment_purpose, cancel_reason, status from appointment where patient_id = #{patientId}")
+    @Select("select id, patient_id, patient_name, appointment_date, appointment_time, duration_minutes, doctor_account_id, doctor_name, appointment_purpose, cancel_reason, status, clinic_status, check_in_time from appointment where patient_id = #{patientId}")
     List<Appointment> selectByPatientReference(@Param("patientId") Long patientId);
 
     @Insert("INSERT INTO appointment (patient_id, patient_name, appointment_date, appointment_time, duration_minutes, doctor_account_id, doctor_name, appointment_purpose, cancel_reason, status, clinic_status, check_in_time) " +

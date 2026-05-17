@@ -301,7 +301,6 @@ export default {
             { label: '财务信息', path: '/Financial' },
             { label: '财务分析', path: '/Financial2' },
             { label: '财务支出', path: '/financial-expenses' },
-            { label: 'AI经营日报', path: '/BusinessAnalysis' }
           ]
         },
         {

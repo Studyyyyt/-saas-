@@ -11,6 +11,7 @@
           </div>
           <div class="page-header__actions">
             <el-tag size="small" :type="recordStatusTagType(form.record_status)">{{ recordStatusLabel(form.record_status) }}</el-tag>
+            <el-button type="primary" plain round icon="el-icon-magic-stick" :loading="aiExpanding" @click="expandWithAI">AI 扩写</el-button>
             <el-button plain round @click="closeEditor">返回列表</el-button>
           </div>
         </div>
@@ -516,89 +517,6 @@
           </div>
 
           <aside class="editor-sidebar">
-            <!-- AI 智能助手面板 -->
-            <el-card v-if="isAiEnabled('medical-expand')" class="ai-panel-card apple-page-enter-delay-2" shadow="never">
-              <div class="ai-panel-header">
-                <div class="ai-panel-icon"><i class="el-icon-cpu"></i></div>
-                <div class="ai-panel-meta">
-                  <div class="ai-panel-title">AI 病历助手</div>
-                  <div class="ai-panel-desc">智能补全病历、生成治疗方案与定价</div>
-                </div>
-                <el-tag size="mini" type="primary" effect="plain" round><i class="el-icon-magic-stick" style="margin-right:4px;"></i>智能</el-tag>
-              </div>
-              <div class="ai-panel-actions">
-                <!-- 治疗场景选择 -->
-                <div class="scene-select-row">
-                  <el-select
-                    v-model="selectedSceneId"
-                    size="mini"
-                    placeholder="选择治疗类型（可选）"
-                    style="width: 100%"
-                    clearable
-                    @change="onSceneChange"
-                  >
-                    <el-option-group
-                      v-for="group in sceneGroups"
-                      :key="group.category"
-                      :label="group.category"
-                    >
-                      <el-option
-                        v-for="scene in group.scenes"
-                        :key="scene.id"
-                        :label="scene.name"
-                        :value="scene.id"
-                      >
-                        <span style="float: left">{{ scene.name }}</span>
-                        <el-tag v-if="scene.level === 3" size="mini" type="warning" style="float: right; margin-left: 8px">复杂</el-tag>
-                        <el-tag v-else-if="scene.level === 2" size="mini" type="info" style="float: right; margin-left: 8px">中等</el-tag>
-                        <el-tag v-else size="mini" type="success" style="float: right; margin-left: 8px">简单</el-tag>
-                      </el-option>
-                    </el-option-group>
-                  </el-select>
-                </div>
-
-                <!-- 操作清单（仅复杂/中等病种显示） -->
-                <div v-if="currentSceneSteps.length > 0" class="scene-steps-box">
-                  <div class="scene-steps-title">
-                    <i class="el-icon-check"></i>
-                    本次操作（勾选已做）
-                  </div>
-                  <el-checkbox-group v-model="selectedOperations" size="mini" class="scene-steps-group">
-                    <el-checkbox
-                      v-for="step in currentSceneSteps"
-                      :key="step.id"
-                      :label="step.name"
-                      border
-                      class="scene-step-tag"
-                    >
-                      {{ step.name }}
-                    </el-checkbox>
-                  </el-checkbox-group>
-                  <div class="scene-steps-hint">
-                    <i class="el-icon-warning-outline"></i>
-                    AI 只会扩写您勾选的操作，未勾选的不会编造
-                  </div>
-                </div>
-
-                <el-button
-                  type="primary"
-                  round
-                  size="small"
-                  :loading="aiLoading"
-                  :disabled="aiLoading"
-                  class="ai-panel-main-btn"
-                  @click="aiAssist"
-                >
-                  <i class="el-icon-magic-stick"></i>
-                  {{ aiLoading ? 'AI 正在扩写中...' : '一键智能扩写' }}
-                </el-button>
-                <div class="ai-panel-hint">
-                  <i class="el-icon-info"></i>
-                  自动检查已填写字段进行扩充，未填写字段智能补全
-                </div>
-              </div>
-            </el-card>
-
             <!-- 模板库 -->
             <el-card class="template-card section-card" shadow="never">
               <div class="panel-head">
@@ -926,7 +844,6 @@ import { getAdminSession } from '@/utils/adminSession'
 import { buildMedicalRecordTreatmentDraft, normalizeToothPositions } from '@/utils/medicalRecordOperationDraft'
 import { fetchCachedResource, saveMedicalRecord } from '@/utils/offline/apiClient'
 import { isLocalEntityId } from '@/utils/offline/queue'
-import { isAiEnabled as checkAiEnabled } from '@/utils/aiConfig'
 
 const DEFAULT_TEMPLATE_CATEGORY = '常用模板'
 
@@ -983,7 +900,6 @@ export default {
       activeTemplateCategory: DEFAULT_TEMPLATE_CATEGORY,
       patientImages: [],
       patientImagesLoading: false,
-      aiLoading: false,
       scenes: [],
       selectedSceneId: null,
       selectedOperations: [],
@@ -1014,7 +930,8 @@ export default {
       phraseNewContent: {},
       phraseNewCategory: {},
       phrasePopoverHover: {},
-      phrasePopoverVisible: {}
+      phrasePopoverVisible: {},
+      aiExpanding: false
     }
   },
   computed: {
@@ -1186,9 +1103,6 @@ export default {
     this.enableRowResize()
   },
   methods: {
-    isAiEnabled(key) {
-      return checkAiEnabled(key)
-    },
     enableRowResize() {
       this.$nextTick(() => {
         const tables = this.$el.querySelectorAll('.workbench-table')
@@ -1493,7 +1407,7 @@ export default {
           cacheKey: `ref:medical-record-phrases-${fieldType}`,
           scope: '',
           url: `/medical-record-phrases/selectByFieldType?fieldType=${fieldType}`,
-          loader: () => axios.get(`/medical-record-phrases/selectByFieldType?fieldType=${fieldType}`)
+          loader: () => axios.get('/medical-record-phrases/selectByFieldType', { params: { fieldType } })
         })
         this.$set(this.phraseData, fieldType, Array.isArray(result && result.data) ? result.data : [])
       } catch (error) {
@@ -1903,8 +1817,16 @@ export default {
           if (!result.offline) {
             this.$message.success(status === 'draft' ? '病历已暂存' : '保存成功')
           }
-          this.editorVisible = false
           this.loadAll()
+          this.$confirm('病历已保存，是否继续留在编辑页面？', '提示', {
+            confirmButtonText: '继续编辑',
+            cancelButtonText: '关闭',
+            type: 'success'
+          }).then(() => {
+            // 用户选择继续编辑，保持在当前页面
+          }).catch(() => {
+            this.editorVisible = false
+          })
         }).catch(error => {
           if (error && error.message) {
             this.$message.error(error.message)
@@ -1924,9 +1846,157 @@ export default {
         })
       })
     },
-    handlePatientIdentityChange() {
+    /**
+     * AI 病历扩写功能入口
+     * 调用链路：前端 → /api/ai/proxy/medical-expand → AiProxyController → AiProxyService → 外部 Webhook
+     * 返回链路：外部 Webhook 返回 JSON → AiProxyService → AiProxyController（解包标准格式）→ 前端回填表单
+     *
+     * 【字段映射总表】前端发送字段名 → 表单输入框对应关系：
+     *   patient_id          → 患者ID（隐藏字段）
+     *   patient_name        → 患者姓名
+     *   doctor_account_id   → 接诊医生ID
+     *   doctor_name         → 接诊医生姓名
+     *   nurse_name          → 护士姓名
+     *   assistant_name      → 助手姓名
+     *   visit_date          → 就诊日期
+     *   record_type         → 病历类型（初诊/复诊）
+     *   chief_complaint     → 主诉
+     *   present_illness_history → 现病史
+     *   past_medical_history    → 既往史（前端表单字段为 past_history）
+     *   infectious_history      → 流行病史/传染病史
+     *   allergy_history         → 过敏史
+     *   general_condition       → 一般情况/全身情况
+     *   examination_findings    → 体格检查（前端表单字段为 examination）
+     *   auxiliary_examination   → 辅助检查
+     *   diagnosis               → 诊断
+     *   treatment_plan          → 治疗计划
+     *   treatment               → 治疗文稿
+     *   tooth_positions         → 牙位
+     *   medical_advice          → 医嘱
+     *   prescription            → 处方
+     *   record_tags             → 病历标签
+     *   image_summary           → 影像说明
+     *   notes                   → 备注
+     *   record_status           → 病历状态（final/draft）
+     *   operation_items         → 治疗项目数组
+     *   draft_record            → 草稿文本（由 chief_complaint + present_illness_history 拼接）
+     *
+     * 【回填字段映射】Webhook 返回字段名 → 前端表单字段名：
+     *   chief_complaint         → this.form.chief_complaint
+     *   present_illness_history → this.form.present_illness_history
+     *   past_medical_history    → this.form.past_history（注意字段名不同！）
+     *   infectious_history      → this.form.infectious_history
+     *   allergy_history         → this.form.allergy_history
+     *   general_condition       → this.form.general_condition
+     *   examination_findings    → this.form.examination（注意字段名不同！）
+     *   auxiliary_examination   → this.form.auxiliary_examination
+     *   diagnosis               → this.form.diagnosis
+     *   treatment_plan          → this.form.treatment_plan
+     *   treatment               → this.form.treatment
+     *   medical_advice          → this.form.medical_advice
+     *   prescription            → this.form.prescription
+     *   record_tags             → this.form.record_tags
+     *   image_summary           → this.form.image_summary
+     *   notes                   → this.form.notes
+     */
+    async expandWithAI() {
+      const patientId = String(this.form.patient_id || '').trim()
+      const patientName = String(this.form.patient_name || '').trim()
+      if (!patientId || !patientName) {
+        this.$message.warning('请先填写患者ID和患者姓名')
+        return
+      }
+      this.aiExpanding = true
+      try {
+        // 组装发送到后端的字段数据，所有字段都会被包装到标准协议中转发给 Webhook
+        const fields = {
+          patient_id: patientId,
+          patient_name: patientName,
+          doctor_account_id: this.form.doctor_account_id || '',
+          doctor_name: this.form.doctor_name || '',
+          nurse_name: this.form.nurse_name || '',
+          assistant_name: this.form.assistant_name || '',
+          visit_date: this.form.visit_date || '',
+          record_type: this.form.record_type || '',
+          chief_complaint: this.form.chief_complaint || '',
+          present_illness_history: this.form.present_illness_history || '',
+          // 注意：前端表单字段名为 past_history，但发送给 Webhook 时统一使用 past_medical_history
+          past_medical_history: this.form.past_history || '',
+          infectious_history: this.form.infectious_history || '',
+          allergy_history: this.form.allergy_history || '',
+          general_condition: this.form.general_condition || '',
+          // 注意：前端表单字段名为 examination，但发送给 Webhook 时统一使用 examination_findings
+          examination_findings: this.form.examination || '',
+          auxiliary_examination: this.form.auxiliary_examination || '',
+          diagnosis: this.form.diagnosis || '',
+          treatment_plan: this.form.treatment_plan || '',
+          treatment: this.form.treatment || '',
+          tooth_positions: this.form.tooth_positions || '',
+          medical_advice: this.form.medical_advice || '',
+          prescription: this.form.prescription || '',
+          record_tags: this.form.record_tags || '',
+          image_summary: this.form.image_summary || '',
+          notes: this.form.notes || '',
+          record_status: this.form.record_status || '',
+          operation_items: this.form.operation_items || [],
+          // draft_record 是给 AI 的草稿提示，由主诉+现病史拼接而成
+          draft_record: (this.form.chief_complaint || '') + ' ' + (this.form.present_illness_history || '')
+        }
+        const accountId = this.currentUser && this.currentUser.id ? this.currentUser.id : ''
+        // 调用 AI 代理接口，后端会将请求包装为标准协议后转发到配置的 Webhook
+        const res = await axios.post('/api/ai/proxy/medical-expand', { fields, account_id: accountId })
+        // 后端返回结构：res.data = { code: '200', msg: 'success', data: { ... } }
+        // 注意：AiProxyController 已做解包处理，res.data.data 直接就是 Webhook 返回的内层 data
+        if (res.data && res.data.code === '200') {
+          const result = res.data.data || {}
+          // AI 返回结果自动回填到表单字段
+          // 字段名必须与后端/webhook 返回的 JSON 字段名保持一致
+          // 只有字段值非空时才回填，避免覆盖医生已手动填写的内容
+          if (result.chief_complaint) this.form.chief_complaint = result.chief_complaint
+          if (result.present_illness_history) this.form.present_illness_history = result.present_illness_history
+          if (result.past_medical_history) this.form.past_history = result.past_medical_history
+          if (result.infectious_history) this.form.infectious_history = result.infectious_history
+          if (result.allergy_history) this.form.allergy_history = result.allergy_history
+          if (result.general_condition) this.form.general_condition = result.general_condition
+          if (result.examination_findings) this.form.examination = result.examination_findings
+          if (result.auxiliary_examination) this.form.auxiliary_examination = result.auxiliary_examination
+          if (result.diagnosis) this.form.diagnosis = result.diagnosis
+          if (result.treatment_plan) this.form.treatment_plan = result.treatment_plan
+          if (result.treatment) this.form.treatment = result.treatment
+          if (result.medical_advice) this.form.medical_advice = result.medical_advice
+          if (result.prescription) this.form.prescription = result.prescription
+          if (result.record_tags) this.form.record_tags = result.record_tags
+          if (result.image_summary) this.form.image_summary = result.image_summary
+          if (result.notes) this.form.notes = result.notes
+          this.$message.success('AI 病历扩写完成')
+        } else {
+          this.$message.warning(res.data?.msg || 'AI 扩写失败')
+        }
+      } catch (error) {
+        console.error('AI 扩写失败:', error)
+        this.$message.error('AI 扩写接口调用失败，请检查网络或后端服务')
+      } finally {
+        this.aiExpanding = false
+      }
+    },
+    async handlePatientIdentityChange() {
       this.syncImageUploadExtra()
       this.loadPatientImages()
+      // 如果输入了患者ID但姓名为空，自动查询患者信息并填充
+      const patientId = Number(this.form.patient_id || 0)
+      const patientName = String(this.form.patient_name || '').trim()
+      if (Number.isFinite(patientId) && patientId > 0 && !patientName) {
+        try {
+          const res = await axios.get(`/patient-details/basic/${patientId}`)
+          if (res.data && res.data.code === '200' && res.data.data && res.data.data.patient) {
+            const patient = res.data.data.patient
+            this.$set(this.form, 'patient_name', patient.name || '')
+            this.syncImageUploadExtra()
+          }
+        } catch (error) {
+          // 查询失败静默处理，不阻塞用户手动输入
+        }
+      }
     },
     syncImageUploadExtra() {
       this.imageUploadExtra.patientId = String(this.form.patient_id || '').trim()
@@ -2242,9 +2312,9 @@ export default {
         this.openLabOrderForRecord(record)
       }
     },
-    openPatient360(patientId) {
+    openPatientDetail(patientId) {
       if (!patientId) return
-      this.$router.push({ path: '/patient360', query: { id: patientId } }).catch(() => {})
+      this.$router.push({ path: '/patient-details', query: { id: patientId } }).catch(() => {})
     },
     async loadScenes() {
       try {
@@ -2278,100 +2348,12 @@ export default {
         }
       }).catch(() => {})
     },
-    async aiAssist() {
-      if (this.aiLoading) return
-      // 如果有选择场景但没有任何操作被勾选，提示用户
-      if (this.selectedSceneId && this.currentSceneSteps.length > 0 && this.selectedOperations.length === 0) {
-        this.$message.warning('请先勾选本次已做的操作，再点击扩写')
-        return
-      }
-      this.$message.info('AI 正在分析病历字段，智能扩写中...')
-      this.aiLoading = true
-      try {
-        // 1. 收集当前页面所有字段数据
-        const fields = {
-          chiefComplaint: this.form.chief_complaint || '',
-          historyOfPresentIllness: this.form.present_illness_history || '',
-          pastHistory: this.form.past_history || '',
-          generalCondition: this.form.general_condition || '',
-          examinationFindings: this.form.examination || '',
-          auxiliaryExamination: this.form.auxiliary_examination || '',
-          diagnosis: this.form.diagnosis || '',
-          treatmentPlan: this.form.treatment_plan || '',
-          treatment: this.form.treatment || '',
-          medicalAdvice: this.form.medical_advice || '',
-          prescription: this.form.prescription || '',
-          notes: this.form.notes || ''
-        }
-        // 2. 获取选中的场景与操作
-        const sceneId = this.selectedSceneId || undefined
-        const scene = this.scenes.find(s => s.id === sceneId)
-        const sceneName = scene ? scene.name : ''
-        const operations = this.selectedOperations.length > 0 ? this.selectedOperations : undefined
-        // 3. 从 sessionStorage 读取当前用户信息
-        const sessionRaw = sessionStorage.getItem('adminSession')
-        const session = sessionRaw ? JSON.parse(sessionRaw) : {}
-        const accountId = session.id || null
-        const accountName = session.name || ''
-        // 4. 从配置读取 enabled_fields 列表（优先使用本地缓存的配置）
-        let enabledFields = []
-        try {
-          const configRaw = localStorage.getItem('saas_medical_ai_config')
-          if (configRaw) {
-            const config = JSON.parse(configRaw)
-            if (config.fields && Array.isArray(config.fields)) {
-              enabledFields = config.fields.filter(f => f.enabled).map(f => f.fieldKey)
-            }
-          }
-        } catch (e) {
-          console.warn('读取本地病历 AI 配置失败', e)
-        }
-        // 5. POST 到统一代理接口
-        const payload = {
-          fields,
-          scene_id: sceneId,
-          scene_name: sceneName,
-          operations,
-          account_id: accountId,
-          account_name: accountName,
-          enabled_fields: enabledFields
-        }
-        const res = await axios.post('/api/ai/proxy/medical-expand', payload)
-        if (res.data && res.data.code === '200' && res.data.data) {
-          const data = res.data.data
-          // 6. 根据 enabled_fields 过滤：只回填启用的字段
-          const fieldMap = {
-            chiefComplaint: 'chief_complaint',
-            historyOfPresentIllness: 'present_illness_history',
-            pastHistory: 'past_history',
-            generalCondition: 'general_condition',
-            examinationFindings: 'examination',
-            auxiliaryExamination: 'auxiliary_examination',
-            diagnosis: 'diagnosis',
-            treatmentPlan: 'treatment_plan',
-            treatment: 'treatment',
-            medicalAdvice: 'medical_advice',
-            prescription: 'prescription',
-            notes: 'notes'
-          }
-          for (const [key, formKey] of Object.entries(fieldMap)) {
-            if (enabledFields.length === 0 || enabledFields.includes(key)) {
-              if (data[key] != null) {
-                this.form[formKey] = data[key]
-              }
-            }
-          }
-          this.$message.success('AI 扩写完成')
-        } else {
-          this.$message.error(res.data && res.data.msg ? res.data.msg : 'AI 扩写失败')
-        }
-      } catch (e) {
-        const msg = e && e.response && e.response.data && e.response.data.msg
-          ? e.response.data.msg
-          : (e.message || '请求失败')
-        this.$message.error('AI 扩写出错：' + msg)
-      } finally {
-        this.aiLoading = false
+    toggleSceneStep(stepName) {
+      const idx = this.selectedOperations.indexOf(stepName)
+      if (idx >= 0) {
+        this.selectedOperations.splice(idx, 1)
+      } else {
+        this.selectedOperations.push(stepName)
       }
     }
   }
@@ -3352,235 +3334,6 @@ export default {
   color: var(--apple-text-primary);
 }
 
-/* AI 面板 */
-.ai-panel-card {
-  background: linear-gradient(135deg, #f0f7ff 0%, #e8f0fe 100%);
-  border: 1px solid rgba(37, 99, 235, 0.12);
-}
-.ai-panel-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-.ai-panel-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, var(--apple-accent), #3b82f6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 16px;
-  flex-shrink: 0;
-}
-.ai-panel-meta {
-  flex: 1;
-  min-width: 0;
-}
-.ai-panel-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--apple-text-primary);
-}
-.ai-panel-desc {
-  font-size: 12px;
-  color: var(--apple-text-secondary);
-  margin-top: 2px;
-  line-height: 1.4;
-}
-.ai-panel-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-.ai-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 5px 10px;
-  border-radius: 100px;
-  background: #ffffff;
-  border: 1px solid rgba(37, 99, 235, 0.18);
-  color: var(--apple-accent);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.ai-chip:hover {
-  background: var(--apple-accent);
-  color: #ffffff;
-  border-color: var(--apple-accent);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.15);
-}
-.ai-panel-input {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: var(--apple-radius-md);
-  background: #ffffff;
-  border: 1px solid rgba(37, 99, 235, 0.15);
-  color: var(--apple-text-secondary);
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.ai-panel-input:hover {
-  border-color: var(--apple-accent);
-  color: var(--apple-accent);
-  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.08);
-}
-.ai-panel-input span {
-  flex: 1;
-}
-.ai-panel-input i:first-child {
-  color: var(--apple-accent);
-  font-size: 15px;
-}
-.ai-panel-input i:last-child {
-  font-size: 13px;
-}
-
-/* 统一 AI 扩写按钮 */
-.ai-panel-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.ai-panel-main-btn {
-  width: 100%;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-.ai-panel-main-btn i {
-  margin-right: 4px;
-}
-.ai-panel-hint {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  font-size: 11px;
-  color: var(--apple-text-tertiary);
-  line-height: 1.5;
-  padding: 0 4px;
-}
-.ai-panel-hint i {
-  font-size: 12px;
-  margin-top: 1px;
-  color: var(--apple-text-tertiary);
-}
-
-/* 场景选择 */
-.scene-select-row {
-  margin-bottom: 8px;
-}
-.scene-steps-box {
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(37, 99, 235, 0.1);
-  border-radius: 10px;
-  padding: 10px 12px;
-  margin-bottom: 8px;
-}
-.scene-steps-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--apple-text-primary);
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.scene-steps-title i {
-  color: var(--apple-accent);
-  font-size: 13px;
-}
-.scene-steps-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.scene-step-tag {
-  margin: 0 !important;
-}
-.scene-step-tag .el-checkbox__label {
-  font-size: 12px;
-  padding-left: 4px;
-}
-.scene-steps-hint {
-  margin-top: 8px;
-  font-size: 11px;
-  color: var(--apple-text-tertiary);
-  display: flex;
-  align-items: flex-start;
-  gap: 4px;
-  line-height: 1.4;
-}
-.scene-steps-hint i {
-  font-size: 12px;
-  margin-top: 1px;
-  color: var(--apple-warning, #f59e0b);
-}
-
-/* section-card 微调 */
-.section-card {
-  border: 1px solid var(--apple-border);
-  box-shadow: var(--apple-shadow-sm);
-}
-.section-card:hover {
-  box-shadow: var(--apple-shadow-md);
-}
-
-/* 列表页 AI 面板 */
-.ai-list-panel {
-  background: linear-gradient(135deg, #f0f7ff 0%, #e8f0fe 100%);
-  border: 1px solid rgba(37, 99, 235, 0.12);
-}
-.ai-list-panel ::v-deep .el-card__body {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  padding: 16px 20px;
-}
-.ai-list-panel__main {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.ai-list-panel__icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, var(--apple-accent), #3b82f6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 18px;
-  flex-shrink: 0;
-}
-.ai-list-panel__title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--apple-text-primary);
-}
-.ai-list-panel__desc {
-  font-size: 13px;
-  color: var(--apple-text-secondary);
-  margin-top: 2px;
-}
-.ai-list-panel__actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
 /* 词条选择器 */
 .phrase-input-wrap {
   width: 100%;
@@ -3727,9 +3480,6 @@ export default {
     grid-template-columns: 1fr 1fr;
     gap: 16px;
   }
-  .ai-panel-card {
-    grid-column: 1 / -1;
-  }
 }
 @media (max-width: 768px) {
   .editor-sidebar {
@@ -3831,7 +3581,7 @@ export default {
   color: var(--apple-text-primary);
 }
 
-/* 展开行样式（复用 Patient360） */
+/* 展开行样式（复用 PatientDetail） */
 .record-expand-box {
   padding: 12px 16px;
   background: var(--apple-bg-primary);

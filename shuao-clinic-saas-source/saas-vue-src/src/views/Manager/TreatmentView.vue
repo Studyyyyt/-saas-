@@ -1,14 +1,16 @@
 <template>
   <div style="height: 100%; width: 100%">
     <!-- 查询框 -->
-    <div>
-      <el-select v-model="searchType" placeholder="请选择查询条件" style="width: 150px;">
-        <el-option label="序号" value="id"></el-option>
-        <el-option label="姓名" value="name"></el-option>
-      </el-select>
-      <el-input v-model="keyword" style="width: 300px; margin-left: 10px; margin-right: 10px" placeholder="请输入关键词"></el-input>
-      <el-button type="primary" @click="search">查询</el-button>
-      <el-button type="info" @click="reset">重置</el-button>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <el-select v-model="searchType" placeholder="请选择查询条件" style="width: 150px;">
+          <el-option label="序号" value="id"></el-option>
+          <el-option label="姓名" value="name"></el-option>
+        </el-select>
+        <el-input v-model="keyword" style="width: 300px; margin-left: 10px; margin-right: 10px" placeholder="请输入关键词"></el-input>
+        <el-button type="primary" @click="search">查询</el-button>
+        <el-button type="info" @click="reset">重置</el-button>
+      </div>
     </div>
 
     <!-- 表格 -->
@@ -22,7 +24,7 @@
         <el-table-column prop="appointment_time" label="预约时间"></el-table-column>
         <el-table-column prop="appointment_purpose" label="预约目的"></el-table-column>
         <el-table-column prop="status" label="状态"></el-table-column>
-        <el-table-column label="操作" align="center" width="180">
+        <el-table-column label="操作" align="center" width="220">
           <template slot-scope="scope">
             <el-button size="mini" type="primary" plain @click="handleEdit(scope.row)">治疗</el-button>
             <el-button size="mini" type="danger" plain @click="handleDelete(scope.row.id)">删除</el-button>
@@ -183,7 +185,7 @@ export default {
           })
     },
     loadTreatmentPlans() {
-      axios.get('/treatment_plans/selectAll')
+      axios.get('/treatment-plans/selectAll')
           .then(response => {
             this.treatmentPlans = response.data.data;
           })
@@ -208,7 +210,8 @@ export default {
       };
 
       if (this.keyword) {
-        url = `/appointments/selectBy${this.searchType}?${this.searchType}=${this.keyword}`;
+        url = `/appointments/selectBy${this.searchType}`;
+        params[this.searchType] = this.keyword;
       }
 
       axios.get(url, {params})

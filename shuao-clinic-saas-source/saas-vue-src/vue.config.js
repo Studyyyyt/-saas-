@@ -13,7 +13,7 @@ module.exports = defineConfig({
     port: 7070,
     historyApiFallback: true,
     proxy: {
-      '/loginController': {
+      '/auth': {
         target: API_TARGET,
         changeOrigin: true
       },
@@ -53,7 +53,7 @@ module.exports = defineConfig({
         target: API_TARGET,
         changeOrigin: true
       },
-      '/insurance': {
+      '/insurances': {
         target: API_TARGET,
         changeOrigin: true
       },
@@ -133,7 +133,7 @@ module.exports = defineConfig({
         target: API_TARGET,
         changeOrigin: true
       },
-      '/patient360': {
+      '/patient-details': {
         target: API_TARGET,
         changeOrigin: true
       },
@@ -141,7 +141,7 @@ module.exports = defineConfig({
         target: API_TARGET,
         changeOrigin: true
       },
-      '/followup': {
+      '/followups': {
         target: API_TARGET,
         changeOrigin: true
       },
@@ -161,7 +161,7 @@ module.exports = defineConfig({
         target: API_TARGET,
         changeOrigin: true
       },
-      '/purchase': {
+      '/purchases': {
         target: API_TARGET,
         changeOrigin: true
       },
@@ -197,7 +197,7 @@ module.exports = defineConfig({
         target: API_TARGET,
         changeOrigin: true
       },
-      '/treatment_plans': {
+      '/treatment-plans': {
         target: API_TARGET,
         changeOrigin: true
       },

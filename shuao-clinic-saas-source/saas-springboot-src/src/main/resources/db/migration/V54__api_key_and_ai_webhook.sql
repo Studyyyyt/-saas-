@@ -1,0 +1,25 @@
+CREATE TABLE IF NOT EXISTS api_key (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    clinic_id BIGINT NOT NULL COMMENT '诊所ID',
+    `key` VARCHAR(64) NOT NULL COMMENT 'API Key值',
+    `name` VARCHAR(64) DEFAULT '默认API Key' COMMENT 'Key名称',
+    is_enabled TINYINT(1) DEFAULT 1 COMMENT '是否启用',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_key (`key`),
+    UNIQUE KEY uk_clinic (clinic_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='API Key管理表';
+
+CREATE TABLE IF NOT EXISTS ai_webhook (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    agent_key VARCHAR(64) NOT NULL COMMENT 'Agent标识',
+    agent_name VARCHAR(64) NOT NULL COMMENT '显示名称',
+    endpoint_url VARCHAR(500) NOT NULL COMMENT 'Webhook地址',
+    auth_token VARCHAR(500) COMMENT '认证令牌',
+    chip_text VARCHAR(128) COMMENT '快捷指令文本',
+    is_enabled TINYINT(1) DEFAULT 1 COMMENT '是否启用',
+    sort_order INT DEFAULT 0 COMMENT '排序',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_agent_key (agent_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI Webhook配置表';

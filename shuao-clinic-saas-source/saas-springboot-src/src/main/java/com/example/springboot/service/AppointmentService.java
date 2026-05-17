@@ -83,6 +83,7 @@ public class AppointmentService {
         List<Patient> matchedPatients = populatePatientReference(appointment);
         populateDoctorReference(appointment);
         validateAppointment(appointment);
+        checkAppointmentConflict(appointment);
         normalizeAppointmentForSave(appointment);
         System.out.println("[APPOINTMENT_ADD] patient=" + appointment.getPatient_name()
                 + ", date=" + appointment.getAppointment_date()
@@ -111,6 +112,7 @@ public class AppointmentService {
         populatePatientReference(appointment);
         populateDoctorReference(appointment);
         validateAppointment(appointment);
+        checkAppointmentConflict(appointment);
         normalizeAppointmentForSave(appointment);
         appointmentMapper.update(appointment);
     }
@@ -360,6 +362,31 @@ public class AppointmentService {
             return false;
         }
         return left.toLocalDate().equals(right.toLocalDate());
+    }
+
+    private void checkAppointmentConflict(Appointment appointment) {
+        if (appointment == null || appointment.getAppointment_date() == null || appointment.getAppointment_time() == null) {
+            return;
+        }
+        List<Appointment> existingAppointments = appointmentMapper.selectByAppointmentDate(appointment.getAppointment_date());
+        if (existingAppointments == null || existingAppointments.isEmpty()) {
+            return;
+        }
+        for (Appointment existing : existingAppointments) {
+            if (existing == null || existing.getId() == appointment.getId()) {
+                continue;
+            }
+            String status = existing.getStatus() == null ? "" : existing.getStatus().trim();
+            if ("已取消".equals(status)) {
+                continue;
+            }
+            if (!sameDoctor(existing, appointment)) {
+                continue;
+            }
+            if (appointment.getAppointment_time().equals(existing.getAppointment_time())) {
+                throw new IllegalArgumentException("该医生在该时段已被预约，请选择其他时间");
+            }
+        }
     }
 
     private boolean sameDoctor(Appointment left, Appointment right) {

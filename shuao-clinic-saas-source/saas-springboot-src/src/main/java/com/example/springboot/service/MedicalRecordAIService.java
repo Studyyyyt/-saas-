@@ -126,53 +126,56 @@ public class MedicalRecordAIService {
      */
     public void saveConfig(MedicalRecordAIConfigDTO dto) {
         Map<String, Object> configMap = dto.getConfig();
-        if (configMap == null) {
+        // 允许只更新字段配置或 fewShots，configMap 为 null 时不更新模板
+        if (configMap == null && (dto.getFields() == null || dto.getFields().isEmpty()) && (dto.getFewShots() == null || dto.getFewShots().isEmpty())) {
             throw new IllegalArgumentException("配置不能为空");
         }
 
-        // 1. 保存/更新提示词模板
+        // 1. 保存/更新提示词模板（仅在 configMap 不为 null 时更新）
         AiPromptTemplate template = promptMapper.selectByScene("medical_expand");
-        boolean isNew = false;
-        if (template == null) {
-            template = new AiPromptTemplate();
-            template.setScene("medical_expand");
-            template.setName("病历扩写模板");
-            template.setVersion(1);
-            isNew = true;
-        }
+        if (configMap != null) {
+            boolean isNew = false;
+            if (template == null) {
+                template = new AiPromptTemplate();
+                template.setScene("medical_expand");
+                template.setName("病历扩写模板");
+                template.setVersion(1);
+                isNew = true;
+            }
 
-        Object enabled = configMap.get("enabled");
-        template.setIsActive(enabled != null ? Boolean.valueOf(String.valueOf(enabled)) : true);
+            Object enabled = configMap.get("enabled");
+            template.setIsActive(enabled != null ? Boolean.valueOf(String.valueOf(enabled)) : true);
 
-        Object temperature = configMap.get("temperature");
-        template.setTemperature(temperature != null ? Double.valueOf(String.valueOf(temperature)) : 0.2);
+            Object temperature = configMap.get("temperature");
+            template.setTemperature(temperature != null ? Double.valueOf(String.valueOf(temperature)) : 0.2);
 
-        Object maxTokens = configMap.get("maxTokens");
-        template.setMaxTokens(maxTokens != null ? Integer.valueOf(String.valueOf(maxTokens)) : 2000);
+            Object maxTokens = configMap.get("maxTokens");
+            template.setMaxTokens(maxTokens != null ? Integer.valueOf(String.valueOf(maxTokens)) : 2000);
 
-        Object systemPrompt = configMap.get("systemPrompt");
-        if (systemPrompt != null) {
-            template.setSystemPrompt(String.valueOf(systemPrompt));
-        }
+            Object systemPrompt = configMap.get("systemPrompt");
+            if (systemPrompt != null) {
+                template.setSystemPrompt(String.valueOf(systemPrompt));
+            }
 
-        // 组装 extraConfig JSON
-        Map<String, Object> extra = new HashMap<>();
-        extra.put("emptyFieldStrategy", configMap.getOrDefault("emptyFieldStrategy", "leave"));
-        extra.put("forbidAssertion", configMap.getOrDefault("forbidAssertion", true));
-        extra.put("sensitiveWords", configMap.getOrDefault("sensitiveWords", "确诊,绝对,保证,100%,肯定"));
-        extra.put("checkDiagnosisTone", configMap.getOrDefault("checkDiagnosisTone", true));
-        extra.put("checkChiefComplaintLength", configMap.getOrDefault("checkChiefComplaintLength", true));
-        extra.put("checkHistoryTime", configMap.getOrDefault("checkHistoryTime", true));
-        try {
-            template.setExtraConfig(objectMapper.writeValueAsString(extra));
-        } catch (Exception e) {
-            template.setExtraConfig("{}");
-        }
+            // 组装 extraConfig JSON
+            Map<String, Object> extra = new HashMap<>();
+            extra.put("emptyFieldStrategy", configMap.getOrDefault("emptyFieldStrategy", "leave"));
+            extra.put("forbidAssertion", configMap.getOrDefault("forbidAssertion", true));
+            extra.put("sensitiveWords", configMap.getOrDefault("sensitiveWords", "确诊,绝对,保证,100%,肯定"));
+            extra.put("checkDiagnosisTone", configMap.getOrDefault("checkDiagnosisTone", true));
+            extra.put("checkChiefComplaintLength", configMap.getOrDefault("checkChiefComplaintLength", true));
+            extra.put("checkHistoryTime", configMap.getOrDefault("checkHistoryTime", true));
+            try {
+                template.setExtraConfig(objectMapper.writeValueAsString(extra));
+            } catch (Exception e) {
+                template.setExtraConfig("{}");
+            }
 
-        if (isNew) {
-            promptMapper.insert(template);
-        } else {
-            promptMapper.update(template);
+            if (isNew) {
+                promptMapper.insert(template);
+            } else {
+                promptMapper.update(template);
+            }
         }
 
         // 2. 保存字段配置
@@ -184,8 +187,8 @@ public class MedicalRecordAIService {
         }
 
         // 3. 保存 Few-shot 示例（先删后插）
-        Long templateId = template.getId();
-        if (templateId != null) {
+        if (template != null && template.getId() != null) {
+            Long templateId = template.getId();
             fewShotMapper.deleteByTemplateId(templateId);
             List<MedicalRecordAIConfigDTO.FewShotItem> fewShots = dto.getFewShots();
             if (fewShots != null) {
@@ -208,7 +211,7 @@ public class MedicalRecordAIService {
     /**
      * 执行病历扩写（兼容旧接口）
      */
-    public Map<String, String> expand(MedicalRecordExpandDTO dto) {
+    public Map<String, Object> expand(MedicalRecordExpandDTO dto) {
         TreatmentSceneExpandRequest req = new TreatmentSceneExpandRequest();
         req.setFields(dto.getFields());
         req.setTestMode(dto.getTestMode());
@@ -283,7 +286,7 @@ public class MedicalRecordAIService {
      * 执行病历扩写（支持治疗场景驱动）
      * 改造后：组装 payload 调用 AiProxyService 转发到外部工作流
      */
-    public Map<String, String> expand(TreatmentSceneExpandRequest dto) {
+    public Map<String, Object> expand(TreatmentSceneExpandRequest dto) {
         // 检查 AI 全局开关与病历扩写功能开关
         aiConfigService.assertAiEnabled("medical-expand");
         boolean debug = Boolean.TRUE.equals(aiConfigService.getDebugMode());
@@ -320,7 +323,10 @@ public class MedicalRecordAIService {
 
         // 3. 组装 payload 转发到外部工作流
         Map<String, Object> payload = new HashMap<>();
-        payload.put("fields", inputFields);
+        // 将病历字段平铺到 payload 顶层，使 extractInputFields 能正确提取每个字段
+        if (inputFields != null) {
+            payload.putAll(inputFields);
+        }
         payload.put("scene_id", dto.getSceneId());
         payload.put("scene_name", constraint != null ? constraint.sceneName : "");
         payload.put("operations", dto.getOperations());
@@ -352,19 +358,9 @@ public class MedicalRecordAIService {
             System.out.println("[AI Debug] medical-expand proxy response: " + response);
         }
 
-        // 5. 将外部返回的 JSON 解析为 Map<String, String> 返回给前端
+        // 5. 将外部返回的 JSON 解析为 Map<String, Object> 返回给前端（L6: 保留原始类型，避免嵌套对象被强制序列化）
         try {
-            Map<String, Object> raw = objectMapper.readValue(response, new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
-            Map<String, String> result = new HashMap<>();
-            for (Map.Entry<String, Object> entry : raw.entrySet()) {
-                if (entry.getValue() instanceof String) {
-                    result.put(entry.getKey(), (String) entry.getValue());
-                } else if (entry.getValue() != null) {
-                    result.put(entry.getKey(), objectMapper.writeValueAsString(entry.getValue()));
-                } else {
-                    result.put(entry.getKey(), "");
-                }
-            }
+            Map<String, Object> result = objectMapper.readValue(response, new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
             return result;
         } catch (Exception e) {
             throw new RuntimeException("外部工作流返回格式异常：" + e.getMessage() + "，原始响应：" + response);

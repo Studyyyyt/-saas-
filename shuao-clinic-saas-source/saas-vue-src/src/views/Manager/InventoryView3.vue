@@ -182,14 +182,15 @@ export default {
   },
   methods: {
     search() {
-      let url = '/purchase/selectAll'; // 获取所有采购信息
+      let url = '/purchases/selectAll'; // 获取所有采购信息
       let params = {
         page: this.currentPage,
         size: this.pageSize,
       };
 
       if (this.keyword) {
-        url = `/purchase/selectBy${this.searchType}?${this.searchType}=${this.keyword}`;
+        url = `/purchases/selectBy${this.searchType}`;
+        params[this.searchType] = this.keyword;
       }
 
       axios.get(url, { params })
@@ -230,7 +231,7 @@ export default {
         row.purchasedate = new Date().toISOString().slice(0, 10); // 更新购买日期
         console.log(row.purchasedate)
         console.log(row)
-        axios.put(`/purchase/updateStatus`, row)
+        axios.put(`/purchases/updateStatus`, row)
             .then(response => {
               this.$message.success('采购完成');
               this.search(); // 刷新数据
@@ -251,7 +252,7 @@ export default {
       }).then(() => {
         row.status = '已入库';
         row.storedate = new Date().toISOString().slice(0, 10); // 更新入库日期
-        axios.put(`/purchase/updateStatus`, row)
+        axios.put(`/purchases/updateStatus`, row)
             .then(response => {
               this.$message.success('入库完成');
               this.search(); // 刷新数据
@@ -308,7 +309,7 @@ export default {
     },
     handleAdd() {
       // 实现新增功能的逻辑
-      axios.post("/purchase/add", this.editItem)
+      axios.post("/purchases/add", this.editItem)
           .then(response => {
             // 处理新增成功逻辑
             this.$message.success("新增成功");
@@ -333,7 +334,7 @@ export default {
       // 发送编辑/新增请求到后端
       if (this.isEditing) {
         // 编辑状态下发送编辑请求
-        axios.post("/purchase/add", this.editItem)
+        axios.post("/purchases/add", this.editItem)
             .then(response => {
               // 处理编辑成功逻辑
               this.$message.success("生成采购单成功");
@@ -356,7 +357,7 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        axios.delete(`/purchase/delete/${id}`)
+        axios.delete(`/purchases/delete/${id}`)
             .then(response => {
               this.$message.success('删除成功');
               this.search(); // 刷新数据
@@ -377,7 +378,7 @@ export default {
         type: 'warning'
       }).then(() => {
         // 批量删除操作
-        axios.delete(`/purchase/deleteBatch`, {data: this.selectedRows})
+        axios.delete(`/purchases/deleteBatch`, {data: this.selectedRows})
             .then(response => {
               this.$message.success('批量删除成功');
               this.search(); // 刷新数据

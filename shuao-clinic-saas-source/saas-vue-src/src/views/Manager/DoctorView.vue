@@ -8,9 +8,6 @@
         <p class="page-subtitle">智能排班 · 关联预约 · 高效管理</p>
       </div>
       <div class="page-header-right">
-        <el-button v-if="isAiEnabled('doctor-schedule')" type="primary" plain icon="el-icon-magic-stick" @click="openAiPanel">
-          AI 智能排班
-        </el-button>
         <el-button icon="el-icon-download" @click="exportSchedule">导出排班</el-button>
       </div>
     </div>
@@ -293,59 +290,12 @@
       </div>
     </el-dialog>
 
-    <!-- AI 智能排班面板 -->
-    <transition name="ai-panel">
-      <div v-if="aiPanelVisible" class="ai-panel-overlay" @click.self="aiPanelVisible = false">
-        <div class="ai-panel">
-          <div class="ai-panel-header">
-            <div>
-              <i class="el-icon-magic-stick"></i>
-              <span>AI 智能排班建议</span>
-            </div>
-            <el-button type="text" icon="el-icon-close" @click="aiPanelVisible = false"></el-button>
-          </div>
-          <div class="ai-panel-body" v-loading="aiLoading">
-            <div v-if="aiSuggestion" class="ai-suggestion-content">
-              <div class="ai-insight-card">
-                <div class="ai-insight-title">📊 预约数据分析</div>
-                <div class="ai-insight-text">{{ aiSuggestion.analysis }}</div>
-              </div>
-              <div class="ai-insight-card">
-                <div class="ai-insight-title">💡 排班优化建议</div>
-                <div class="ai-insight-text">{{ aiSuggestion.advice }}</div>
-              </div>
-              <div class="ai-insight-card">
-                <div class="ai-insight-title">📋 建议调整明细</div>
-                <div class="ai-change-list">
-                  <div v-for="(change, idx) in aiSuggestion.changes" :key="idx" class="ai-change-item">
-                    <span class="ai-change-date">{{ change.date }}</span>
-                    <span class="ai-change-doctor">{{ change.doctor }}</span>
-                    <span class="ai-change-arrow">→</span>
-                    <span :class="`ai-change-shift tone-${change.toTone}`">{{ change.toShift }}</span>
-                  </div>
-                </div>
-              </div>
-              <div class="ai-actions">
-                <el-button type="primary" @click="applyAiSuggestion">一键应用建议</el-button>
-                <el-button @click="aiPanelVisible = false">暂不应用</el-button>
-              </div>
-            </div>
-            <div v-else class="ai-empty">
-              <i class="el-icon-magic-stick"></i>
-              <p>AI 将根据历史预约量和医生负荷<br>为您生成最优排班建议</p>
-              <el-button type="primary" @click="generateAiSuggestion">生成排班建议</el-button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </transition>
   </div>
 </template>
 
 <script>
 import axios from 'axios'
 import { showApiError } from '@/utils/errorMessage'
-import { isAiEnabled as checkAiEnabled } from '@/utils/aiConfig'
 import {
   SHIFT_CODE_EVENING,
   SHIFT_CODE_MORNING,
@@ -397,11 +347,7 @@ export default {
       // 模板
       templateDialogVisible: false,
       shiftTemplates: [],
-      newTemplateName: '',
-      // AI
-      aiPanelVisible: false,
-      aiLoading: false,
-      aiSuggestion: null
+      newTemplateName: ''
     }
   },
   computed: {
@@ -606,7 +552,7 @@ export default {
       const startDate = `${this.selectedMonth}-01`
       const lastDay = new Date(this.monthMeta.year, this.monthMeta.month + 1, 0).getDate()
       const endDate = `${this.selectedMonth}-${String(lastDay).padStart(2, '0')}`
-      axios.get(`/doctors/schedules?startDate=${startDate}&endDate=${endDate}`).then(response => {
+      axios.get('/doctors/schedules', { params: { startDate, endDate } }).then(response => {
         const list = Array.isArray(response.data.data) ? response.data.data : []
         this.scheduleEntries = list.map(normalizeScheduleRecord).filter(Boolean)
           .sort((a, b) => Number(a.id || 0) - Number(b.id || 0))
@@ -963,60 +909,8 @@ export default {
       this.newTemplateName = ''
       this.$message.success('模板已保存（本地）')
     },
-    // AI
-    openAiPanel() {
-      this.aiPanelVisible = true
-      this.aiSuggestion = null
-    },
-    generateAiSuggestion() {
-      this.aiLoading = true
-      // 模拟 AI 分析
-      setTimeout(() => {
-        const analysis = `本月共有 ${this.doctorCount} 名医生，${this.monthSummary.morning} 个早班、${this.monthSummary.evening} 个晚班。预约饱和度为 ${this.saturationRate}%。周末预约量偏低，建议减少周末排班或调整为弹性班次。`
-        const advice = `1. ${this.overloadDoctors.length ? this.overloadDoctors.map(d => d.doctor.name).join('、') + ' 工作天数超过22天，建议安排调休。' : '目前医生负荷较均衡，建议保持。'}\n2. 周末早班利用率低，建议将部分早班调整为晚班或休息。\n3. 根据历史数据，周三、周四预约量最高，建议确保这两天全员在岗。`
-        const changes = []
-        // 生成一些随机建议调整
-        this.scheduleRows.slice(0, 3).forEach(row => {
-          const weekendCells = row.cells.filter(c => c.isWeekend && c.tone !== 'rest')
-          if (weekendCells.length) {
-            changes.push({
-              date: weekendCells[0].dateText,
-              doctor: row.doctor.name,
-              toShift: '休息',
-              toTone: 'rest'
-            })
-          }
-        })
-        this.aiSuggestion = { analysis, advice, changes }
-        this.aiLoading = false
-      }, 1500)
-    },
-    applyAiSuggestion() {
-      if (!this.aiSuggestion || !this.aiSuggestion.changes) return
-      this.aiSuggestion.changes.forEach(change => {
-        const key = scheduleKey(change.doctor, change.date)
-        const serverEntry = this.serverScheduleMap[key] || null
-        const shiftType = change.toShift === '休息' ? SHIFT_CODE_REST : SHIFT_CODE_MORNING
-        const nextEntry = createShiftPayload({
-          id: serverEntry ? serverEntry.id : null,
-          doctorName: change.doctor,
-          scheduleDate: change.date,
-          shiftType
-        })
-        if (this.scheduleEntriesEqual(serverEntry, nextEntry)) {
-          this.$delete(this.draftScheduleMap, key)
-        } else {
-          this.$set(this.draftScheduleMap, key, nextEntry)
-        }
-      })
-      this.aiPanelVisible = false
-      this.$message.success('AI 建议已应用到排班草稿')
-    },
     exportSchedule() {
       this.$message.info('导出功能开发中，即将支持 Excel/PDF 导出')
-    },
-    isAiEnabled(key) {
-      return checkAiEnabled(key)
     }
   }
 }
@@ -1691,157 +1585,6 @@ export default {
   color: #647569;
 }
 
-/* AI 面板 */
-.ai-panel-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(15, 23, 42, 0.4);
-  z-index: 2000;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.ai-panel {
-  width: 480px;
-  height: 100%;
-  background: #fff;
-  box-shadow: -8px 0 32px rgba(15, 23, 42, 0.12);
-  display: flex;
-  flex-direction: column;
-}
-
-.ai-panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e2e8f0;
-  font-size: 18px;
-  font-weight: 800;
-  color: #0f172a;
-}
-
-.ai-panel-header i {
-  color: #7c3aed;
-  margin-right: 8px;
-  font-size: 22px;
-}
-
-.ai-panel-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 24px;
-}
-
-.ai-empty {
-  text-align: center;
-  padding: 60px 20px;
-  color: #64748b;
-}
-
-.ai-empty i {
-  font-size: 48px;
-  color: #c4b5fd;
-  margin-bottom: 16px;
-}
-
-.ai-insight-card {
-  padding: 16px;
-  border-radius: 14px;
-  background: #f8fafc;
-  margin-bottom: 14px;
-}
-
-.ai-insight-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: #0f172a;
-  margin-bottom: 8px;
-}
-
-.ai-insight-text {
-  font-size: 13px;
-  color: #475569;
-  line-height: 1.7;
-  white-space: pre-line;
-}
-
-.ai-change-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.ai-change-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: #fff;
-  border-radius: 10px;
-  font-size: 13px;
-}
-
-.ai-change-date {
-  color: #64748b;
-  font-weight: 600;
-  min-width: 90px;
-}
-
-.ai-change-doctor {
-  color: #0f172a;
-  font-weight: 700;
-  min-width: 80px;
-}
-
-.ai-change-arrow {
-  color: #94a3b8;
-}
-
-.ai-change-shift {
-  padding: 2px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.ai-change-shift.tone-rest {
-  background: #e2e8f0;
-  color: #475569;
-}
-
-.ai-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid #e2e8f0;
-}
-
-/* 过渡动画 */
-.ai-panel-enter-active,
-.ai-panel-leave-active {
-  transition: opacity 0.3s;
-}
-
-.ai-panel-enter-active .ai-panel,
-.ai-panel-leave-active .ai-panel {
-  transition: transform 0.3s ease;
-}
-
-.ai-panel-enter .ai-panel,
-.ai-panel-leave-to .ai-panel {
-  transform: translateX(100%);
-}
-
-.ai-panel-enter-to .ai-panel,
-.ai-panel-leave .ai-panel {
-  transform: translateX(0);
-}
-
 /* 响应式 */
 @media (max-width: 1280px) {
   .summary-grid {
@@ -1867,9 +1610,6 @@ export default {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .ai-panel {
-    width: 100%;
-  }
 }
 
 @media (max-width: 768px) {

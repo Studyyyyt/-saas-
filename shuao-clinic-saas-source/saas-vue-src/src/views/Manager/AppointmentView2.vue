@@ -149,7 +149,7 @@
                 >
                   <div class="resize-handle resize-handle--top" @mousedown.stop.prevent="startResize($event, item, 'top')"></div>
                   <div class="appointment-block__title-row">
-                    <div class="appointment-block__name" @click.stop="goPatient360(item)">{{ item.patient_name || '未命名患者' }}</div>
+                    <div class="appointment-block__name" @click.stop="goPatientDetail(item)">{{ item.patient_name || '未命名患者' }}</div>
                   <div v-if="showAppointmentBadges(item)" class="appointment-block__badges">
                     <span class="appointment-block__status-chip">{{ displayStatus(item.status) }}</span>
                     <span v-if="item.has_arrears" class="appointment-block__arrears-chip">欠费</span>
@@ -269,7 +269,7 @@
       </div>
       <span slot="footer" class="dialog-footer">
         <el-button @click="quickStatusVisible = false">关闭</el-button>
-        <el-button v-if="quickStatusItem && quickStatusItem.patient_id" type="success" plain @click="goPatient360(quickStatusItem)">患者详情</el-button>
+        <el-button v-if="quickStatusItem && quickStatusItem.patient_id" type="success" plain @click="goPatientDetail(quickStatusItem)">患者详情</el-button>
         <el-button type="primary" plain @click="openEditFromQuickStatus">编辑预约</el-button>
       </span>
     </el-dialog>
@@ -1152,7 +1152,7 @@ export default {
       this.quickStatusItem = null
       this.handleSlotClick(target)
     },
-    goPatient360(source = null) {
+    goPatientDetail(source = null) {
       const current = source || this.editItem
       if (!current || !current.patient_id) {
         this.$message.warning('当前预约缺少患者ID，无法进入患者详情')
@@ -1161,7 +1161,7 @@ export default {
       this.closeDialog()
       this.quickStatusVisible = false
       this.quickStatusItem = null
-      this.$router.push({ path: '/Patient360', query: { id: current.patient_id } })
+      this.$router.push({ path: '/PatientDetail', query: { id: current.patient_id } })
     },
     closeDialog() {
       this.dialogVisible = false
@@ -1215,6 +1215,16 @@ export default {
       if (!this.editItem.patient_name || !String(this.editItem.patient_name).trim()) {
         return '患者姓名必填'
       }
+      // 如果 patient_id 为空，尝试根据名字匹配
+      if (!this.editItem.patient_id) {
+        const name = String(this.editItem.patient_name).trim()
+        const matched = this.allPatients.find(p => p.name === name)
+        if (matched && matched.id) {
+          this.editItem.patient_id = matched.id
+        } else {
+          return '请选择患者'
+        }
+      }
       if (!this.editItem.appointment_date || !String(this.editItem.appointment_date).trim()) {
         return '预约日期必填'
       }
@@ -1262,6 +1272,14 @@ export default {
       }
     },
     handleAdd() {
+      // 保存前自动根据姓名匹配患者
+      if (!this.editItem.patient_id && this.editItem.patient_name) {
+        const name = String(this.editItem.patient_name).trim()
+        const matched = this.allPatients.find(p => p.name === name)
+        if (matched && matched.id) {
+          this.editItem.patient_id = matched.id
+        }
+      }
       const validationMessage = this.validateAppointmentForm()
       if (validationMessage) {
         this.$message.warning(validationMessage)
@@ -1281,6 +1299,14 @@ export default {
       })
     },
     handleSaveEdit() {
+      // 保存前自动根据姓名匹配患者
+      if (!this.editItem.patient_id && this.editItem.patient_name) {
+        const name = String(this.editItem.patient_name).trim()
+        const matched = this.allPatients.find(p => p.name === name)
+        if (matched && matched.id) {
+          this.editItem.patient_id = matched.id
+        }
+      }
       const validationMessage = this.validateAppointmentForm()
       if (validationMessage) {
         this.$message.warning(validationMessage)

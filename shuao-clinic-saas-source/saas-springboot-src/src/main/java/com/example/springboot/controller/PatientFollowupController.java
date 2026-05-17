@@ -9,9 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
-@CrossOrigin(origins = "http://localhost:7070")
 @RestController
-@RequestMapping("/followup")
+@RequestMapping("/followups")
 public class PatientFollowupController {
 
     @Autowired

@@ -10,7 +10,7 @@
       <div class="dialog-topbar">
         <el-tag size="small" :type="statusTagType(form.status)">{{ form.status || '已下单' }}</el-tag>
         <div class="topbar-actions">
-          <el-button v-if="form.patient_id" size="mini" type="primary" plain @click="goPatient360">患者档案</el-button>
+          <el-button v-if="form.patient_id" size="mini" type="primary" plain @click="goPatientDetail">患者档案</el-button>
           <el-button v-if="form.patient_id && form.medical_record_id" size="mini" plain @click="goMedicalRecord">关联病历</el-button>
           <el-button v-if="form.patient_id && form.treatment_id" size="mini" plain @click="goTreatmentRecord">关联治疗</el-button>
         </div>
@@ -693,18 +693,18 @@ export default {
         this.saving = false
       }
     },
-    goPatient360() {
+    goPatientDetail() {
       if (!this.form.patient_id) return
-      this.$router.push({ path: '/Patient360', query: { id: this.form.patient_id } }).catch(() => {})
+      this.$router.push({ path: '/PatientDetail', query: { id: this.form.patient_id } }).catch(() => {})
     },
     goMedicalRecord() {
       if (!this.form.patient_id) return
-      this.$router.push({ path: '/Patient360', query: { id: this.form.patient_id, tab: 'records' } }).catch(() => {})
+      this.$router.push({ path: '/PatientDetail', query: { id: this.form.patient_id, tab: 'records' } }).catch(() => {})
     },
     goTreatmentRecord() {
       if (!this.form.patient_id || !this.form.treatment_id) return
       this.$router.push({
-        path: '/Patient360',
+        path: '/PatientDetail',
         query: { id: this.form.patient_id, tab: 'billing', treatmentId: this.form.treatment_id }
       }).catch(() => {})
     }

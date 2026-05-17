@@ -1,14 +1,12 @@
 package com.example.springboot.entity;
 
 import java.sql.Date;
-import java.sql.Time;
-
 public class Appointment {
     private int id;
     private Long patient_id;
     private String patient_name;
     private Date appointment_date;
-    private Time appointment_time;
+    private String appointment_time;
     private Integer duration_minutes;
     private Long doctor_account_id;
     private String doctor_name;
@@ -52,11 +50,11 @@ public class Appointment {
         this.appointment_date = appointment_date;
     }
 
-    public Time getAppointment_time() {
+    public String getAppointment_time() {
         return appointment_time;
     }
 
-    public void setAppointment_time(Time appointment_time) {
+    public void setAppointment_time(String appointment_time) {
         this.appointment_time = appointment_time;
     }
 

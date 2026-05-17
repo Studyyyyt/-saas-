@@ -281,20 +281,6 @@
         </div>
       </div>
 
-      <!-- AI 分析区域 -->
-      <div v-if="!isReadOnly" class="ai-section">
-        <el-divider>AI 智能分析</el-divider>
-        <div class="ai-actions">
-          <el-button type="primary" plain size="small" icon="el-icon-magic-stick" :loading="aiAnalyzing" @click="runAiAnalysis">
-            AI 分析客户意向
-          </el-button>
-          <span v-if="aiResult.summary" class="ai-result-text">{{ aiResult.summary }}</span>
-        </div>
-        <el-alert v-if="aiResult.score !== null" :type="aiScoreType" :closable="false" class="ai-score-alert">
-          <div>AI意向评分：<strong>{{ aiResult.score }}</strong>/100</div>
-          <div>建议：{{ aiResult.suggestedNextFollowup }}</div>
-        </el-alert>
-      </div>
     </el-form>
 
     <span slot="footer" class="dialog-footer">
@@ -393,20 +379,12 @@ export default {
       handlingResultOptions: HANDLING_RESULT_OPTIONS,
       followups: [],
       followupLoading: false,
-      newFollowup: { content: '', next_followup_time: '' },
-      aiAnalyzing: false,
-      aiResult: { summary: '', score: null, suggestedNextFollowup: '' }
+      newFollowup: { content: '', next_followup_time: '' }
     }
   },
   computed: {
     isReadOnly() {
       return this.mode === 'detail'
-    },
-    aiScoreType() {
-      const score = Number(this.aiResult.score || 0)
-      if (score >= 80) return 'danger'
-      if (score >= 50) return 'warning'
-      return 'info'
     },
     dialogTitle() {
       if (this.mode === 'detail') return '咨询记录详情'
@@ -498,7 +476,6 @@ export default {
         this.accountOptions = []
         this.followups = []
         this.newFollowup = { content: '', next_followup_time: '' }
-        this.aiResult = { summary: '', score: null, suggestedNextFollowup: '' }
         if (preselectedId && preselectedId > 0) {
           this.ensureCurrentPatientOption(this.record)
         }
@@ -544,7 +521,6 @@ export default {
       this.patientOptions = []
       this.patientSearchEmpty = false
       this.newFollowup = { content: '', next_followup_time: '' }
-      this.aiResult = { summary: '', score: null, suggestedNextFollowup: '' }
       this.ensureCurrentPatientOption(source)
       if (this.mode !== 'create' && this.form.id) {
         this.loadFollowups()
@@ -814,7 +790,6 @@ export default {
       this.lastSelectedAccount = null
       this.followups = []
       this.newFollowup = { content: '', next_followup_time: '' }
-      this.aiResult = { summary: '', score: null, suggestedNextFollowup: '' }
       this.$emit('close')
     },
     async loadFollowups() {
@@ -878,35 +853,6 @@ export default {
         })
       } catch (error) {
         console.error('自动创建跟进记录失败', error)
-      }
-    },
-    async runAiAnalysis() {
-      this.aiAnalyzing = true
-      try {
-        const response = await axios.post('/consultations/aiAnalyze', {
-          consultationId: this.form.id,
-          contactName: this.form.contact_name,
-          chiefProject: this.form.chief_project,
-          intentLevel: this.form.intent_level,
-          remarks: this.form.remarks,
-          customerConcerns: this.form.customer_concerns
-        })
-        if (response.data && response.data.code === '200') {
-          this.aiResult = {
-            summary: response.data.data.summary || '',
-            score: response.data.data.intentScore || null,
-            suggestedNextFollowup: response.data.data.suggestedNextFollowup || ''
-          }
-          this.form.ai_analysis_summary = this.aiResult.summary
-          this.form.ai_analysis_score = this.aiResult.score
-        } else {
-          this.$message.error((response.data && response.data.msg) || 'AI分析失败')
-        }
-      } catch (error) {
-        const msg = error && error.response && error.response.data && error.response.data.msg
-        this.$message.error(msg || 'AI分析请求失败')
-      } finally {
-        this.aiAnalyzing = false
       }
     },
     hasReferralPayload() {
@@ -1056,6 +1002,15 @@ export default {
 .ai-score-alert {
   margin-top: 10px;
 }
+
+.ai-response-block {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
 
 @media (max-width: 768px) {
   .system-meta-card {

@@ -21,7 +21,6 @@ export const ROLE_MENU_CATALOG = [
   { key: '/Financial', label: '财务信息', group: '财务管理', defaultRoles: ['admin', 'nurse'] },
   { key: '/Financial2', label: '财务分析', group: '财务管理', defaultRoles: ['admin', 'nurse'] },
   { key: '/financial-expenses', label: '财务支出', group: '财务管理', defaultRoles: ['admin', 'nurse'] },
-  { key: '/BusinessAnalysis', label: 'AI经营日报', group: '财务管理', defaultRoles: ['admin', 'nurse'] },
   { key: '/InsuranceOverview', label: '医保总览', group: '医保管理', defaultRoles: ['admin', 'doctor', 'nurse'] },
   { key: '/InsuranceConfig', label: '医保配置', group: '医保管理', defaultRoles: ['admin', 'doctor', 'nurse'] },
   { key: '/InsurancePatientProfile', label: '患者医保档案', group: '医保管理', defaultRoles: ['admin', 'doctor', 'nurse'] },

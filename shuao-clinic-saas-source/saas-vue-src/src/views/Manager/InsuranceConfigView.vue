@@ -85,7 +85,7 @@ export default {
   },
   methods: {
     loadConfig() {
-      axios.get('/insurance/config').then(res => {
+      axios.get('/insurances/config').then(res => {
         if (res.data.code === '200') {
           this.form = Object.assign(emptyForm(), res.data.data || {})
         } else {
@@ -103,7 +103,7 @@ export default {
         this.$message.warning('平台编码和平台名称不能为空')
         return
       }
-      axios.post('/insurance/config', this.form).then(res => {
+      axios.post('/insurances/config', this.form).then(res => {
         if (res.data.code === '200') {
           this.$message.success('医保配置保存成功')
           this.form = Object.assign(emptyForm(), res.data.data || {})

@@ -14,6 +14,7 @@ import axios, { AxiosError } from "axios";
 // ==================== 常量配置 ====================
 const API_BASE_URL = process.env.API_BASE_URL || "http://backend:8080";
 const API_AUTH_TOKEN = process.env.API_AUTH_TOKEN || "";
+const MCP_API_KEY = process.env.MCP_API_KEY || "";
 const PORT = parseInt(process.env.PORT || "3001", 10);
 const CHARACTER_LIMIT = 25000;
 
@@ -903,19 +904,59 @@ Returns:
   }
 );
 
+// ==================== 鉴权中间件 ====================
+
+/**
+ * 验证 MCP API Key
+ * 从请求头 Authorization: Bearer <token> 中提取并校验
+ */
+function authenticateMcpApiKey(
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction
+): void {
+  // 如果未配置 MCP_API_KEY，则跳过鉴权（开发环境兼容）
+  if (!MCP_API_KEY) {
+    next();
+    return;
+  }
+
+  const authHeader = req.headers.authorization || "";
+  const parts = authHeader.split(" ");
+
+  if (parts.length !== 2 || parts[0].toLowerCase() !== "bearer") {
+    res.status(401).json({
+      status: "error",
+      message: "Unauthorized: 缺少 Authorization: Bearer <token> 请求头",
+    });
+    return;
+  }
+
+  const token = parts[1];
+  if (token !== MCP_API_KEY) {
+    res.status(401).json({
+      status: "error",
+      message: "Unauthorized: API Key 无效",
+    });
+    return;
+  }
+
+  next();
+}
+
 // ==================== HTTP Server 启动 ====================
 
 async function runHttpServer() {
   const app = express();
   app.use(express.json());
 
-  // 健康检查端点
+  // 健康检查端点（无需鉴权）
   app.get("/health", (_req, res) => {
     res.json({ status: "ok", service: "clinic-mcp-server", version: "1.0.0" });
   });
 
-  // MCP Streamable HTTP 端点
-  app.post("/mcp", async (req, res) => {
+  // MCP Streamable HTTP 端点（需要 API Key 鉴权）
+  app.post("/mcp", authenticateMcpApiKey, async (req, res) => {
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: undefined,
       enableJsonResponse: true,
@@ -930,6 +971,9 @@ async function runHttpServer() {
     console.error(`MCP endpoint: http://localhost:${PORT}/mcp`);
     console.error(`Health check: http://localhost:${PORT}/health`);
     console.error(`API base URL: ${API_BASE_URL}`);
+    console.error(
+      `API Key 鉴权: ${MCP_API_KEY ? "已启用" : "未启用（未配置 MCP_API_KEY）"}`
+    );
   });
 }
 

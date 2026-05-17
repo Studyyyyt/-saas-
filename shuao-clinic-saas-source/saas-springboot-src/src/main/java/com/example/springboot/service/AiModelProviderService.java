@@ -30,6 +30,18 @@ public class AiModelProviderService {
         return mapper.selectFirst();
     }
 
+    /**
+     * 获取默认启用的 AI 模型供应商配置
+     * 优先读取 ai_model_provider 表中第一条启用的记录，无数据时返回 null
+     */
+    public AiModelProvider getDefaultProvider() {
+        AiModelProvider provider = mapper.selectFirst();
+        if (provider != null && Boolean.TRUE.equals(provider.getEnabled())) {
+            return provider;
+        }
+        return null;
+    }
+
     public AiModelProvider getById(Long id) {
         return mapper.selectById(id);
     }

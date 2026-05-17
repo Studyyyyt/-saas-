@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-@CrossOrigin(origins = "http://localhost:7070")
 @RestController
 @RequestMapping("/patients")
 public class PatientController {
@@ -91,7 +90,12 @@ public class PatientController {
     }
 
     @PostMapping("/add")
-    public Result addPatient(@RequestBody Patient patient) {
+    public Result addPatient(@RequestBody Patient patient,
+                             @RequestHeader(value = OPERATOR_ACCOUNT_ID_HEADER, required = false) Long operatorAccountId) {
+        String roleValidation = validateOperatorRole(operatorAccountId);
+        if (roleValidation != null) {
+            return Result.error("403", roleValidation);
+        }
         String validation = validatePatient(patient, true);
         if (validation != null) {
             return Result.error(validation);
@@ -105,7 +109,12 @@ public class PatientController {
     }
 
     @PutMapping("/edit")
-    public Result updatePatient(@RequestBody Patient patient) {
+    public Result updatePatient(@RequestBody Patient patient,
+                                @RequestHeader(value = OPERATOR_ACCOUNT_ID_HEADER, required = false) Long operatorAccountId) {
+        String roleValidation = validateOperatorRole(operatorAccountId);
+        if (roleValidation != null) {
+            return Result.error("403", roleValidation);
+        }
         String validation = validatePatient(patient, false);
         if (validation != null) {
             return Result.error(validation);
@@ -160,6 +169,22 @@ public class PatientController {
         }
         if (!patientAdminSecondaryPassword.equals(StringUtils.hasText(secondaryPassword) ? secondaryPassword.trim() : "")) {
             return "二级密码错误";
+        }
+        return null;
+    }
+
+    private String validateOperatorRole(Long operatorAccountId) {
+        if (operatorAccountId == null || operatorAccountId <= 0) {
+            return "请重新登录后再试";
+        }
+        List<Account> accounts = accountService.selectById(operatorAccountId);
+        if (accounts == null || accounts.isEmpty() || accounts.get(0) == null) {
+            return "操作账号不存在";
+        }
+        Account account = accounts.get(0);
+        String roleCode = normalizeRoleCode(account.getRole());
+        if (!"admin".equals(roleCode) && !"doctor".equals(roleCode) && !"nurse".equals(roleCode)) {
+            return "当前账号无权执行该操作";
         }
         return null;
     }

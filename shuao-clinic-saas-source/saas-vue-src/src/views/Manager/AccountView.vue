@@ -132,7 +132,8 @@ export default {
       };
 
       if (this.keyword) {
-        url = `/accounts/selectBy${this.searchType}?${this.searchType}=${this.keyword}`;
+        url = `/accounts/selectBy${this.searchType}`;
+        params[this.searchType] = this.keyword;
       }
 
       axios.get(url,{ params } )

@@ -1,16 +1,18 @@
 <template>
   <div class="financial-page">
-    <div>
-      <el-select v-model="searchType" placeholder="请选择查询条件" style="width: 150px;">
-        <el-option label="编号" value="id"></el-option>
-        <el-option label="名称" value="name"></el-option>
-        <el-option label="金额" value="amount"></el-option>
-        <el-option label="日期" value="date"></el-option>
-        <el-option label="类型" value="type"></el-option>
-      </el-select>
-      <el-input v-model="keyword" style="width: 300px; margin-left: 10px; margin-right: 10px" placeholder="请输入关键词"></el-input>
-      <el-button type="primary" @click="search">查询</el-button>
-      <el-button type="info" @click="reset">重置</el-button>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <el-select v-model="searchType" placeholder="请选择查询条件" style="width: 150px;">
+          <el-option label="编号" value="id"></el-option>
+          <el-option label="名称" value="name"></el-option>
+          <el-option label="金额" value="amount"></el-option>
+          <el-option label="日期" value="date"></el-option>
+          <el-option label="类型" value="type"></el-option>
+        </el-select>
+        <el-input v-model="keyword" style="width: 300px; margin-left: 10px; margin-right: 10px" placeholder="请输入关键词"></el-input>
+        <el-button type="primary" @click="search">查询</el-button>
+        <el-button type="info" @click="reset">重置</el-button>
+      </div>
     </div>
 
     <div style="margin: 10px 0">
@@ -28,7 +30,7 @@
         <el-table-column prop="type" label="类型"></el-table-column>
         <el-table-column prop="payment_channel_name" label="收款渠道"></el-table-column>
         <el-table-column prop="remark" label="备注"></el-table-column>
-        <el-table-column label="操作" align="center" width="180">
+        <el-table-column label="操作" align="center" width="220">
           <template slot-scope="scope">
             <el-button size="mini" type="primary" plain @click="handleEdit(scope.row)">编辑</el-button>
             <el-button size="mini" type="danger" plain @click="handleDelete(scope.row.id)">删除</el-button>
@@ -214,14 +216,15 @@ export default {
   },
   methods: {
     search() {
-      let url = '/finances/all';
+      let url = '/finances/selectAll';
       const params = {
         page: this.currentPage,
         size: this.pageSize
       };
 
       if (this.keyword) {
-        url = `/finances/selectBy${this.searchType}?${this.searchType}=${this.keyword}`;
+        url = `/finances/selectBy${this.searchType.charAt(0).toUpperCase() + this.searchType.slice(1)}`;
+        params[this.searchType] = this.keyword;
       }
 
       axios.get(url, { params })
@@ -398,7 +401,7 @@ export default {
             return '';
         }
       });
-    }
+    },
   }
 };
 </script>

@@ -9,9 +9,6 @@
           <p>统一录入平台投放，自动同步财务支出，并在同页查看平台级 ROI。</p>
         </div>
         <div class="hero-actions">
-          <el-button v-if="isAiEnabled('ad-spending-analysis')" type="primary" plain icon="el-icon-magic-stick" @click="openAiPanel">
-            AI 投放分析
-          </el-button>
           <el-button v-if="canCreate" type="primary" icon="el-icon-plus" @click="openCreateDialog">新增投放</el-button>
           <el-button icon="el-icon-refresh" @click="loadAll">刷新</el-button>
         </div>
@@ -185,7 +182,7 @@
         <el-table-column prop="target_project" label="目标项目" min-width="110" />
         <el-table-column prop="created_by_name" label="录入人" min-width="100" />
         <el-table-column prop="remark" label="备注" min-width="160" show-overflow-tooltip />
-        <el-table-column label="操作" width="140" fixed="right">
+        <el-table-column label="操作" width="180" fixed="right">
           <template slot-scope="scope">
             <el-button v-if="isAdmin" type="text" size="mini" @click="openEditDialog(scope.row)">编辑</el-button>
             <el-button v-if="isAdmin" type="text" size="mini" class="danger-link" @click="removeRow(scope.row)">删除</el-button>
@@ -242,45 +239,6 @@
       </span>
     </el-dialog>
 
-    <!-- AI 侧边浮层面板 -->
-    <transition name="ai-panel-slide">
-      <div v-if="aiPanelVisible" class="ai-panel-overlay" @click.self="closeAiPanel">
-        <div class="ai-panel">
-          <div class="ai-panel-head">
-            <div class="ai-panel-title">
-              <i class="el-icon-magic-stick"></i>
-              AI 投放分析
-            </div>
-            <button class="ai-panel-close" @click="closeAiPanel">
-              <i class="el-icon-close"></i>
-            </button>
-          </div>
-          <div class="ai-panel-body">
-            <div class="ai-section">
-              <div class="ai-section-title"><i class="el-icon-s-finance"></i> 智能预算建议</div>
-              <div class="ai-section-content">
-                <p class="ai-placeholder">基于历史 ROI 推荐下月各平台预算分配</p>
-                <div class="ai-coming-soon">功能即将上线，敬请期待</div>
-              </div>
-            </div>
-            <div class="ai-section">
-              <div class="ai-section-title"><i class="el-icon-warning-outline"></i> 投放效果诊断</div>
-              <div class="ai-section-content">
-                <p class="ai-placeholder">识别低 ROI 平台和异常波动</p>
-                <div class="ai-coming-soon">功能即将上线，敬请期待</div>
-              </div>
-            </div>
-            <div class="ai-section">
-              <div class="ai-section-title"><i class="el-icon-s-marketing"></i> 趋势预测</div>
-              <div class="ai-section-content">
-                <p class="ai-placeholder">基于历史数据预测未来投放趋势</p>
-                <div class="ai-coming-soon">功能即将上线，敬请期待</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </transition>
   </div>
 </template>
 
@@ -290,7 +248,6 @@ import * as echarts from 'echarts'
 import { ADVERTISING_PLATFORM_OPTIONS } from '@/utils/consultationOptions'
 import { getAdminSession } from '@/utils/adminSession'
 import { showApiError } from '@/utils/errorMessage'
-import { isAiEnabled as checkAiEnabled } from '@/utils/aiConfig'
 
 const PLATFORM_COLORS = {
   '抖音': '#1a1a1a',
@@ -348,7 +305,6 @@ export default {
       currentPage: 1,
       pageSize: 20,
       expandedRowKeys: [],
-      aiPanelVisible: false,
       trendChart: null,
       pieChart: null,
       funnelChart: null
@@ -676,15 +632,6 @@ export default {
     },
     tableHeaderStyle() {
       return { backgroundColor: '#f8fafc', color: '#475569', fontWeight: '600' }
-    },
-    openAiPanel() {
-      this.aiPanelVisible = true
-    },
-    closeAiPanel() {
-      this.aiPanelVisible = false
-    },
-    isAiEnabled(key) {
-      return checkAiEnabled(key)
     }
   }
 }
@@ -877,128 +824,6 @@ export default {
 
 .danger-link {
   color: #ef4444;
-}
-
-/* AI 面板 */
-.ai-panel-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 2000;
-  background: rgba(0, 0, 0, 0.35);
-  display: flex;
-  justify-content: flex-end;
-}
-
-.ai-panel {
-  width: 420px;
-  max-width: 90vw;
-  height: 100vh;
-  background: #f8fafc;
-  display: flex;
-  flex-direction: column;
-  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.12);
-}
-
-.ai-panel-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 18px;
-  background: #fff;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.ai-panel-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: #0f172a;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.ai-panel-title i {
-  color: #a855f7;
-  font-size: 18px;
-}
-
-.ai-panel-close {
-  width: 32px;
-  height: 32px;
-  border: 0;
-  background: transparent;
-  border-radius: 8px;
-  cursor: pointer;
-  color: #64748b;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.ai-panel-close:hover {
-  background: #f1f5f9;
-  color: #0f172a;
-}
-
-.ai-panel-body {
-  flex: 1;
-  overflow: auto;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.ai-section {
-  background: #fff;
-  border-radius: 14px;
-  padding: 16px;
-  border: 1px solid #e2e8f0;
-}
-
-.ai-section-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #0f172a;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-
-.ai-section-title i {
-  color: #a855f7;
-}
-
-.ai-placeholder {
-  font-size: 13px;
-  color: #64748b;
-  margin: 0 0 10px;
-}
-
-.ai-coming-soon {
-  font-size: 12px;
-  color: #94a3b8;
-  background: #f8fafc;
-  padding: 8px 12px;
-  border-radius: 8px;
-  text-align: center;
-}
-
-/* 动画 */
-.ai-panel-slide-enter-active,
-.ai-panel-slide-leave-active {
-  transition: all 0.25s ease;
-}
-
-.ai-panel-slide-enter,
-.ai-panel-slide-leave-to {
-  opacity: 0;
-}
-
-.ai-panel-slide-enter .ai-panel,
-.ai-panel-slide-leave-to .ai-panel {
-  transform: translateX(100%);
 }
 
 /* 响应式 */

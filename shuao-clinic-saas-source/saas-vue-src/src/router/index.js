@@ -19,7 +19,7 @@ import register from "@/views/register.vue";
 
 import PatientView from "@/views/Manager/PatientView.vue";
 import InventoryView3 from "@/views/Manager/InventoryView3.vue";
-import Patient360View from "@/views/Manager/Patient360View.vue";
+import PatientDetailView from "@/views/Manager/PatientDetailView.vue";
 import MedicalRecordView from "@/views/Manager/MedicalRecordView.vue";
 import FollowupManagementView from "@/views/Manager/FollowupManagementView.vue";
 import ConsultationView from "@/views/Manager/ConsultationView.vue";
@@ -32,7 +32,6 @@ import InsurancePatientProfileView from "@/views/Manager/InsurancePatientProfile
 import InsuranceSettlementView from "@/views/Manager/InsuranceSettlementView.vue";
 import InsuranceLogView from "@/views/Manager/InsuranceLogView.vue";
 import InsuranceMockPayloadView from "@/views/Manager/InsuranceMockPayloadView.vue";
-import BusinessAnalysisView from "@/views/Manager/BusinessAnalysisView.vue";
 import SystemTreatmentCatalogView from "@/views/Manager/SystemTreatmentCatalogView.vue";
 import SystemPaymentChannelView from "@/views/Manager/SystemPaymentChannelView.vue";
 import SystemConsentTemplateView from "@/views/Manager/SystemConsentTemplateView.vue";
@@ -40,8 +39,6 @@ import SystemAccountPermissionView from "@/views/Manager/SystemAccountPermission
 import SystemAccountManageView from "@/views/Manager/SystemAccountManageView.vue";
 import SystemSettingsView from "@/views/Manager/SystemSettingsView.vue";
 import SystemSettingsLayout from "@/views/Manager/SystemSettingsLayout.vue";
-import AIAgentConfigView from "@/views/Manager/AIAgentConfigView.vue";
-import ModelProviderConfigView from "@/views/Manager/ModelProviderConfigView.vue";
 import AIOverviewView from "@/views/Manager/AIOverviewView.vue";
 import MedicalRecordAIConfigView from "@/views/Manager/MedicalRecordAIConfigView.vue";
 import HelpDocumentLayout from "@/views/Manager/HelpDocumentLayout.vue";
@@ -51,7 +48,6 @@ import HelpTreatmentSceneView from "@/views/Manager/HelpTreatmentSceneView.vue";
 import HelpPatientInsightView from "@/views/Manager/HelpPatientInsightView.vue";
 import HelpModelProviderView from "@/views/Manager/HelpModelProviderView.vue";
 import HelpAIOverviewView from "@/views/Manager/HelpAIOverviewView.vue";
-import HelpPlaceholderView from "@/views/Manager/HelpPlaceholderView.vue";
 import LabFactoryView from "@/views/Manager/LabFactoryView.vue";
 import LabFactoryDetailView from "@/views/Manager/LabFactoryDetailView.vue";
 import LabOrderView from "@/views/Manager/LabOrderView.vue";
@@ -107,7 +103,6 @@ const routes = [
       { path: 'InsuranceSettlement', name: 'InsuranceSettlementView', component: InsuranceSettlementView},
       { path: 'InsuranceLog', name: 'InsuranceLogView', component: InsuranceLogView},
       { path: 'InsuranceMockPayload', name: 'InsuranceMockPayloadView', component: InsuranceMockPayloadView},
-      { path: 'BusinessAnalysis', name: 'BusinessAnalysisView', component: BusinessAnalysisView, meta: { allowedRoles: ['admin', 'nurse'] }},
       { path: 'SystemTreatmentCatalog', name: 'SystemTreatmentCatalogView', component: SystemTreatmentCatalogView, meta: { allowedRoles: ['admin', 'nurse'] }},
       { path: 'SystemPaymentChannel', name: 'SystemPaymentChannelView', component: SystemPaymentChannelView, meta: { allowedRoles: ['admin', 'nurse'] }},
       { path: 'SystemConsentTemplate', name: 'SystemConsentTemplateView', component: SystemConsentTemplateView, meta: { allowedRoles: ['admin', 'nurse'] }},
@@ -123,11 +118,7 @@ const routes = [
           { path: 'basic/payment', component: SystemPaymentChannelView },
           { path: 'basic/consent', component: SystemConsentTemplateView },
           { path: 'basic/account', component: SystemAccountManageView },
-          { path: 'ai/overview', name: 'AIOverviewView', component: AIOverviewView },
-          { path: 'ai/agent', name: 'AIAgentConfigView', component: AIAgentConfigView },
-          // { path: 'ai/model', name: 'ModelProviderConfigView', component: ModelProviderConfigView },
-          { path: 'ai/pages/medical', name: 'MedicalRecordAIConfigView', component: MedicalRecordAIConfigView },
-          // { path: 'ai/pages/patient', name: 'PatientAIConfigView', component: PatientAIConfigView },
+          { path: 'ai/overview', name: 'AIOverviewView', component: AIOverviewView, meta: { allowedRoles: ['admin'] } },
           {
             path: 'help',
             component: HelpDocumentLayout,
@@ -138,33 +129,12 @@ const routes = [
               { path: 'ai/medical', component: HelpMedicalRecordAIView },
               { path: 'ai/scene', component: HelpTreatmentSceneView },
               { path: 'ai/patient', component: HelpPatientInsightView },
-              { path: 'ai/model', component: HelpModelProviderView },
-              { path: 'ai/agent', component: HelpPlaceholderView },
-              { path: 'ai/link', component: HelpPlaceholderView },
-              { path: 'basic/treatment', component: HelpPlaceholderView },
-              { path: 'basic/payment', component: HelpPlaceholderView },
-              { path: 'basic/consent', component: HelpPlaceholderView },
-              { path: 'basic/lab', component: HelpPlaceholderView },
-              { path: 'basic/material', component: HelpPlaceholderView },
-              { path: 'basic/account', component: HelpPlaceholderView },
-              { path: 'patient/list', component: HelpPlaceholderView },
-              { path: 'patient/360', component: HelpPlaceholderView },
-              { path: 'patient/record', component: HelpPlaceholderView },
-              { path: 'patient/followup', component: HelpPlaceholderView },
-              { path: 'patient/consultation', component: HelpPlaceholderView },
-              { path: 'inventory/material', component: HelpPlaceholderView },
-              { path: 'inventory/purchase', component: HelpPlaceholderView },
-              { path: 'inventory/statistics', component: HelpPlaceholderView },
-              { path: 'lab/factory', component: HelpPlaceholderView },
-              { path: 'lab/order', component: HelpPlaceholderView },
-              { path: 'lab/bill', component: HelpPlaceholderView }
+              { path: 'ai/model', component: HelpModelProviderView }
             ]
           }
         ]
       },
       { path: 'SystemSettingsOld', name: 'SystemSettingsView', component: SystemSettingsView, meta: { allowedRoles: ['admin', 'nurse'] }},
-      { path: 'SystemAIAgentConfig', name: 'AIAgentConfigViewOld', component: AIAgentConfigView, meta: { allowedRoles: ['admin', 'nurse'] }},
-      { path: 'SystemModelProviderConfig', name: 'ModelProviderConfigViewOld', component: ModelProviderConfigView, meta: { allowedRoles: ['admin', 'nurse'] }},
       { path: 'lab-factories', alias: ['/LabFactory'], name: 'LabFactoryView', component: LabFactoryView, meta: { allowedRoles: ['admin', 'nurse'] } },
       { path: 'lab-factories/:id', alias: ['/LabFactoryDetail/:id'], name: 'LabFactoryDetailView', component: LabFactoryDetailView, meta: { allowedRoles: ['admin', 'nurse'] } },
       { path: 'lab-orders', alias: ['/LabOrder'], name: 'LabOrderView', component: LabOrderView, meta: { allowedRoles: ['admin', 'doctor', 'nurse'] } },
@@ -178,7 +148,7 @@ const routes = [
       { path: 'material-statistics', alias: ['/MaterialStatistics'], name: 'MaterialStatisticsView', component: MaterialStatisticsView, meta: { allowedRoles: ['admin'] } },
       { path: 'Person',name: 'PersonView',component: PersonView},
       { path: 'Patient',name: 'PatientView',component: PatientView},
-      { path: 'Patient360',name: 'Patient360View',component: Patient360View},
+      { path: 'PatientDetail',name: 'PatientDetailView',component: PatientDetailView},
       { path: 'MedicalRecord',name: 'MedicalRecordView',component: MedicalRecordView},
       { path: 'Followup', name: 'FollowupManagementView', component: FollowupManagementView},
       { path: 'Consultation', name: 'ConsultationView', component: ConsultationView, meta: { allowedRoles: ['admin', 'doctor', 'nurse'] } },

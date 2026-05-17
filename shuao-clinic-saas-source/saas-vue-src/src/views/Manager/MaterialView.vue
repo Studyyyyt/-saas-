@@ -63,7 +63,7 @@
         <el-table-column label="预警差额" width="100" align="right">
           <template slot-scope="scope">{{ scope.row.alert_gap || 0 }}</template>
         </el-table-column>
-        <el-table-column label="操作" fixed="right" width="180">
+        <el-table-column label="操作" fixed="right" width="220">
           <template slot-scope="scope">
             <el-button type="text" size="mini" @click="openDialog(scope.row, !canEdit)">详情</el-button>
             <el-button v-if="canEdit" type="text" size="mini" @click="openDialog(scope.row)">编辑</el-button>
@@ -101,7 +101,6 @@ import CategoryTreeSelect from '@/components/CategoryTreeSelect.vue'
 import MaterialDialog from '@/components/MaterialDialog.vue'
 import { MATERIAL_STATUS_OPTIONS, canEditMaterials, materialStatusTagType, normalizeMaterialRole } from '@/utils/materialConstants'
 import { showApiError } from '@/utils/errorMessage'
-
 export default {
   name: 'MaterialView',
   components: { CategoryTreeSelect, MaterialDialog },
@@ -148,7 +147,7 @@ export default {
     async loadList() {
       this.loading = true
       try {
-        const res = await axios.get('/materials/search', {
+        const res = await axios.get('/materials/selectAll', {
           params: {
             categoryId: this.filters.categoryId || undefined,
             keyword: this.filters.keyword || undefined,
@@ -190,7 +189,7 @@ export default {
       this.dialogReadonly = readonly
       this.activeMaterial = row ? Object.assign({}, row) : {}
       this.dialogVisible = true
-    }
+    },
   }
 }
 </script>

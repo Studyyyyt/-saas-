@@ -205,7 +205,7 @@ export default {
     loadSettlements() {
       const params = {}
       if (this.queryPatientId) params.patientId = this.queryPatientId
-      axios.get('/insurance/settlements', { params }).then(res => {
+      axios.get('/insurances/settlements', { params }).then(res => {
         if (res.data.code === '200') {
           this.settlements = res.data.data || []
         } else {
@@ -383,7 +383,7 @@ export default {
         personal_amount: this.toAmount(this.form.personal_amount),
         cash_amount: this.toAmount(this.form.cash_amount)
       })
-      axios.post('/insurance/settlements/draft', payload).then(res => {
+      axios.post('/insurances/settlements/draft', payload).then(res => {
         if (res.data.code === '200') {
           const draft = res.data.data || {}
           this.$alert(

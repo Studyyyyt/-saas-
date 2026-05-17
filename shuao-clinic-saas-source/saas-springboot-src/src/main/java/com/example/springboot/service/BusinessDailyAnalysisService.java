@@ -1,6 +1,7 @@
 package com.example.springboot.service;
 
 import com.example.springboot.config.OpenAiAnalysisProperties;
+import com.example.springboot.entity.AiModelProvider;
 import com.example.springboot.entity.Appointment;
 import com.example.springboot.entity.BusinessDailyAnalysis;
 import com.example.springboot.entity.Finance;
@@ -72,6 +73,7 @@ public class BusinessDailyAnalysisService {
     private final TreatmentMapper treatmentMapper;
     private final PatientMapper patientMapper;
     private final OpenAiAnalysisProperties openAiProperties;
+    private final AiModelProviderService aiModelProviderService;
     private final ObjectMapper objectMapper;
     private final HttpClient httpClient;
 
@@ -82,6 +84,7 @@ public class BusinessDailyAnalysisService {
                                         TreatmentMapper treatmentMapper,
                                         PatientMapper patientMapper,
                                         OpenAiAnalysisProperties openAiProperties,
+                                        AiModelProviderService aiModelProviderService,
                                         ObjectMapper objectMapper) {
         this.analysisMapper = analysisMapper;
         this.appointmentMapper = appointmentMapper;
@@ -90,6 +93,7 @@ public class BusinessDailyAnalysisService {
         this.treatmentMapper = treatmentMapper;
         this.patientMapper = patientMapper;
         this.openAiProperties = openAiProperties;
+        this.aiModelProviderService = aiModelProviderService;
         this.objectMapper = objectMapper;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(OPENAI_CONNECT_TIMEOUT)
@@ -117,7 +121,7 @@ public class BusinessDailyAnalysisService {
         entity.setAnalysis_status(STATUS_PENDING);
         entity.setSource_type(canUseOpenAi() ? SOURCE_OPENAI : SOURCE_RULE_BASED);
         entity.setTrigger_type(normalizeTriggerType(triggerType));
-        entity.setModel_name(openAiProperties.getBusinessAnalysis().getModel());
+        entity.setModel_name(resolveModelName());
         entity.setOperating_score(null);
         entity.setTrend("");
         entity.setHeadline("日报生成中");
@@ -140,7 +144,7 @@ public class BusinessDailyAnalysisService {
         entity.setAnalysis_status(STATUS_FAILED);
         entity.setSource_type(canUseOpenAi() ? SOURCE_OPENAI : SOURCE_RULE_BASED);
         entity.setTrigger_type(normalizeTriggerType(triggerType));
-        entity.setModel_name(openAiProperties.getBusinessAnalysis().getModel());
+        entity.setModel_name(resolveModelName());
         entity.setOperating_score(null);
         entity.setTrend("");
         entity.setHeadline("日报生成失败");
@@ -164,7 +168,7 @@ public class BusinessDailyAnalysisService {
             entity.setAnalysis_date(java.util.Date.from(targetDate.atStartOfDay(DEFAULT_ZONE).toInstant()));
         }
         entity.setTrigger_type(finalTriggerType);
-        entity.setModel_name(openAiProperties.getBusinessAnalysis().getModel());
+        entity.setModel_name(resolveModelName());
         entity.setMetrics_json(writeJson(metrics));
 
         String rawResponse = "";
@@ -230,27 +234,52 @@ public class BusinessDailyAnalysisService {
 
     public Map<String, Object> testModelConnection() {
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("provider", "OpenAI");
+        AiModelProvider provider = aiModelProviderService.getDefaultProvider();
+        String baseUrl;
+        String apiKey;
+        String model;
+        String reasoningEffort;
+        boolean enabled;
+        boolean fromDatabase = provider != null;
+
+        if (fromDatabase) {
+            baseUrl = provider.getBaseUrl();
+            apiKey = provider.getApiKey();
+            model = provider.getModelName();
+            reasoningEffort = provider.getReasoningEffort();
+            enabled = Boolean.TRUE.equals(provider.getEnabled());
+            result.put("provider", provider.getProviderName());
+            result.put("config_source", "database");
+        } else {
+            baseUrl = openAiProperties.getBaseUrl();
+            apiKey = openAiProperties.getApiKey();
+            model = openAiProperties.getBusinessAnalysis().getModel();
+            reasoningEffort = openAiProperties.getBusinessAnalysis().getReasoningEffort();
+            enabled = openAiProperties.isEnabled();
+            result.put("provider", "OpenAI");
+            result.put("config_source", "yaml_fallback");
+        }
+
         result.put("wire_api", "responses");
-        result.put("base_url", trimTrailingSlash(openAiProperties.getBaseUrl()));
-        result.put("model", openAiProperties.getBusinessAnalysis().getModel());
-        result.put("reasoning_effort", openAiProperties.getBusinessAnalysis().getReasoningEffort());
+        result.put("base_url", trimTrailingSlash(baseUrl));
+        result.put("model", model);
+        result.put("reasoning_effort", reasoningEffort);
         result.put("response_storage_disabled", openAiProperties.isDisableResponseStorage());
         result.put("checked_at", formatDateTime(java.util.Date.from(Instant.now())));
 
-        if (!openAiProperties.isEnabled()) {
+        if (!enabled) {
             result.put("connected", false);
-            result.put("message", "OPENAI_ENABLED 未开启");
+            result.put("message", "AI 分析功能未开启");
             return result;
         }
-        if (!StringUtils.hasText(openAiProperties.getApiKey())) {
+        if (!StringUtils.hasText(apiKey)) {
             result.put("connected", false);
-            result.put("message", "OPENAI_API_KEY 未配置");
+            result.put("message", "API Key 未配置");
             return result;
         }
 
         try {
-            String outputText = requestOpenAiProbe();
+            String outputText = requestOpenAiProbe(baseUrl, apiKey, model, reasoningEffort);
             result.put("connected", true);
             result.put("message", "模型连接成功");
             result.put("response_sample", trimToLimit(outputText, 200));
@@ -270,8 +299,9 @@ public class BusinessDailyAnalysisService {
     }
 
     public BusinessAnalysisOutput requestAiAnalysis(String instructions, String prompt) throws IOException, InterruptedException {
+        ResolvedModelConfig config = resolveModelConfig();
         ObjectNode requestBody = objectMapper.createObjectNode();
-        applyRequestDefaults(requestBody);
+        applyRequestDefaults(requestBody, config);
         requestBody.put("instructions", instructions);
         ArrayNode input = requestBody.putArray("input");
         ObjectNode userMessage = input.addObject();
@@ -280,7 +310,7 @@ public class BusinessDailyAnalysisService {
         content.addObject()
                 .put("type", "input_text")
                 .put("text", prompt);
-        requestBody.put("max_output_tokens", openAiProperties.getBusinessAnalysis().getMaxOutputTokens());
+        requestBody.put("max_output_tokens", config.maxOutputTokens);
 
         ObjectNode text = requestBody.putObject("text");
         ObjectNode format = text.putObject("format");
@@ -289,7 +319,7 @@ public class BusinessDailyAnalysisService {
         format.put("strict", true);
         format.set("schema", buildAnalysisSchema());
 
-        JsonNode responseJson = sendResponsesRequest(requestBody);
+        JsonNode responseJson = sendResponsesRequest(requestBody, config);
         String outputText = extractOutputText(responseJson);
         if (!StringUtils.hasText(outputText)) {
             throw new IOException("未从 Responses API 提取到结构化输出");
@@ -306,10 +336,11 @@ public class BusinessDailyAnalysisService {
     }
 
     private boolean canUseOpenAi() {
-        return openAiProperties.isEnabled()
-                && StringUtils.hasText(openAiProperties.getApiKey())
-                && StringUtils.hasText(openAiProperties.getBaseUrl())
-                && StringUtils.hasText(openAiProperties.getBusinessAnalysis().getModel());
+        ResolvedModelConfig config = resolveModelConfig();
+        return config.enabled
+                && StringUtils.hasText(config.apiKey)
+                && StringUtils.hasText(config.baseUrl)
+                && StringUtils.hasText(config.model);
     }
 
     private DailyBusinessMetrics buildMetrics(LocalDate targetDate) {
@@ -502,9 +533,9 @@ public class BusinessDailyAnalysisService {
         return result;
     }
 
-    private String requestOpenAiProbe() throws IOException, InterruptedException {
+    private String requestOpenAiProbe(String baseUrl, String apiKey, String model, String reasoningEffort) throws IOException, InterruptedException {
         ObjectNode requestBody = objectMapper.createObjectNode();
-        applyRequestDefaults(requestBody);
+        applyRequestDefaults(requestBody, baseUrl, apiKey, model, reasoningEffort);
         requestBody.put("max_output_tokens", 60);
         ArrayNode input = requestBody.putArray("input");
         ObjectNode userMessage = input.addObject();
@@ -513,7 +544,7 @@ public class BusinessDailyAnalysisService {
         content.addObject()
                 .put("type", "input_text")
                 .put("text", "请只返回一句简短中文：连接测试成功。");
-        JsonNode responseJson = sendResponsesRequest(requestBody);
+        JsonNode responseJson = sendResponsesRequest(requestBody, baseUrl, apiKey);
         String outputText = extractOutputText(responseJson);
         if (!StringUtils.hasText(outputText)) {
             throw new IOException("模型未返回可读文本");
@@ -521,22 +552,30 @@ public class BusinessDailyAnalysisService {
         return outputText;
     }
 
-    private void applyRequestDefaults(ObjectNode requestBody) {
-        requestBody.put("model", openAiProperties.getBusinessAnalysis().getModel());
+    private void applyRequestDefaults(ObjectNode requestBody, ResolvedModelConfig config) {
+        applyRequestDefaults(requestBody, config.baseUrl, config.apiKey, config.model, config.reasoningEffort);
+    }
+
+    private void applyRequestDefaults(ObjectNode requestBody, String baseUrl, String apiKey, String model, String reasoningEffort) {
+        requestBody.put("model", model);
         requestBody.put("store", !openAiProperties.isDisableResponseStorage());
-        if (StringUtils.hasText(openAiProperties.getBusinessAnalysis().getReasoningEffort())) {
-            requestBody.putObject("reasoning").put("effort", openAiProperties.getBusinessAnalysis().getReasoningEffort());
+        if (StringUtils.hasText(reasoningEffort)) {
+            requestBody.putObject("reasoning").put("effort", reasoningEffort);
         }
     }
 
-    private JsonNode sendResponsesRequest(ObjectNode requestBody) throws IOException, InterruptedException {
+    private JsonNode sendResponsesRequest(ObjectNode requestBody, ResolvedModelConfig config) throws IOException, InterruptedException {
+        return sendResponsesRequest(requestBody, config.baseUrl, config.apiKey);
+    }
+
+    private JsonNode sendResponsesRequest(ObjectNode requestBody, String baseUrl, String apiKey) throws IOException, InterruptedException {
         String body = objectMapper.writeValueAsString(requestBody);
         IOException lastIOException = null;
         InterruptedException lastInterruptedException = null;
         for (int attempt = 1; attempt <= OPENAI_MAX_RETRIES; attempt++) {
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(trimTrailingSlash(openAiProperties.getBaseUrl()) + "/responses"))
-                    .header("Authorization", "Bearer " + openAiProperties.getApiKey())
+                    .uri(URI.create(trimTrailingSlash(baseUrl) + "/responses"))
+                    .header("Authorization", "Bearer " + apiKey)
                     .header("Content-Type", "application/json")
                     .timeout(OPENAI_REQUEST_TIMEOUT)
                     .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
@@ -1445,6 +1484,55 @@ public class BusinessDailyAnalysisService {
     private static class OpenAiAnalysisResult {
         private String rawResponse;
         private BusinessAnalysisOutput output;
+    }
+
+    /**
+     * 解析后的模型配置（优先读表，无数据时回退到 YAML）
+     */
+    private static class ResolvedModelConfig {
+        String baseUrl;
+        String apiKey;
+        String model;
+        String reasoningEffort;
+        int maxOutputTokens;
+        boolean enabled;
+        boolean fromDatabase;
+    }
+
+    /**
+     * 优先从 ai_model_provider 表获取默认配置，无数据时回退到 application.yml
+     * 回退时会打印警告日志
+     */
+    private ResolvedModelConfig resolveModelConfig() {
+        ResolvedModelConfig config = new ResolvedModelConfig();
+        AiModelProvider provider = aiModelProviderService.getDefaultProvider();
+        if (provider != null) {
+            config.baseUrl = provider.getBaseUrl();
+            config.apiKey = provider.getApiKey();
+            config.model = provider.getModelName();
+            config.reasoningEffort = provider.getReasoningEffort();
+            config.maxOutputTokens = provider.getMaxOutputTokens() != null ? provider.getMaxOutputTokens() : 3000;
+            config.enabled = Boolean.TRUE.equals(provider.getEnabled());
+            config.fromDatabase = true;
+        } else {
+            config.baseUrl = openAiProperties.getBaseUrl();
+            config.apiKey = openAiProperties.getApiKey();
+            config.model = openAiProperties.getBusinessAnalysis().getModel();
+            config.reasoningEffort = openAiProperties.getBusinessAnalysis().getReasoningEffort();
+            config.maxOutputTokens = openAiProperties.getBusinessAnalysis().getMaxOutputTokens() != null
+                    ? openAiProperties.getBusinessAnalysis().getMaxOutputTokens() : 3000;
+            config.enabled = openAiProperties.isEnabled();
+            config.fromDatabase = false;
+            System.err.println("[警告] ai_model_provider 表中没有默认配置，已回退到 application.yml 的 openai 配置。生产环境应在数据库中配置模型供应商。");
+        }
+        return config;
+    }
+
+    /**
+     * 获取当前使用的模型名称（优先读表，无数据时回退 YAML）
+     */
+    private String resolveModelName() {
+        return resolveModelConfig().model;
     }
 
     public static class DailyBusinessMetrics {

@@ -68,7 +68,7 @@
             <div class="patient-cell">
               <el-avatar :size="32" icon="el-icon-user" class="patient-avatar" />
               <div class="patient-info">
-                <div class="patient-name-link" @click="goToPatient360(scope.row.patient_id)">{{ scope.row.patient_name }}</div>
+                <div class="patient-name-link" @click="goToPatientDetail(scope.row.patient_id)">{{ scope.row.patient_name }}</div>
                 <div v-if="scope.row.phone" class="patient-phone">{{ scope.row.phone }}</div>
               </div>
             </div>
@@ -100,7 +100,7 @@
             </el-dropdown>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200">
+        <el-table-column label="操作" width="240">
           <template slot-scope="scope">
             <div style="display: flex; gap: 4px; flex-wrap: nowrap; align-items: center">
               <el-button size="mini" type="primary" plain class="btn-mini" @click="startVisit(scope.row)">开始就诊</el-button>
@@ -189,7 +189,7 @@
                   @mousedown="startMove($event, appt)"
                 >
                   <div class="card-header">
-                    <span class="appt-patient-name" @click.stop="goToPatient360(appt.patient_id)">{{ appt.patient_name }}</span>
+                    <span class="appt-patient-name" @click.stop="goToPatientDetail(appt.patient_id)">{{ appt.patient_name }}</span>
                     <div class="card-header-right">
                       <el-dropdown trigger="click" size="mini" @command="(cmd) => handleStatusChange(appt, cmd)">
                         <span class="appt-status-tag" :class="`status-${statusClass(appt.status)}`" @click.stop @mousedown.stop>
@@ -459,7 +459,14 @@ export default {
     getDayAppointments(day) {
       return this.appointments.filter(a => {
         const apptDate = String(a.appointment_date || '').trim()
-        return apptDate === day.fullDate
+        if (apptDate !== day.fullDate) return false
+        if (this.searchName) {
+          const keyword = String(this.searchName).trim().toLowerCase()
+          if (!String(a.patient_name || '').toLowerCase().includes(keyword)) return false
+        }
+        if (this.searchDoctor && a.doctor_name !== this.searchDoctor) return false
+        if (this.searchStatus && a.status !== this.searchStatus) return false
+        return true
       })
     },
     computeEventStyle(appt) {
@@ -604,14 +611,14 @@ export default {
         }
       })
     },
-    goToPatient360(patientId) {
+    goToPatientDetail(patientId) {
       if (this.isDragging || this.justDragged) return
       if (!patientId) {
         this.$message.warning('该预约未关联患者')
         return
       }
       this.$router.push({
-        path: '/Patient360',
+        path: '/PatientDetail',
         query: { id: patientId }
       })
     },
@@ -649,21 +656,7 @@ export default {
       })
     },
     fetchAppointments() {
-      axios.get('/appointments/selectAll', {
-        params: { page: 1, size: 1000 }
-      }).then(response => {
-        const data = response.data.data || {}
-        this.appointments = data.list || []
-        // 同步更新医生下拉列表
-        const doctors = new Set(this.doctorList)
-        this.appointments.forEach(a => {
-          if (a.doctor_name) doctors.add(a.doctor_name)
-        })
-        this.doctorList = Array.from(doctors)
-      }).catch(error => {
-        console.error('Error fetching appointments:', error)
-        showApiError(this, '获取预约列表', error)
-      })
+      this.searchAppointments()
     },
     loadPatients(keyword = '') {
       axios.get('/patients/search', {
@@ -776,8 +769,17 @@ export default {
       this.patientSuggestionVisible = false
     },
     validateAppointment() {
-      if (!this.editItem.patient_id) return '请选择患者'
       if (!this.editItem.patient_name || !String(this.editItem.patient_name).trim()) return '患者姓名必填'
+      // 如果 patient_id 为空，尝试根据名字匹配
+      if (!this.editItem.patient_id) {
+        const name = String(this.editItem.patient_name).trim()
+        const matched = this.allPatients.find(p => p.name === name)
+        if (matched && matched.id) {
+          this.editItem.patient_id = matched.id
+        } else {
+          return '请选择患者'
+        }
+      }
       if (!this.editItem.appointment_date) return '预约日期必填'
       if (!this.editItem.appointment_time) return '预约时间必填'
       if (!this.editItem.doctor_name || !String(this.editItem.doctor_name).trim()) return '医生必填'
@@ -786,6 +788,14 @@ export default {
       return ''
     },
     handleSave() {
+      // 保存前自动根据姓名匹配患者
+      if (!this.editItem.patient_id && this.editItem.patient_name) {
+        const name = String(this.editItem.patient_name).trim()
+        const matched = this.allPatients.find(p => p.name === name)
+        if (matched && matched.id) {
+          this.editItem.patient_id = matched.id
+        }
+      }
       const validationMessage = this.validateAppointment()
       if (validationMessage) {
         this.$message.warning(validationMessage)
