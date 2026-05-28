@@ -1,0 +1,821 @@
+{
+  "name": "病历扩写agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "test",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "35a2e09e-ead9-4730-a10f-2e83d8383b9f",
+      "name": "Webhook",
+      "position": [
+        -896,
+        1104
+      ],
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "webhookId": "medical-expand-v2"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json[\"治疗项目\"] }}",
+                    "rightValue": "根管治疗",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "01114e0a-e427-4e36-a999-b3d7381201fd"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "676d45e3-a530-4a54-bd86-d75fc321d800",
+                    "leftValue": "={{ $json[\"治疗项目\"] }}",
+                    "rightValue": "拔牙",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "77f73892-065a-42b8-89fc-b1e811ebc60a",
+                    "leftValue": "={{ $json[\"治疗项目\"] }}",
+                    "rightValue": "树脂充填",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "8ff55417-4eb5-4470-b1e7-f27684c409e4",
+                    "leftValue": "={{ $json[\"治疗项目\"] }}",
+                    "rightValue": "种植修复",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "a385bab8-0ec9-4d46-9322-24cd35d21325",
+                    "leftValue": "={{ $json[\"治疗项目\"] }}",
+                    "rightValue": "洁牙",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "c1bdbb98-449c-462a-a13e-bf864088f03b",
+                    "leftValue": "={{ $json[\"治疗项目\"] }}",
+                    "rightValue": "全冠修复",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -224,
+        1040
+      ],
+      "id": "0f3439e1-e1a1-400d-98e0-ee6e7d81a991",
+      "name": "项目分流"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f315bac3-4f24-4efd-88c4-c730740e442c",
+              "name": "治疗项目",
+              "value": "={{ $json[\"治疗项目\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "de69e141-991f-43da-b50a-b32abfc31442",
+              "name": "治疗步骤",
+              "value": "={{ $json[\"治疗步骤\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "bad6a5b9-a8d4-484e-9793-f46776745b5b",
+              "name": "病历表单",
+              "value": "={{ $json[\"医疗字段\"] }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -448,
+        1104
+      ],
+      "id": "92c0f7dc-1fb3-44a7-8b20-53b6d50a1792",
+      "name": "数据整理"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1392,
+        1040
+      ],
+      "id": "1b65cae9-f9be-4bd5-a708-f73caa62d911",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst payload = input.body._original_payload;\nconst rawFields = payload.fields || {};\n\n// 医疗字段白名单：只保留需要 AI 扩写/生成的字段\nconst medicalFieldKeys = [\n  'chief_complaint',           // 主诉\n  'present_illness_history',   // 现病史\n  'past_medical_history',      // 既往史\n  'infectious_history',        // 流行病史\n  'allergy_history',           // 过敏史\n  'general_condition',         // 一般情况\n  'examination_findings',      // 检查所见\n  'auxiliary_examination',     // 辅助检查\n  'diagnosis',                 // 诊断\n  'treatment_plan',            // 治疗计划\n  'treatment',                 // 治疗文稿\n  'tooth_positions',           // 治疗牙位\n  'medical_advice',            // 医嘱\n  'prescription',              // 处方\n  'record_tags',               // 病历标签\n  'image_summary',             // 影像摘要\n  'notes'                      // 病历备注\n];\n\n// 构建干净的医疗字段对象，字符串自动 trim\nconst 医疗字段 = {};\nmedicalFieldKeys.forEach(key => {\n  const value = rawFields[key];\n  医疗字段[key] = (typeof value === 'string') ? value.trim() : value;\n});\n\n// AI 写病历时需要引用的患者基础信息（从原始数据提取，但不参与扩写）\nconst 患者信息 = {\n  patient_name: (rawFields.patient_name || '').trim(),\n  visit_date: (rawFields.visit_date || '').trim(),\n  record_type: (rawFields.record_type || '').trim(),\n  tooth_positions: (rawFields.tooth_positions || '').trim(),\n  doctor_name: (rawFields.doctor_name || '').trim()\n};\n\n// 统计医疗字段中已填写的字段（方便调试）\nconst 已填写字段 = Object.entries(医疗字段).filter(([k, v]) => {\n  if (v === null || v === undefined) return false;\n  if (typeof v === 'string' && v === '') return false;\n  if (Array.isArray(v) && v.length === 0) return false;\n  return true;\n}).map(([k]) => k);\n\n// 返回给下游的干净数据结构\nreturn [{\n  json: {\n    // 路由信息\n    治疗项目: payload.scene_name || '',\n    治疗步骤: payload.step_name || '',\n    scene_id: payload.scene_id || '',\n    step_id: payload.step_id || '',\n    account_id: payload.account_id || '',\n    \n    // 患者基础信息（供提示词引用）\n    患者信息,\n    \n    // 纯医疗字段（供 AI 扩写）\n    医疗字段,\n    \n    // 调试信息\n    已填写字段数: 已填写字段.length,\n    已填写字段列表: 已填写字段\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -672,
+        1104
+      ],
+      "id": "4512a1d5-e4a4-46c3-be7c-cdfa136910c1",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "typeVersion": 1,
+      "position": [
+        0,
+        224
+      ],
+      "id": "8853fb46-0f11-411f-a495-8d18894d9bbf",
+      "name": "DeepSeek Chat Model"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"chief_complaint\": \"\",\n  \"present_illness_history\": \"\",\n  \"past_medical_history\": \"\",\n  \"infectious_history\": \"\",\n  \"allergy_history\": \"\",\n  \"general_condition\": \"\",\n  \"examination_findings\": \"\",\n  \"auxiliary_examination\": \"\",\n  \"diagnosis\": \"\",\n  \"treatment_plan\": \"\",\n  \"treatment\": \"\",\n  \"tooth_positions\": \"\",\n  \"medical_advice\": \"\",\n  \"prescription\": \"\",\n  \"record_tags\": \"\",\n  \"image_summary\": \"\",\n  \"notes\": \"\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        128,
+        224
+      ],
+      "id": "502b9319-08d5-4395-b890-5f7aa115163d",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "typeVersion": 1,
+      "position": [
+        0,
+        624
+      ],
+      "id": "212f2ba2-7a1d-4214-9441-6293a4dfc46b",
+      "name": "DeepSeek Chat Model1"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"chief_complaint\": \"\",\n  \"present_illness_history\": \"\",\n  \"past_medical_history\": \"\",\n  \"infectious_history\": \"\",\n  \"allergy_history\": \"\",\n  \"general_condition\": \"\",\n  \"examination_findings\": \"\",\n  \"auxiliary_examination\": \"\",\n  \"diagnosis\": \"\",\n  \"treatment_plan\": \"\",\n  \"treatment\": \"\",\n  \"tooth_positions\": \"\",\n  \"medical_advice\": \"\",\n  \"prescription\": \"\",\n  \"record_tags\": \"\",\n  \"image_summary\": \"\",\n  \"notes\": \"\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        128,
+        624
+      ],
+      "id": "1f32bdd2-8c6b-4e21-8c2a-613d1e857afc",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=用户输入:{{ JSON.stringify($json[\"病历表单\"]) }}\n治疗项目:{{ $json[\"治疗项目\"] }}\n治疗步骤:{{ $json[\"治疗步骤\"] }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=你是一位资深的口腔牙体牙髓科医生。请根据以下患者信息和当前治疗步骤，生成一份规范的病历。\n\n【重要】如果\"患者已填写内容\"中有值，请在其基础上完善和扩充；如果为空，请直接生成完整内容,字数小于120字。\n\n【已知患者信息】\n- 治疗牙位：{{ $json['病历表单'].tooth_positions }}\n【当前诊疗任务】\n- 治疗项目：{{ $json['治疗项目'] }}\n- 治疗步骤：{{ $json['治疗步骤'] }}\n- 该牙位存在牙髓疾病，需进行{{ $json['治疗项目'] }}\n\n【患者已填写内容】\n{{ JSON.stringify($json[\"病历表单\"]) }}\n【根管治疗知识库】\n1. 急性牙髓炎诊断要点：自发痛、夜间痛、冷热刺激痛、放射性痛、不能定位\n2. 慢性牙髓炎诊断要点：轻度钝痛、冷热刺激不适、可有轻度叩痛、病史较长\n3. 检查所见规范：视诊（龋坏/隐裂）、探诊（深浅/穿髓孔）、叩诊（-/±/+）、松动度、冷热测（敏感/迟钝/无反应）、牙龈（红肿/瘘管）\n4. 诊断语气：必须使用\"考虑/疑似/待排/可能\"，严禁\"确诊/肯定/绝对\"\n5. 治疗步骤规范：\n   - 开髓引流：局麻→去龋→揭髓室顶→拔髓→疏通根管→开放引流→置CP棉球\n   - 根管预备：拔髓→确定工作长度→逐步深入预备→次氯酸钠+EDTA冲洗\n   - 根管消毒：氢氧化钙/碘仿糊剂封药1-2周\n   - 根管充填：牙胶尖+AH Plus糊剂，距根尖0.5-2mm，严密三维充填\n6. 主诉格式：牙位+症状+时间，≤30字，如\"27牙自发痛3天\"\n\n【生成要求】\n请生成以下所有字段的完整内容，返回严格JSON对象，不要markdown代码块：\n\n1. chief_complaint（主诉）：牙位+症状+时间，≤30字\n2. present_illness_history（现病史）：起病时间、主要症状、演变过程、既往处理\n3. past_medical_history（既往史）：否认全身系统性疾病史，否认药物过敏史\n4. infectious_history（流行病史）：否认肝炎、结核等传染病史\n5. allergy_history（过敏史）：否认药物及食物过敏史\n6. general_condition（一般情况）：精神、饮食、睡眠、大小便\n7. examination_findings（检查所见）：视诊、叩诊、探诊、松动度、冷热测结果\n8. auxiliary_examination（辅助检查）：建议完善根尖片，描述预期影像表现，未做写\"暂缺，建议完善\"\n9. diagnosis（诊断）：必须用建议性语气，如\"考虑27牙慢性牙髓炎急性发作\"，严禁\"确诊\"\n10. treatment_plan（治疗计划）：围绕当前治疗步骤展开，阐述治疗思路、操作要点、后续步骤\n11. treatment（治疗文稿）：记录本次实际或拟行的具体操作步骤\n12. medical_advice（医嘱）：术后注意事项、消炎止痛用药、复诊安排\n13. prescription（处方）：如有用药记录名称和用法，无则写\"暂无\"\n14. record_tags（病历标签）：病种关键词，逗号分隔，如\"根管治疗,开髓引流,牙髓炎\"\n15. image_summary（影像摘要）：如有影像检查则记录，无则保留原值或写\"无\"\n16. notes（病历备注）：医患沟通要点、知情同意情况\n\n【硬性约束】\n- 诊断绝对禁止\"确诊\"、\"肯定\"、\"绝对\"、\"100%\"等词汇\n- 治疗计划必须紧扣当前治疗步骤\n- 所有内容符合口腔医学诊疗规范"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "98f1e2b5-2b83-46a8-b70b-83095df2a19e",
+      "name": "根管治疗"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=用户输入:{{ JSON.stringify($json[\"病历表单\"]) }}\n治疗项目:{{ $json[\"治疗项目\"] }}\n治疗步骤:{{ $json[\"治疗步骤\"] }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=你是一位资深的口腔外科医生。请根据以下患者信息和当前治疗步骤，生成一份规范的病历。\n\n【重要】如果\"患者已填写内容\"中有值，请在其基础上完善和扩充；如果为空，请直接生成完整内容,字数小于120字。\n\n【已知患者信息】\n- 治疗牙位：{{ $json['病历表单'].tooth_positions }}\n\n【当前诊疗任务】\n- 治疗项目：{{ $json['治疗项目'] }}\n- 治疗步骤：{{ $json['治疗步骤'] }}\n- 该牙位无法保留，需进行{{ $json['治疗项目'] }}\n\n【患者已填写内容】\n{{ JSON.stringify($json[\"病历表单\"]) }}\n\n【简单拔牙知识库】\n1. 拔牙适应证：牙体严重龋坏无法修复、晚期牙周病、阻生牙、正畸需要、滞留乳牙\n2. 拔牙禁忌证（需询问）：高血压（>180/100mmHg）、心脏病、血液病、糖尿病急性期、月经期、长期服用抗凝药\n3. 术前评估：牙根形态、邻牙关系、X线片评估牙根数目/弯曲度/与神经管关系\n4. 操作步骤：局麻→分离牙龈→牙挺挺松→拔牙钳拔除→检查牙根完整→处理拔牙创→咬纱卷止血\n5. 主诉格式：要求拔除X牙（或X牙疼痛/松动要求拔除）\n6. 诊断语气：必须用建议性语气，如\"考虑X牙残根\"、\"考虑X牙III度松动\"\n\n【生成要求】\n请生成以下所有字段的完整内容，返回严格JSON对象，不要markdown代码块：\n\n1. chief_complaint（主诉）：要求拔除X牙 或 X牙疼痛/松动要求拔除，≤30字\n2. present_illness_history（现病史）：患牙疼痛/松动时间、治疗经过、拔除原因\n3. past_medical_history（既往史）：重点询问高血压、心脏病、糖尿病、血液病、药物过敏史\n4. infectious_history（流行病史）：否认肝炎、结核等传染病史\n5. allergy_history（过敏史）：否认药物及食物过敏史，如有则记录\n6. general_condition（一般情况）：精神、饮食、睡眠、大小便\n7. examination_findings（检查所见）：牙体龋坏/松动度、叩诊、牙龈状况、邻牙情况\n8. auxiliary_examination（辅助检查）：X线片显示牙根形态、与邻牙/神经管关系\n9. diagnosis（诊断）：必须用建议性语气，如\"考虑27牙残根\"、\"考虑36牙III度松动\"\n10. treatment_plan（治疗计划）：局部麻醉下拔除X牙，交代术中术后风险，签署知情同意书\n11. treatment（治疗文稿）：记录麻醉方式、拔牙过程、牙根完整性、拔牙创处理\n12. medical_advice（医嘱）：咬纱卷30-40分钟、24h内不漱口刷牙、温凉软食、出血处理\n13. prescription（处方）：必要时开具抗生素（如阿莫西林/甲硝唑）和止痛药（布洛芬）\n14. record_tags（病历标签）：病种关键词，如\"拔牙,残根,27牙\"\n15. image_summary（影像摘要）：如有X线片则记录，无则保留原值\n16. notes（病历备注）：交代拔牙风险（出血、感染、神经损伤）、知情同意签署情况\n\n【硬性约束】\n- 诊断绝对禁止\"确诊\"、\"肯定\"、\"绝对\"等词汇\n- 必须记录术前禁忌证询问情况\n- 所有内容符合口腔医学诊疗规范"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        0,
+        400
+      ],
+      "id": "ef30e93f-9d69-4c2a-9528-552f6f3cacb7",
+      "name": "简单拔牙",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "typeVersion": 1,
+      "position": [
+        0,
+        1024
+      ],
+      "id": "35bd6d17-7799-47cb-a8be-ebca06c7e820",
+      "name": "DeepSeek Chat Model2"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"chief_complaint\": \"\",\n  \"present_illness_history\": \"\",\n  \"past_medical_history\": \"\",\n  \"infectious_history\": \"\",\n  \"allergy_history\": \"\",\n  \"general_condition\": \"\",\n  \"examination_findings\": \"\",\n  \"auxiliary_examination\": \"\",\n  \"diagnosis\": \"\",\n  \"treatment_plan\": \"\",\n  \"treatment\": \"\",\n  \"tooth_positions\": \"\",\n  \"medical_advice\": \"\",\n  \"prescription\": \"\",\n  \"record_tags\": \"\",\n  \"image_summary\": \"\",\n  \"notes\": \"\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        128,
+        1024
+      ],
+      "id": "bfbf7f8d-b124-472d-a9d3-7c67a33b754f",
+      "name": "Structured Output Parser2"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "typeVersion": 1,
+      "position": [
+        0,
+        1424
+      ],
+      "id": "b7f05199-fe13-4567-bf15-e7b31afe3a27",
+      "name": "DeepSeek Chat Model3"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"chief_complaint\": \"\",\n  \"present_illness_history\": \"\",\n  \"past_medical_history\": \"\",\n  \"infectious_history\": \"\",\n  \"allergy_history\": \"\",\n  \"general_condition\": \"\",\n  \"examination_findings\": \"\",\n  \"auxiliary_examination\": \"\",\n  \"diagnosis\": \"\",\n  \"treatment_plan\": \"\",\n  \"treatment\": \"\",\n  \"tooth_positions\": \"\",\n  \"medical_advice\": \"\",\n  \"prescription\": \"\",\n  \"record_tags\": \"\",\n  \"image_summary\": \"\",\n  \"notes\": \"\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        128,
+        1424
+      ],
+      "id": "0bf6a39f-de31-48fb-9a3f-4eacf5c988d7",
+      "name": "Structured Output Parser3"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=用户输入:{{ JSON.stringify($json[\"病历表单\"]) }}\n治疗项目:{{ $json[\"治疗项目\"] }}\n治疗步骤:{{ $json[\"治疗步骤\"] }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=你是一位资深的口腔牙体牙髓科医生。请根据以下患者信息和当前治疗步骤，生成一份规范的病历。\n\n【重要】如果\"患者已填写内容\"中有值，请在其基础上完善和扩充；如果为空，请直接生成完整内容,字数小于120字。\n\n【已知患者信息】\n- 治疗牙位：{{ $json['病历表单'].tooth_positions }}\n\n【当前诊疗任务】\n- 治疗项目：{{ $json['治疗项目'] }}\n- 治疗步骤：{{ $json['治疗步骤'] }}\n- 该牙位存在龋损，需进行{{ $json['治疗项目'] }}修复\n\n【患者已填写内容】\n{{ JSON.stringify($json[\"病历表单\"]) }}\n\n【树脂充填知识库】\n1. 浅龋诊断：局限于釉质，无自觉症状，白垩色或黄褐色斑点，探诊粗糙\n2. 中龋诊断：达牙本质浅层，冷热酸甜刺激敏感，刺激去除后症状立即消失\n3. 深龋诊断：达牙本质深层近髓，冷热刺激明显疼痛，食物嵌塞痛，无自发痛，叩诊（-）\n4. 操作步骤：去龋→护髓（深龋近髓垫氢氧化钙）→酸蚀（釉质15-30s，本质10-15s）→涂粘接剂→分层充填树脂（每层≤2mm）→光固化→调合→抛光\n5. 深龋处理：近髓可保留部分脱矿牙本质间接盖髓；针尖大小露髓可直接盖髓；露髓孔大则改行根管治疗\n6. 主诉格式：X牙冷热刺激痛/食物嵌塞痛X天，或X牙发现龋洞要求补牙\n7. 鉴别诊断：深龋与可复性牙髓炎、慢性牙髓炎鉴别（有无自发痛/夜间痛）\n\n【生成要求】\n请生成以下所有字段的完整内容，返回严格JSON对象，不要markdown代码块：\n\n1. chief_complaint（主诉）：X牙冷热刺激痛/食物嵌塞痛X天，或X牙发现龋洞要求补牙，≤30字\n2. present_illness_history（现病史）：患牙疼痛时间、性质、诱因、缓解因素，有无自发痛/夜间痛\n3. past_medical_history（既往史）：否认全身系统性疾病史，否认药物过敏史\n4. infectious_history（流行病史）：否认肝炎、结核等传染病史\n5. allergy_history（过敏史）：否认药物及食物过敏史\n6. general_condition（一般情况）：精神、饮食、睡眠、大小便\n7. examination_findings（检查所见）：龋坏部位/范围/颜色、探诊、叩诊、冷热测、牙龈状况\n8. auxiliary_examination（辅助检查）：建议完善X线片显示龋坏深度，未做写\"暂缺，建议完善\"\n9. diagnosis（诊断）：必须用建议性语气，如\"考虑27牙深龋\"、\"考虑16牙中龋\"，严禁\"确诊\"\n10. treatment_plan（治疗计划）：去龋后树脂充填修复；如去龋露髓则改行根管治疗\n11. treatment（治疗文稿）：记录去龋过程、护髓措施、酸蚀粘接步骤、充填材料、调合抛光\n12. medical_advice（医嘱）：2小时内避免进食、避免咀嚼硬物、出现自发痛及时复诊\n13. prescription（处方）：如为浅/中龋写\"暂无\"，深龋近髓必要时可开止痛药\n14. record_tags（病历标签）：病种关键词，如\"树脂充填,深龋,27牙\"\n15. image_summary（影像摘要）：如有X线片则记录龋坏深度，无则保留原值\n16. notes（病历备注）：深龋需告知可能露髓风险及改行根管治疗的可能性\n\n【硬性约束】\n- 诊断绝对禁止\"确诊\"、\"肯定\"、\"绝对\"等词汇\n- 深龋必须写鉴别诊断（与牙髓炎鉴别）\n- 所有内容符合口腔医学诊疗规范\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        0,
+        800
+      ],
+      "id": "a191eabc-f205-4432-bfe6-efdd165601bd",
+      "name": "树脂充填",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=用户输入:{{ JSON.stringify($json[\"病历表单\"]) }}\n治疗项目:{{ $json[\"治疗项目\"] }}\n治疗步骤:{{ $json[\"治疗步骤\"] }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=你是一位资深的口腔种植科医生。请根据以下患者信息和当前治疗步骤，生成一份规范的病历。\n\n【重要】如果\"患者已填写内容\"中有值，请在其基础上完善和扩充；如果为空，请直接生成完整内容,字数小于120字。\n\n【已知患者信息】\n- 治疗牙位：{{ $json['病历表单'].tooth_positions }}\n\n【当前诊疗任务】\n- 治疗项目：{{ $json['治疗项目'] }}\n- 治疗步骤：{{ $json['治疗步骤'] }}\n- 该牙位缺失，需进行{{ $json['治疗项目'] }}\n\n【患者已填写内容】\n{{ JSON.stringify($json[\"病历表单\"]) }}\n\n【种植修复知识库】\n1. 适应证：单牙/多牙缺失邻牙健康、全口义齿固位不良、牙槽骨充足或可植骨\n2. 禁忌证：未控制糖尿病（HbA1c>7.5%）、严重心血管疾病、长期服用双膦酸盐、头颈部放疗史、妊娠期、重度吸烟（>20支/天）\n3. 术前评估：CBCT评估骨量（高度/宽度）、神经管/上颌窦位置、邻牙状况\n4. 一期手术：切口翻瓣→球钻定位→逐级备洞（生理盐水冷却）→植入种植体→旋入覆盖螺丝/愈合基台→缝合\n5. 二期手术：骨结合完成后（上颌4-6月，下颌3-4月）切开牙龈→去除覆盖螺丝→旋入愈合基台\n6. 修复阶段：取模→试戴基台和修复体→调合→粘接或螺丝固位\n7. 诊断语气：必须用建议性语气，如\"考虑X牙缺失，建议种植修复\"\n\n【生成要求】\n请生成以下所有字段的完整内容，返回严格JSON对象，不要markdown代码块：\n\n1. chief_complaint（主诉）：要求种植修复缺失牙，≤30字\n2. present_illness_history（现病史）：缺牙时间、原因、是否佩戴过活动义齿、修复诉求\n3. past_medical_history（既往史）：重点询问糖尿病、高血压、骨质疏松、吸烟史、放疗史、药物过敏史\n4. infectious_history（流行病史）：否认肝炎、结核等传染病史\n5. allergy_history（过敏史）：否认药物及食物过敏史\n6. general_condition（一般情况）：精神、饮食、睡眠、大小便\n7. examination_findings（检查所见）：缺牙区牙槽嵴高度/宽度、邻牙状况、咬合关系、张口度\n8. auxiliary_examination（辅助检查）：CBCT显示骨量、神经管/上颌窦位置、邻牙根尖状况\n9. diagnosis（诊断）：必须用建议性语气，如\"考虑27牙缺失，建议种植修复\"\n10. treatment_plan（治疗计划）：种植修复方案（种植体数量/位置）、手术步骤、修复方式、费用告知\n11. treatment（治疗文稿）：记录本次就诊内容（一期/二期手术记录或修复记录）\n12. medical_advice（医嘱）：术后24h冰敷、温凉流食、7-10天拆线、愈合期避免咀嚼硬物、定期复查\n13. prescription（处方）：术后抗生素（如阿莫西林+甲硝唑）和止痛药（布洛芬）\n14. record_tags（病历标签）：病种关键词，如\"种植修复,27牙缺失,一期手术\"\n15. image_summary（影像摘要）：CBCT显示骨量及神经管/上颌窦位置描述\n16. notes（病历备注）：交代种植成功率、风险（感染、骨结合失败、神经损伤）、费用、知情同意签署\n\n【硬性约束】\n- 诊断绝对禁止\"确诊\"、\"肯定\"、\"绝对\"等词汇\n- 必须记录术前禁忌证询问和CBCT评估\n- 必须交代种植风险和签署知情同意\n- 所有内容符合口腔医学诊疗规范\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        0,
+        1200
+      ],
+      "id": "98394daa-d24a-4710-8e6a-bd9883de7ed0",
+      "name": "种植修复",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "typeVersion": 1,
+      "position": [
+        0,
+        1824
+      ],
+      "id": "3f3ddd1e-88d1-4116-b83a-351dd5930d74",
+      "name": "DeepSeek Chat Model4"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"chief_complaint\": \"\",\n  \"present_illness_history\": \"\",\n  \"past_medical_history\": \"\",\n  \"infectious_history\": \"\",\n  \"allergy_history\": \"\",\n  \"general_condition\": \"\",\n  \"examination_findings\": \"\",\n  \"auxiliary_examination\": \"\",\n  \"diagnosis\": \"\",\n  \"treatment_plan\": \"\",\n  \"treatment\": \"\",\n  \"tooth_positions\": \"\",\n  \"medical_advice\": \"\",\n  \"prescription\": \"\",\n  \"record_tags\": \"\",\n  \"image_summary\": \"\",\n  \"notes\": \"\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        128,
+        1824
+      ],
+      "id": "aec6a819-51c8-4f07-b154-937065b14b58",
+      "name": "Structured Output Parser4"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=用户输入:{{ JSON.stringify($json[\"病历表单\"]) }}\n治疗项目:{{ $json[\"治疗项目\"] }}\n治疗步骤:{{ $json[\"治疗步骤\"] }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=你是一位资深的口腔预防科医生。请根据以下患者信息和当前治疗步骤，生成一份规范的病历。\n\n【重要】如果\"患者已填写内容\"中有值，请在其基础上完善和扩充；如果为空，请直接生成完整内容,字数小于120字。\n\n【已知患者信息】\n- 治疗牙位：{{ $json['病历表单'].tooth_positions }}\n\n【当前诊疗任务】\n- 治疗项目：{{ $json['治疗项目'] }}\n- 治疗步骤：{{ $json['治疗步骤'] }}\n- 患者需进行{{ $json['治疗项目'] }}及牙周维护\n\n【患者已填写内容】\n{{ JSON.stringify($json[\"病历表单\"]) }}\n\n【洁牙知识库】\n1. 适应证：牙龈炎/牙周炎基础治疗、预防性洁治（每6-12月）、口腔异味、牙石沉积\n2. 超声洁治：超声工作尖沿牙面震动去除龈上牙石和菌斑→抛光→冲洗→必要时上药\n3. 龈下刮治：适用于牙周炎患者，探诊深度>3mm，去除龈下牙石和病变牙骨质\n4. 牙周检查记录：牙龈指数、探诊深度、出血位点、牙石分布（+~+++）\n5. 诊断分类：慢性牙龈炎（无附着丧失）vs 慢性牙周炎（有附着丧失和骨吸收）\n6. 主诉格式：要求洁牙/牙龈出血/口腔异味\n\n【生成要求】\n请生成以下所有字段的完整内容，返回严格JSON对象，不要markdown代码块：\n\n1. chief_complaint（主诉）：要求洁牙/牙龈出血X月/口腔异味，≤30字\n2. present_illness_history（现病史）：牙龈出血时间、频率、刷牙/咬硬物时是否出血、口腔异味情况\n3. past_medical_history（既往史）：否认全身系统性疾病史，否认药物过敏史\n4. infectious_history（流行病史）：否认肝炎、结核等传染病史\n5. allergy_history（过敏史）：否认药物及食物过敏史\n6. general_condition（一般情况）：精神、饮食、睡眠、大小便\n7. examination_findings（检查所见）：牙龈颜色/形态/质地、探诊出血位点、牙石分布（+~+++）、牙周袋深度\n8. auxiliary_examination（辅助检查）：建议完善全口X线片评估牙槽骨吸收程度，未做写\"暂缺，建议完善\"\n9. diagnosis（诊断）：必须用建议性语气，如\"考虑慢性牙龈炎\"、\"考虑慢性牙周炎（轻度）\"\n10. treatment_plan（治疗计划）：全口洁治+抛光，必要时龈下刮治，口腔卫生指导，定期复查\n11. treatment（治疗文稿）：记录洁治范围、牙石清除情况、抛光、冲洗上药过程\n12. medical_advice（医嘱）：术后1-2周可能出现敏感属正常、避免染色食物、使用抗敏感牙膏、正确刷牙法和牙线、每6-12月定期洁牙\n13. prescription（处方）：一般写\"暂无\"，牙龈炎症重时可开漱口水（如复方氯己定）\n14. record_tags（病历标签）：病种关键词，如\"洁牙,牙龈炎,牙周维护\"\n15. image_summary（影像摘要）：如有X线片则记录牙槽骨情况，无则保留原值\n16. notes（病历备注）：口腔卫生宣教内容、患者依从性评估、下次复查预约\n\n【硬性约束】\n- 诊断绝对禁止\"确诊\"、\"肯定\"、\"绝对\"等词汇\n- 必须区分牙龈炎和牙周炎的诊断\n- 所有内容符合口腔医学诊疗规范\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        0,
+        1600
+      ],
+      "id": "ca47e16f-c8ff-4733-a46b-13700fd0a01f",
+      "name": "洁牙（预防科）",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "typeVersion": 1,
+      "position": [
+        0,
+        2336
+      ],
+      "id": "faed0bd6-d57d-48e0-8ef7-c94b206ccaaf",
+      "name": "DeepSeek Chat Model5"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"chief_complaint\": \"\",\n  \"present_illness_history\": \"\",\n  \"past_medical_history\": \"\",\n  \"infectious_history\": \"\",\n  \"allergy_history\": \"\",\n  \"general_condition\": \"\",\n  \"examination_findings\": \"\",\n  \"auxiliary_examination\": \"\",\n  \"diagnosis\": \"\",\n  \"treatment_plan\": \"\",\n  \"treatment\": \"\",\n  \"tooth_positions\": \"\",\n  \"medical_advice\": \"\",\n  \"prescription\": \"\",\n  \"record_tags\": \"\",\n  \"image_summary\": \"\",\n  \"notes\": \"\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        128,
+        2336
+      ],
+      "id": "9b359671-082a-4220-9eaa-bcdb63824404",
+      "name": "Structured Output Parser5"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=用户输入:{{ JSON.stringify($json[\"病历表单\"]) }}\n治疗项目:{{ $json[\"治疗项目\"] }}\n治疗步骤:{{ $json[\"治疗步骤\"] }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=你是一位资深的口腔修复科医生。请根据以下患者信息和当前治疗步骤，生成一份规范的病历。\n\n【重要】如果\"患者已填写内容\"中有值，请在其基础上完善和扩充；如果为空，请直接生成完整内容,字数小于120字。\n\n【已知患者信息】\n- 治疗牙位：{{ $json['病历表单'].tooth_positions }}\n\n【当前诊疗任务】\n- 治疗项目：{{ $json['治疗项目'] }}\n- 治疗步骤：{{ $json['治疗步骤'] }}\n- 该牙位缺损，需进行{{ $json['治疗项目'] }}\n\n【患者已填写内容】\n{{ JSON.stringify($json[\"病历表单\"]) }}\n\n【全冠修复知识库】\n1. 适应证：牙体大面积缺损无法充填、根管治疗后牙体变脆需保护、牙体隐裂或牙折、牙齿形态/颜色异常需美容修复、固定桥基牙\n2. 牙体预备量标准：\n   - 金属烤瓷冠：唇面1.2-1.5mm，舌面0.8-1.0mm，合面1.5-2.0mm，肩台0.5-1.0mm\n   - 全瓷冠：唇面1.0-1.5mm，合面1.5-2.0mm\n3. 操作步骤：局麻→牙体预备→精修圆钝线角→硅橡胶取模→制作临时冠粘接→试戴调合→永久粘接\n4. 临时冠医嘱：避免咀嚼硬物和黏性食物、脱落及时复诊、防止基牙移位和敏感\n5. 主诉格式：X牙缺损要求修复 或 X牙根管治疗后要求做冠保护\n6. 诊断语气：必须用建议性语气，如\"考虑27牙牙体缺损，建议全冠修复\"\n\n【生成要求】\n请生成以下所有字段的完整内容，返回严格JSON对象，不要markdown代码块：\n\n1. chief_complaint（主诉）：X牙缺损要求修复 或 X牙根管治疗后要求做冠保护，≤30字\n2. present_illness_history（现病史）：患牙缺损/治疗经过、修复诉求、有无疼痛史\n3. past_medical_history（既往史）：否认全身系统性疾病史，否认药物过敏史\n4. infectious_history（流行病史）：否认肝炎、结核等传染病史\n5. allergy_history（过敏史）：否认药物及食物过敏史\n6. general_condition（一般情况）：精神、饮食、睡眠、大小便\n7. examination_findings（检查所见）：牙体缺损范围、剩余牙体组织量、叩诊、松动度、咬合关系、牙龈状况\n8. auxiliary_examination（辅助检查）：X线片显示牙根充填情况、根尖周状况、牙周膜间隙\n9. diagnosis（诊断）：必须用建议性语气，如\"考虑27牙牙体缺损，建议全冠修复\"\n10. treatment_plan（治疗计划）：牙体预备后行全冠修复，交代修复材料种类（金属烤瓷/全瓷/金属）和费用\n11. treatment（治疗文稿）：记录牙体预备量、取模方式、临时冠制作、试戴调合情况\n12. medical_advice（医嘱）：临时冠避免硬物和黏性食物、脱落及时复诊、永久冠避免咬硬物防崩瓷\n13. prescription（处方）：一般写\"暂无\"，牙体预备后敏感可开抗敏感牙膏或止痛药\n14. record_tags（病历标签）：病种关键词，如\"全冠修复,牙体缺损,27牙\"\n15. image_summary（影像摘要）：如有X线片则记录牙根及根尖周情况，无则保留原值\n16. notes（病历备注）：交代修复材料优缺点、费用、保修期、基牙预后评估、知情同意签署\n\n【硬性约束】\n- 诊断绝对禁止\"确诊\"、\"肯定\"、\"绝对\"等词汇\n- 根管治疗后做冠必须说明保护患牙的必要性\n- 必须交代修复材料种类和费用\n- 所有内容符合口腔医学诊疗规范\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        0,
+        2112
+      ],
+      "id": "ed891441-f737-4c1b-b3c1-63c66be2ccce",
+      "name": "全冠修复（修复科）",
+      "disabled": true
+    }
+  ],
+  "pinData": {
+    "根管治疗": [
+      {
+        "json": {
+          "output": {
+            "chief_complaint": "右上后牙自发痛3天",
+            "present_illness_history": "患者3天前右上后牙出现自发痛，呈阵发性，夜间加重，冷热刺激可诱发剧烈疼痛，疼痛放射至同侧头面部，无法定位，未经特殊处理。",
+            "past_medical_history": "否认高血压、糖尿病、心脏病等全身系统性疾病史。",
+            "infectious_history": "否认肝炎、结核等传染病史。",
+            "allergy_history": "否认药物及食物过敏史。",
+            "general_condition": "精神可，饮食欠佳，睡眠因疼痛受影响，大小便正常。",
+            "examination_findings": "视诊：右上后牙牙合面深龋洞，探诊（+），探及穿髓孔，叩诊（±），无明显松动，冷热测敏感且疼痛持续，牙龈无明显红肿，未见瘘管。",
+            "auxiliary_examination": "暂缺，建议完善根尖X线片，预期可见牙体低密度影接近穿髓，根尖周膜间隙可无明显增宽。",
+            "diagnosis": "考虑右上后牙急性牙髓炎",
+            "treatment_plan": "行根管治疗（开髓引流）以缓解疼痛，后续待症状缓解后行根管预备、消毒及根管充填。",
+            "treatment": "局麻下（阿替卡因肾上腺素注射液），去尽龋坏腐质，揭髓室顶，暴露髓腔，拔除牙髓，疏通根管，根管冲洗后置CP棉球开放引流。",
+            "tooth_positions": "右上后牙",
+            "medical_advice": "1.避免患侧咀嚼，勿用患牙咬硬物。2.术后可能出现轻微胀痛，可口服布洛芬止痛。3.保持口腔清洁，复诊前勿填塞开放口。4.遵医嘱按时复诊，1周后复诊行根管预备。",
+            "prescription": "布洛芬缓释胶囊 300mg po qd×3d（必要时）",
+            "record_tags": "根管治疗,开髓引流,急性牙髓炎",
+            "image_summary": "无",
+            "notes": "术前已向患者解释根管治疗的必要性、过程、费用及可能风险（如器械分离、根管侧穿、术后疼痛等），患者表示理解并签署知情同意书。"
+          }
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "项目分流": {
+      "main": [
+        [
+          {
+            "node": "根管治疗",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "简单拔牙",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "树脂充填",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "种植修复",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "洁牙（预防科）",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "全冠修复（修复科）",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "数据整理": {
+      "main": [
+        [
+          {
+            "node": "项目分流",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "数据整理",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeek Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "根管治疗",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "根管治疗",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeek Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "简单拔牙",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "简单拔牙",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "根管治疗": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeek Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "树脂充填",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser2": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "树脂充填",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeek Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "种植修复",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser3": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "种植修复",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeek Chat Model4": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "洁牙（预防科）",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser4": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "洁牙（预防科）",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeek Chat Model5": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "全冠修复（修复科）",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser5": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "全冠修复（修复科）",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "简单拔牙": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "树脂充填": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "种植修复": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "洁牙（预防科）": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "全冠修复（修复科）": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "f8eb084b-9be2-472d-8b47-c11c10305689",
+  "meta": {
+    "instanceId": "1c4bef29fc77e115d4580ac30508175980a2cb93134c8724cb2cf76cb4f7b36f"
+  },
+  "id": "bgmSA9fx2p8rhlYg",
+  "tags": []
+}

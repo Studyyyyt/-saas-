@@ -1,0 +1,20 @@
+version: "3.8"
+
+services:
+  mcp-data-server:
+    # 服务名称
+    container_name: mcp-data-server
+    # 基于当前目录 Dockerfile 构建镜像
+    build: .
+    # 端口映射，宿主机 8000 映射到容器 8000
+    ports:
+      - "8000:8000"
+    # 环境变量从 .env 文件加载
+    env_file:
+      - .env
+    # 覆盖 .env 中的地址：容器内使用 host.docker.internal 访问宿主机后端
+    environment:
+      - JAVA_API_BASE=http://host.docker.internal:8080
+    # 重启策略：除非手动停止，否则自动重启
+    restart: unless-stopped
+    # 使用默认 bridge 网络（不额外声明 networks 时即为 bridge）

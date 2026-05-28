@@ -1,0 +1,223 @@
+{
+  "name": "WF-01 每日营业简报 (AI分析版)",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "http://192.168.1.158:8080/api/open/clinic/1/daily-metrics",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "date",
+              "value": "={{ $now.format('yyyy-MM-dd') }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "sk-saas-33d792bdc1274027"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "22222222-2222-2222-2222-222222222222",
+      "name": "获取经营指标",
+      "position": [
+        256,
+        0
+      ],
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.all()[0];\nconst m = item.json.data || {};\n\nconst 日期 = m.date || '未知日期';\nconst appointments = m.appointment_count || 0;\nconst uniquePatients = m.appointment_unique_patient_count || 0;\nconst completed = m.appointment_completed_count || 0;\nconst cancelled = m.appointment_cancelled_count || 0;\nconst records = m.total_visit_count || 0;\nconst income = m.total_income || 0;\nconst expense = m.total_expense || 0;\nconst netProfit = m.net_profit || 0;\nconst cancelRate = appointments === 0 ? 0 : (cancelled * 100 / appointments).toFixed(1);\nconst visitPatients = m.visit_patient_count || 0;\nconst returningVisits = m.returning_visit_count || 0;\nconst arrears = m.arrears_amount || 0;\n\nlet text = '📊 营业简报 | ' + 日期 + '（' + (m.day_of_week || '') + '）\\n';\ntext += '━━━━━━━━━━━━━━━━━━━━\\n\\n';\ntext += '👥 今日运营\\n';\ntext += '   预约: ' + appointments + '人（接诊' + visitPatients + '人 | 复诊' + returningVisits + '人次 | 取消' + cancelled + '人）\\n';\ntext += '   病历: ' + records + '份 | 完成治疗: ' + completed + '例\\n';\ntext += '💰 当日收支\\n';\ntext += '   收入: ¥' + income.toFixed(2) + ' | 支出: ¥' + expense.toFixed(2) + ' | 净利润: ¥' + netProfit.toFixed(2) + '\\n';\ntext += '📉 取消率: ' + cancelRate + '%';\nif (arrears > 0) {\n  text += ' | 欠款: ¥' + arrears.toFixed(2);\n}\ntext += '\\n\\n';\n\nif (m.top_doctors && m.top_doctors.length > 0) {\n  text += '👨‍⚕️ 医生排行\\n';\n  m.top_doctors.forEach(function(d, i) {\n    text += '   ' + (i + 1) + '. ' + d.doctor_name + ' | 预约' + (d.appointment_count || 0) + '人 | 治疗' + (d.treatment_count || 0) + '例 | 收入¥' + ((d.treatment_revenue || 0)).toFixed(2) + '\\n';\n  });\n  text += '\\n';\n}\n\nif (m.top_projects && m.top_projects.length > 0) {\n  text += '🏆 项目排行\\n';\n  m.top_projects.forEach(function(p, i) {\n    text += '   ' + (i + 1) + '. ' + p.project_name + ' | ' + (p.case_count || 0) + '例 | ¥' + ((p.revenue || 0)).toFixed(2) + '\\n';\n  });\n  text += '\\n';\n}\n\nreturn [{ json: { brief: text, date: 日期 } }];\n"
+      },
+      "id": "33333333-3333-3333-3333-333333333333",
+      "name": "格式化简报",
+      "position": [
+        448,
+        0
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "DeepSeek 模型",
+      "position": [
+        608,
+        208
+      ],
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "typeVersion": 1,
+      "credentials": {
+        "deepSeekApi": {
+          "id": "PDUx8zNK0HknSmw7",
+          "name": "DeepSeek account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"总体评价\": \"今日运营整体良好...\",\n  \"运营情况\": {\n    \"预约\": 5,\n    \"接诊\": 4,\n    \"完成治疗\": 2,\n    \"取消率\": \"20%\"\n  },\n  \"财务情况\": {\n    \"收入\": 1150,\n    \"支出\": 620,\n    \"净利润\": 530\n  },\n  \"亮点\": [\n    \"李医生单人贡献近70%收入\",\n    \"根管治疗客单价800元\"\n  ],\n  \"预警\": [\n    \"取消率达20%，高于健康值\",\n    \"日收入仅1150元，处于低位\"\n  ],\n  \"建议\": [\n    \"对取消预约患者进行电话回访\",\n    \"推出种植/正畸高价项目优惠\"\n  ],\n  \"评分\": 55\n}\n",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        768,
+        176
+      ],
+      "id": "b509d137-a1c8-4e54-9ed0-790ab0ecc3c8",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "model": "deepseek-v4-pro",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "typeVersion": 1,
+      "position": [
+        768,
+        304
+      ],
+      "id": "c873e1cb-d886-4e04-b638-e2339b64ead4",
+      "name": "DeepSeek Chat Model",
+      "credentials": {
+        "deepSeekApi": {
+          "id": "PDUx8zNK0HknSmw7",
+          "name": "DeepSeek account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "jinrijingying",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        16,
+        0
+      ],
+      "id": "aa588b97-16b2-4a48-b873-21f45e593d24",
+      "name": "Webhook",
+      "webhookId": "ec78e91e-dc54-42e6-a18f-c5b2051a9d18"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=你是一位口腔诊所经营分析专家。请基于以下经营日报数据，生成结构化的中文分析报告。\n\n{{ $json.brief }}\n\n【输出格式要求】\n1. 必须严格按照 JSON Schema 格式返回，字段名使用中文\n2. \"总体评价\"：一段总评，30字以内\n3. \"运营情况\"：包含预约数、接诊数、完成治疗数、取消率\n4. \"财务情况\"：包含收入、支出、净利润\n5. \"亮点\"：数组，1-3条，当日积极表现\n6. \"预警\"：数组，1-3条，需关注的问题\n7. \"建议\"：数组，1-3条，具体可执行的改进措施\n8. \"评分\"：0-100的整数，综合当日经营表现\n\n【格式强制要求】\n- 返回严格合法 JSON，不要 markdown 代码块\n- JSON 内部不要包含换行符，所有字符串写在一行\n- 使用紧凑格式，不要多余空格\n",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+      "name": "AI_今日经营分析",
+      "position": [
+        672,
+        0
+      ],
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "DeepSeek 模型": {
+      "ai_languageModel": [
+        [
+          {
+            "index": 0,
+            "node": "AI_今日经营分析",
+            "type": "ai_languageModel"
+          }
+        ]
+      ]
+    },
+    "格式化简报": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "AI_今日经营分析",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "获取经营指标": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "格式化简报",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI_今日经营分析",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeek Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "获取经营指标",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionTimeout": 3600,
+    "timezone": "UTC"
+  },
+  "versionId": "84ca4411-ac71-4681-a12b-f08bd3c2a823",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1c4bef29fc77e115d4580ac30508175980a2cb93134c8724cb2cf76cb4f7b36f"
+  },
+  "id": "Gt0hf82Ie1APsbzH",
+  "tags": []
+}

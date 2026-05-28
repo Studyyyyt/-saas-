@@ -1,0 +1,144 @@
+/* 一隐口腔 — 青瓷设计令牌系统 v3 */
+
+:root {
+  /* === 颜色系统 === */
+  /* 背景层：宣纸暖白，温润如玉 */
+  --apple-bg-primary: #F5F0E8;
+  --apple-bg-secondary: #ffffff;
+  --apple-bg-tertiary: #FAF9F7;
+  --apple-bg-hover: rgba(90, 143, 123, 0.04);
+  --apple-bg-active: rgba(90, 143, 123, 0.08);
+  --apple-bg-gradient: radial-gradient(ellipse 60% 40% at 30% 20%, rgba(90, 143, 123, 0.06), transparent),
+                       radial-gradient(ellipse 50% 50% at 70% 80%, rgba(90, 143, 123, 0.04), transparent);
+
+  /* 表层卡片：温润瓷白 */
+  --apple-surface: rgba(255, 255, 255, 0.92);
+  --apple-surface-solid: #ffffff;
+  --apple-surface-blur: blur(24px) saturate(150%);
+  --apple-surface-border: 1px solid rgba(90, 143, 123, 0.12);
+  --apple-surface-shadow-inset: inset 0 1px 1px rgba(255, 255, 255, 0.6);
+
+  /* 文字 */
+  --apple-text-primary: #2C3E35;
+  --apple-text-secondary: #6B6B6B;
+  --apple-text-tertiary: #A0A0A0;
+  --apple-text-inverse: #ffffff;
+
+  /* 强调色 — 青瓷 */
+  --apple-accent: #5A8F7B;
+  --apple-accent-hover: #4A7F6B;
+  --apple-accent-active: #3D6B5A;
+  --apple-accent-light: rgba(90, 143, 123, 0.08);
+  --apple-accent-ring: rgba(90, 143, 123, 0.15);
+  --apple-accent-glow: rgba(90, 143, 123, 0.12);
+
+  /* 功能色 */
+  --apple-success: #5A8F7B;
+  --apple-success-light: rgba(90, 143, 123, 0.08);
+  --apple-warning: #C9A227;
+  --apple-warning-light: rgba(201, 162, 39, 0.08);
+  --apple-danger: #C75B5B;
+  --apple-danger-light: rgba(199, 91, 91, 0.08);
+  --apple-info: #6B8FA8;
+  --apple-info-light: rgba(107, 143, 168, 0.08);
+  --apple-purple: #7c3aed;
+  --apple-purple-light: rgba(124, 58, 237, 0.08);
+
+  /* 边框与分割线 */
+  --apple-border: rgba(90, 143, 123, 0.12);
+  --apple-border-light: rgba(90, 143, 123, 0.06);
+  --apple-border-medium: rgba(90, 143, 123, 0.20);
+  --apple-divider: rgba(0, 0, 0, 0.05);
+
+  /* === 阴影系统（更柔和，模拟宣纸层次） === */
+  --apple-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+  --apple-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.02);
+  --apple-shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.05), 0 4px 8px rgba(0, 0, 0, 0.02);
+  --apple-shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.06), 0 8px 16px rgba(0, 0, 0, 0.02);
+  --apple-shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.06), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+  --apple-shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+  --apple-shadow-glow: 0 0 40px rgba(90, 143, 123, 0.08);
+
+  /* === 圆角系统 === */
+  --apple-radius-sm: 6px;
+  --apple-radius-md: 10px;
+  --apple-radius-lg: 14px;
+  --apple-radius-xl: 20px;
+  --apple-radius-full: 9999px;
+
+  /* === 间距系统（基于 4px 网格） === */
+  --apple-space-xs: 4px;
+  --apple-space-sm: 8px;
+  --apple-space-md: 12px;
+  --apple-space-lg: 16px;
+  --apple-space-xl: 20px;
+  --apple-space-2xl: 24px;
+  --apple-space-3xl: 32px;
+  --apple-space-4xl: 40px;
+  --apple-space-5xl: 48px;
+  --apple-space-6xl: 64px;
+
+  /* === 字体系统 === */
+  --apple-font-serif: 'Noto Serif SC', 'Songti SC', 'STSong', serif;
+  --apple-font-sans: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+  --apple-font-mono: 'SF Mono', SFMono-Regular, ui-monospace, Menlo, Monaco, 'Cascadia Mono', monospace;
+
+  /* 字重 */
+  --apple-weight-light: 300;
+  --apple-weight-regular: 400;
+  --apple-weight-medium: 500;
+  --apple-weight-semibold: 600;
+  --apple-weight-bold: 700;
+
+  /* 字号 */
+  --apple-text-xs: 11px;
+  --apple-text-sm: 12px;
+  --apple-text-base: 13px;
+  --apple-text-md: 14px;
+  --apple-text-lg: 16px;
+  --apple-text-xl: 20px;
+  --apple-text-2xl: 24px;
+  --apple-text-3xl: 28px;
+  --apple-text-4xl: 32px;
+  --apple-text-5xl: 40px;
+  --apple-text-6xl: 48px;
+
+  /* 行高 */
+  --apple-leading-tight: 1.25;
+  --apple-leading-normal: 1.5;
+  --apple-leading-relaxed: 1.6;
+
+  /* === 过渡与动画 === */
+  --apple-transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --apple-transition-normal: 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  --apple-transition-slow: 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* === 布局 === */
+  --apple-nav-height: 56px;
+  --apple-content-max-width: 1400px;
+  --apple-content-padding: 32px;
+}
+
+/* 响应式内容边距 */
+@media (max-width: 1200px) {
+  :root {
+    --apple-content-padding: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --apple-content-padding: 16px;
+  }
+}
+
+/* 减少动画偏好 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
