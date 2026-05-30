@@ -43,10 +43,13 @@ public class SpaForwardController {
             "/SystemSettings",
             "/SystemAIAgentConfig",
             "/SystemModelProviderConfig",
+            "/SystemPaymentChannel",
             "/Purchase",
             "/Doctors",
             "/Accounts",
             "/Followup",
+            "/Consultation",
+            "/ConsultationDashboard",
             "/advertising-spending",
             "/RiskTags",
             "/login1",
@@ -72,14 +75,50 @@ public class SpaForwardController {
             "/followups",
             "/purchases",
             "/insurances",
-            "/treatment-plans"
+            "/treatment-plans",
+            "/lab-factories",
+            "/LabFactory",
+            "/lab-orders",
+            "/LabOrder",
+            "/lab-bills",
+            "/LabBill",
+            "/lab-statistics",
+            "/LabStatistics",
+            "/material-categories",
+            "/MaterialCategory",
+            "/materials",
+            "/Material",
+            "/material-purchases",
+            "/MaterialPurchase",
+            "/material-statistics",
+            "/MaterialStatistics"
     })
     public String forward() {
         return "forward:/index.html";
     }
 
+    @GetMapping("/LabFactoryDetail/{id}")
+    public String forwardLabFactoryDetailAlias() {
+        return "forward:/index.html";
+    }
+
+    @GetMapping("/LabBillDetail/{id}")
+    public String forwardLabBillDetailAlias() {
+        return "forward:/index.html";
+    }
+
+    @GetMapping("/MaterialPurchaseDetail/{id}")
+    public String forwardMaterialPurchaseDetailAlias() {
+        return "forward:/index.html";
+    }
+
     @GetMapping("/SystemSettings/ai/pages/config/{agentKey}")
     public String forwardAgentConfig() {
+        return "forward:/index.html";
+    }
+
+    @GetMapping("/SystemSettings/open/api-key")
+    public String forwardSystemSettingsApiKey() {
         return "forward:/index.html";
     }
 }

@@ -37,9 +37,9 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         String apiKeyHeader = request.getHeader("X-API-Key");
 
-        // 未提供 X-API-Key：返回 401
+        // 未提供 X-API-Key：放行，兼容前端现有登录流程
         if (apiKeyHeader == null || apiKeyHeader.isBlank()) {
-            writeUnauthorized(response, "401", "缺少X-API-Key");
+            filterChain.doFilter(request, response);
             return;
         }
 
