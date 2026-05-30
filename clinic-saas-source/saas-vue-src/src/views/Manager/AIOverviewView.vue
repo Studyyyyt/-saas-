@@ -1,12 +1,13 @@
 <template>
   <div class="ai-overview-page">
     <!-- 页面标题 -->
-    <div class="page-header">
-      <div class="page-header-left">
-        <h1 class="page-title">AI 中心</h1>
-        <p class="page-subtitle">管理 Agent 配置与 API Key</p>
+    <div class="hero-card">
+      <div>
+        <div class="page-kicker">AI 智能</div>
+        <h2>AI 中心</h2>
+        <p>管理 Agent 配置与 API Key</p>
       </div>
-      <div class="page-header-right">
+      <div class="hero-actions">
         <el-button size="small" icon="el-icon-refresh" :loading="loading" @click="loadData">刷新</el-button>
       </div>
     </div>
@@ -15,9 +16,9 @@
     <div class="section-card">
       <div class="section-header">
         <div class="section-title">Agent 配置</div>
-        <div style="display: flex; align-items: center; gap: 12px;">
+        <div class="section-header-actions">
           <el-tooltip content="开启后删除 Agent 需二次确认" placement="top">
-            <div style="display: flex; align-items: center; gap: 6px; cursor: pointer;" @click="toggleSecurityLock">
+            <div class="security-lock-toggle" @click="toggleSecurityLock">
               <i :class="securityLockEnabled ? 'el-icon-lock' : 'el-icon-unlock'" :style="{ color: securityLockEnabled ? '#f56c6c' : '#909399' }" />
               <el-switch v-model="securityLockEnabled" size="mini" active-text="安全锁" @change="toggleSecurityLock" />
             </div>
@@ -25,7 +26,7 @@
           <el-button type="primary" size="small" icon="el-icon-plus" @click="openEditor()">新增 Agent</el-button>
         </div>
       </div>
-      <el-table :data="agentList" style="width: 100%" v-loading="loading">
+      <el-table :data="agentList" style="width: 100%" v-loading="loading" :header-cell-style="{ backgroundColor: '#f8fafc', color: '#475569', fontWeight: '600' }">
         <el-table-column label="图标" width="55" align="center">
           <template slot-scope="scope">
             <i :class="scope.row.icon || 'el-icon-cpu'" style="font-size:16px;color:#5A8F7B" />
@@ -105,7 +106,7 @@
     <div class="section-card">
       <div class="section-header">
         <div class="section-title">系统功能绑定</div>
-        <div style="display:flex;gap:8px;">
+        <div class="section-actions">
           <el-button size="mini" icon="el-icon-close" @click="batchCloseUnintegrated">批量关闭未接入</el-button>
           <el-button size="mini" icon="el-icon-connection" @click="batchBindAgentVisible = true">批量绑定 Agent</el-button>
         </div>
@@ -127,6 +128,7 @@
         v-loading="functionMappingLoading"
         border
         stripe
+        :header-cell-style="{ backgroundColor: '#f8fafc', color: '#475569', fontWeight: '600' }"
       >
         <el-table-column prop="functionName" label="功能名称" min-width="120" show-overflow-tooltip>
           <template slot-scope="scope">
@@ -314,25 +316,25 @@
       <div class="section-header">
         <div class="section-title">运维工具</div>
       </div>
-      <div style="display:flex;gap:16px;flex-wrap:wrap;">
-        <div style="flex:1;min-width:280px;">
-          <div style="font-size:13px;font-weight:600;color:var(--apple-text-secondary);margin-bottom:10px;">Agent 连通性测试</div>
-          <div style="display:flex;gap:8px;">
+      <div class="ops-row">
+        <div class="ops-col">
+          <div class="ops-col-title">Agent 连通性测试</div>
+          <div class="ops-actions">
             <el-select v-model="testAgentKey" size="small" placeholder="选择 Agent" style="flex:1;">
               <el-option v-for="agent in agentList" :key="agent.agentKey" :label="agent.name" :value="agent.agentKey" />
             </el-select>
             <el-button size="small" type="primary" icon="el-icon-s-promotion" :loading="opsLoading" :disabled="!testAgentKey" @click="testAgentWebhook(testAgentKey)">测试</el-button>
           </div>
         </div>
-        <div style="flex:1;min-width:280px;">
-          <div style="font-size:13px;font-weight:600;color:var(--apple-text-secondary);margin-bottom:10px;">会话缓存管理</div>
-          <div style="display:flex;gap:8px;">
+        <div class="ops-col">
+          <div class="ops-col-title">会话缓存管理</div>
+          <div class="ops-actions">
             <el-button size="small" icon="el-icon-delete" @click="clearAllAiSessions">清空所有会话</el-button>
             <el-button size="small" icon="el-icon-refresh" @click="loadLocalStorageKeys">刷新缓存列表</el-button>
           </div>
-          <div v-if="localStorageKeys.length > 0" style="margin-top:10px;max-height:120px;overflow-y:auto;background:var(--apple-bg-primary);border-radius:8px;padding:8px;">
-            <div v-for="item in localStorageKeys" :key="item.key" style="display:flex;align-items:center;justify-content:space-between;font-size:12px;padding:3px 0;">
-              <span style="color:var(--apple-text-secondary);" :title="item.preview">{{ item.key }} ({{ item.size }}B)</span>
+          <div v-if="localStorageKeys.length > 0" class="cache-list">
+            <div v-for="item in localStorageKeys" :key="item.key" class="cache-item">
+              <span class="cache-key-text" :title="item.preview">{{ item.key }} ({{ item.size }}B)</span>
               <el-button type="text" size="mini" style="padding:0;" @click="clearLocalStorageItem(item.key)">清理</el-button>
             </div>
           </div>
@@ -344,7 +346,7 @@
     <div class="section-card">
       <div class="section-header">
         <div class="section-title">调用日志看板</div>
-        <div style="display:flex;gap:8px;align-items:center;">
+        <div class="log-query-actions">
           <el-date-picker v-model="logDateRange" size="small" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" style="width:220px;" @change="onLogDateChange" />
           <el-select v-model="logQuery.agentKey" size="small" placeholder="Agent" clearable style="width:120px;" @change="loadCallLogs">
             <el-option v-for="agent in agentList" :key="agent.agentKey" :label="agent.name" :value="agent.agentKey" />
@@ -357,7 +359,7 @@
           <el-button size="small" icon="el-icon-refresh" :loading="logLoading" @click="loadCallLogs">刷新</el-button>
         </div>
       </div>
-      <div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap;">
+      <div class="stat-row">
         <div class="stat-card">
           <div class="stat-value">{{ logStats.totalCount }}</div>
           <div class="stat-label">总调用次数</div>
@@ -375,7 +377,7 @@
           <div class="stat-label">平均耗时</div>
         </div>
       </div>
-      <el-table :data="logList" size="mini" style="width:100%;" v-loading="logLoading" max-height="360">
+      <el-table :data="logList" size="mini" style="width:100%;" v-loading="logLoading" max-height="360" :header-cell-style="{ backgroundColor: '#f8fafc', color: '#475569', fontWeight: '600' }">
         <el-table-column prop="createdAt" label="时间" width="140">
           <template slot-scope="scope">{{ scope.row.createdAt ? new Date(scope.row.createdAt).toLocaleString() : '-' }}</template>
         </el-table-column>
@@ -1295,32 +1297,6 @@ export default {
   box-sizing: border-box;
 }
 
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 28px;
-}
-
-.page-header-left {
-  flex: 1;
-}
-
-.page-title {
-  margin: 0;
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--apple-text-primary);
-  line-height: 1.2;
-}
-
-.page-subtitle {
-  margin: 6px 0 0;
-  font-size: 14px;
-  color: var(--apple-text-secondary);
-}
-
 /* 卡片区块 */
 .section-card {
   background: var(--apple-surface);
@@ -1349,6 +1325,24 @@ export default {
   font-size: 16px;
   font-weight: 700;
   color: var(--apple-text-primary);
+}
+
+.section-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.security-lock-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.section-actions {
+  display: flex;
+  gap: 8px;
 }
 
 .ellipsis-text {
@@ -1466,14 +1460,67 @@ export default {
   border: 1px dashed var(--apple-divider);
 }
 
+/* 运维工具布局 */
+.ops-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.ops-col {
+  flex: 1;
+  min-width: 280px;
+}
+
+.ops-col-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--apple-text-secondary);
+  margin-bottom: 10px;
+}
+
+.ops-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.cache-list {
+  margin-top: 10px;
+  max-height: 120px;
+  overflow-y: auto;
+  background: var(--apple-bg-primary);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.cache-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  padding: 3px 0;
+}
+
+.cache-key-text {
+  color: var(--apple-text-secondary);
+}
+
+/* 日志查询与统计 */
+.log-query-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.stat-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
 /* 响应式 */
 @media (max-width: 576px) {
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-
   .api-key-row {
     flex-direction: column;
     align-items: flex-start;
@@ -1483,6 +1530,10 @@ export default {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
+  }
+
+  .ops-row {
+    flex-direction: column;
   }
 }
 

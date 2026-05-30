@@ -1,18 +1,19 @@
 <template>
   <div class="catalog-page">
-    <div class="catalog-header-card">
+    <div class="hero-card">
       <div>
         <div class="page-kicker">处置收费</div>
         <h2>项目库</h2>
         <p>维护常用处置收费项目，供开处置时直接选择并自动带出默认值。</p>
       </div>
-      <div class="header-actions">
+      <div class="hero-actions">
         <el-button type="primary" plain @click="showAddDialog">新增项目</el-button>
         <el-button @click="fetchCatalog">刷新</el-button>
       </div>
     </div>
 
-    <div class="catalog-grid">
+    <el-card shadow="never" class="table-card">
+      <div class="catalog-grid">
       <div v-for="item in catalogs" :key="item.id" class="catalog-card">
         <div class="catalog-card__top">
           <div>
@@ -38,6 +39,7 @@
         </div>
       </div>
     </div>
+    </el-card>
 
     <el-dialog :title="isEditing ? '编辑项目' : '新增项目'" :visible.sync="dialogVisible" width="420px">
       <el-form :model="editItem" label-width="110px">
@@ -136,33 +138,6 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 14px;
-}
-.catalog-header-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  padding: 18px;
-  border-radius: 18px;
-  background: #fff;
-  box-shadow: 0 8px 24px rgba(31, 71, 136, 0.08);
-}
-.page-kicker {
-  color: #64748b;
-  font-size: 13px;
-}
-.catalog-header-card h2 {
-  margin: 6px 0 8px;
-  color: #0f172a;
-  font-size: 24px;
-}
-.catalog-header-card p {
-  margin: 0;
-  color: #94a3b8;
-}
-.header-actions {
-  display: flex;
-  gap: 10px;
 }
 .catalog-grid {
   display: grid;

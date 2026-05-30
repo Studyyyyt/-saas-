@@ -892,10 +892,10 @@ export default {
 <style scoped>
 /* e看牙 设计系统变量 — 定义在 .page-wrap 上确保 scoped 样式内可继承 */
 .page-wrap {
-  --primary: #00a6c9;
-  --primary-hover: #0095b5;
-  --primary-light: rgba(0, 166, 201, 0.08);
-  --primary-border: rgba(0, 166, 201, 0.3);
+  --primary: #5A8F7B;
+  --primary-hover: #4A7F6B;
+  --primary-light: rgba(90, 143, 123, 0.08);
+  --primary-border: rgba(90, 143, 123, 0.3);
   --text-primary: #1d222a;
   --text-regular: #3e3e3c;
   --text-secondary: #636a74;
@@ -909,7 +909,7 @@ export default {
   --success: #52c41a;
   --warning: #faad14;
   --danger: #f86359;
-  --info: #00a6c9;
+  --info: #6B8FA8;
   --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08);
   --shadow-dropdown: 0 4px 12px rgba(0, 0, 0, 0.1);
   --shadow-modal: 0 8px 24px rgba(0, 0, 0, 0.12);
@@ -1699,9 +1699,9 @@ export default {
 
 /* 状态标签 — 治疗中 */
 .status-tag--in-progress {
-  background: rgba(0, 166, 201, 0.1);
+  background: rgba(90, 143, 123, 0.1);
   color: var(--primary);
-  border: 1px solid rgba(0, 166, 201, 0.3);
+  border: 1px solid rgba(90, 143, 123, 0.3);
 }
 .status-tag--arrived {
   background: rgba(82, 196, 26, 0.1);

@@ -1,6 +1,7 @@
 <template>
-  <div id="app" class="manager-shell apple-design-scope">
-    <AppTopNav />
+  <div id="app" class="manager-shell apple-design-scope" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
+    <AppTopNav @toggle-sidebar="toggleSidebar" />
+    <AppSideNav :collapsed="sidebarCollapsed" @toggle="toggleSidebar" />
     <main class="manager-main">
       <router-view class="view-container apple-page-enter" />
     </main>
@@ -9,11 +10,41 @@
 
 <script>
 import AppTopNav from '@/components/apple-design/AppTopNav.vue'
+import AppSideNav from '@/components/apple-design/AppSideNav.vue'
+
+const SIDEBAR_COLLAPSED_KEY = 'sidebar_collapsed'
 
 export default {
   name: 'ManagerShell',
   components: {
-    AppTopNav
+    AppTopNav,
+    AppSideNav
+  },
+  data() {
+    return {
+      sidebarCollapsed: false
+    }
+  },
+  created() {
+    // 从 localStorage 恢复侧边栏折叠状态
+    try {
+      const saved = localStorage.getItem(SIDEBAR_COLLAPSED_KEY)
+      if (saved !== null) {
+        this.sidebarCollapsed = saved === 'true'
+      }
+    } catch {
+      // ignore
+    }
+  },
+  methods: {
+    toggleSidebar() {
+      this.sidebarCollapsed = !this.sidebarCollapsed
+      try {
+        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(this.sidebarCollapsed))
+      } catch {
+        // ignore
+      }
+    }
   }
 }
 </script>
@@ -44,6 +75,20 @@ body {
   padding-top: var(--apple-nav-height);
   min-height: 100vh;
   box-sizing: border-box;
+  margin-left: var(--apple-sidebar-width);
+  transition: margin-left var(--apple-transition-normal);
+}
+
+/* 侧边栏折叠时主内容区域左移减少 */
+.sidebar-collapsed .manager-main {
+  margin-left: var(--apple-sidebar-collapsed-width);
+}
+
+/* 移动端隐藏侧边栏时主内容区域全宽 */
+@media (max-width: 1100px) {
+  .manager-main {
+    margin-left: 0 !important;
+  }
 }
 
 .view-container {

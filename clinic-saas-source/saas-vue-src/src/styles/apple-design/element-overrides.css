@@ -163,16 +163,22 @@
   font-size: var(--apple-text-sm) !important;
   letter-spacing: 0.02em;
   border-bottom: 1px solid var(--apple-border-light) !important;
-  padding: 14px 16px !important;
-  height: 52px;
+  padding: 12px 6px !important;
+  height: 48px;
 }
 
 .apple-design-scope .el-table td {
   border-bottom: 1px solid var(--apple-border-light) !important;
-  padding: 14px 16px !important;
+  padding: 12px 6px !important;
   color: var(--apple-text-primary) !important;
   font-size: var(--apple-text-md) !important;
-  height: 52px;
+  height: 48px;
+}
+
+/* 覆盖 .cell 默认 padding，避免与 th/td padding 叠加导致文字空间不足 */
+.apple-design-scope .el-table th > .cell,
+.apple-design-scope .el-table td > .cell {
+  padding: 0 4px !important;
 }
 
 .apple-design-scope .el-table--enable-row-hover .el-table__body tr:hover > td {
@@ -393,6 +399,34 @@
 
 .apple-design-scope .el-radio__label {
   color: var(--apple-text-primary) !important;
+}
+
+/* === 单选按钮组 (radio-button) === */
+.apple-design-scope .el-radio-button__inner {
+  border-color: var(--apple-border) !important;
+  color: var(--apple-text-secondary) !important;
+  background: var(--apple-bg-secondary) !important;
+  font-weight: var(--apple-weight-medium) !important;
+  transition: all var(--apple-transition-fast) !important;
+}
+
+.apple-design-scope .el-radio-button__orig-radio:checked + .el-radio-button__inner {
+  background: var(--apple-accent) !important;
+  border-color: var(--apple-accent) !important;
+  color: var(--apple-text-inverse) !important;
+  box-shadow: -1px 0 0 0 var(--apple-accent) !important;
+}
+
+.apple-design-scope .el-radio-button:first-child .el-radio-button__inner {
+  border-left-color: var(--apple-border) !important;
+}
+
+.apple-design-scope .el-radio-button__orig-radio:checked + .el-radio-button__inner:hover {
+  background: var(--apple-accent-hover) !important;
+}
+
+.apple-design-scope .el-radio-button__inner:hover {
+  color: var(--apple-accent) !important;
 }
 
 /* === 步骤条 === */

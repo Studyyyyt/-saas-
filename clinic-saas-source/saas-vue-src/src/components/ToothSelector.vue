@@ -74,6 +74,6 @@ export default {
 .tooth-row__label { width:44px; color:#606266; font-size:12px; line-height:28px; }
 .tooth-row__grid { display:flex; flex-wrap:wrap; gap:6px; flex:1; }
 .tooth-btn { min-width:44px; margin:0; }
-.tooth-selected { font-size:12px; color:#409EFF; }
+.tooth-selected { font-size:12px; color:#5A8F7B; }
 .tooth-selected--empty { color:#909399; }
 </style>

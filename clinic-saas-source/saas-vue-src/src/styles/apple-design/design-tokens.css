@@ -115,6 +115,8 @@
 
   /* === 布局 === */
   --apple-nav-height: 56px;
+  --apple-sidebar-width: 220px;
+  --apple-sidebar-collapsed-width: 64px;
   --apple-content-max-width: 1400px;
   --apple-content-padding: 32px;
 }

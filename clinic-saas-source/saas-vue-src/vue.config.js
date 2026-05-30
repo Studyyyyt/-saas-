@@ -1,5 +1,17 @@
 const { defineConfig } = require('@vue/cli-service')
 const API_TARGET = process.env.VUE_APP_API_TARGET || 'http://127.0.0.1:8080'
+
+/**
+ * 用于前端路由与后端 API 路径冲突时的 bypass 逻辑。
+ * 当浏览器直接访问页面（Accept 包含 html）时，返回 index.html 让前端路由接管；
+ * 否则继续代理到后端 API。
+ */
+function bypassForSpa(req, res, proxyOptions) {
+  if (req.headers.accept && req.headers.accept.indexOf('html') !== -1) {
+    return '/index.html'
+  }
+}
+
 module.exports = defineConfig({
   transpileDependencies: true,
   pages: {
@@ -45,9 +57,10 @@ module.exports = defineConfig({
         target: API_TARGET,
         changeOrigin: true
       },
-      '/Inventory': {
+      '/inventory': {
         target: API_TARGET,
-        changeOrigin: true
+        changeOrigin: true,
+        bypass: bypassForSpa
       },
       '/treatment-catalog': {
         target: API_TARGET,
@@ -71,37 +84,45 @@ module.exports = defineConfig({
       },
       '/lab-factories': {
         target: API_TARGET,
-        changeOrigin: true
+        changeOrigin: true,
+        bypass: bypassForSpa
       },
       '/lab-orders': {
         target: API_TARGET,
-        changeOrigin: true
+        changeOrigin: true,
+        bypass: bypassForSpa
       },
       '/lab-bills': {
         target: API_TARGET,
-        changeOrigin: true
+        changeOrigin: true,
+        bypass: bypassForSpa
       },
       '/lab-statistics': {
         target: API_TARGET,
-        changeOrigin: true
+        changeOrigin: true,
+        bypass: bypassForSpa
       },
       '/material-categories': {
         target: API_TARGET,
-        changeOrigin: true
+        changeOrigin: true,
+        bypass: bypassForSpa
       },
       '/materials': {
         target: API_TARGET,
-        changeOrigin: true
+        changeOrigin: true,
+        bypass: bypassForSpa
       },
       '/material-purchases': {
         target: API_TARGET,
-        changeOrigin: true
+        changeOrigin: true,
+        bypass: bypassForSpa
       },
       '/material-statistics': {
         target: API_TARGET,
-        changeOrigin: true
+        changeOrigin: true,
+        bypass: bypassForSpa
       },
-      '/api': {
+      '/api/': {
         target: API_TARGET,
         changeOrigin: true
       },

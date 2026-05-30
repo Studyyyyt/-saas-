@@ -423,7 +423,7 @@
                 <el-button
                   size="mini"
                   type="text"
-                  :style="{ color: img.sent_to_patient ? '#67C23A' : '#409EFF' }"
+                  :style="{ color: img.sent_to_patient ? '#67C23A' : '#5A8F7B' }"
                   @click="sendImageToPatient(img)"
                 >{{ img.sent_to_patient ? '重新发送' : '发送给患者' }}</el-button>
                 <el-button size="mini" type="text" style="color:#F56C6C" @click="deleteImage(img.id)" icon="el-icon-delete">删除</el-button>
@@ -3362,9 +3362,9 @@ export default {
 <style scoped>
 /* === e看牙 医疗 SaaS 风格 === */
 :root {
-  --primary: #00a6c9;
-  --primary-hover: #0095b5;
-  --primary-light: rgba(0, 166, 201, 0.08);
+  --primary: #5A8F7B;
+  --primary-hover: #4A7F6B;
+  --primary-light: rgba(90, 143, 123, 0.08);
   --text-primary: #1d222a;
   --text-regular: #3e3e3c;
   --text-secondary: #636a74;

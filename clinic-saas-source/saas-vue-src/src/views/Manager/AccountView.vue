@@ -1,27 +1,40 @@
 <template>
-  <div style="width: 100%; height: 100%">
-    <!-- 查询框 -->
-    <div>
-      <el-select v-model="searchType" placeholder="请选择查询条件" style="width: 150px;">
-        <el-option label="序号" value="id"></el-option>
-        <el-option label="姓名" value="name"></el-option>
-      </el-select>
-      <el-input v-model="keyword" style="width: 300px; margin-left: 10px; margin-right: 10px" placeholder="请输入关键词"></el-input>
-      <el-button type="primary" @click="fetchAccounts">查询</el-button>
-      <el-button type="info" @click="reset">重置</el-button>
+  <div class="account-page">
+    <!-- 页面标题区 -->
+    <div class="hero-card">
+      <div>
+        <div class="page-kicker">系统管理</div>
+        <h2>账号管理</h2>
+        <p>管理系统账号、角色分配与微信绑定状态。</p>
+      </div>
+      <div class="hero-actions">
+        <el-button type="primary" plain @click="showAddDialog">新增账号</el-button>
+        <el-button type="danger" plain @click="delBatch">批量删除</el-button>
+      </div>
     </div>
 
-    <!-- 操作框 -->
-    <div style="margin: 10px 0">
-      <el-button type="primary" plain @click="showAddDialog">新增</el-button>
-      <el-button type="danger" plain @click="delBatch">批量删除</el-button>
-    </div>
+    <!-- 查询区 -->
+    <el-card shadow="never" class="query-card">
+      <div class="query-row">
+        <el-select v-model="searchType" placeholder="请选择查询条件" class="query-select">
+          <el-option label="序号" value="id"></el-option>
+          <el-option label="姓名" value="name"></el-option>
+        </el-select>
+        <el-input v-model="keyword" class="query-input" placeholder="请输入关键词" @keyup.enter.native="fetchAccounts"></el-input>
+        <el-button type="primary" icon="el-icon-search" @click="fetchAccounts">查询</el-button>
+        <el-button icon="el-icon-refresh" @click="reset">重置</el-button>
+      </div>
+    </el-card>
 
-    <!-- 账号列表 -->
-    <!-- 表格 -->
-    <div style="margin: 10px 0">
-      <el-table :data="accounts" stripe :header-cell-style="{ backgroundColor: 'aliceblue', color: '#666' }"
-                @selection-change="handleSelectionChange">
+    <!-- 表格区 -->
+    <el-card shadow="never" class="table-card">
+      <el-table
+        :data="accounts"
+        stripe
+        v-loading="loading"
+        :header-cell-style="{ backgroundColor: '#f8fafc', color: '#475569', fontWeight: '600' }"
+        @selection-change="handleSelectionChange"
+      >
         <el-table-column type="selection" width="55" align="center"></el-table-column>
         <el-table-column prop="id" label="序号" width="70" align="center"></el-table-column>
         <el-table-column prop="username" label="账号名称"></el-table-column>
@@ -31,22 +44,21 @@
           <template slot-scope="scope">
             <div v-if="scope.row.wechat_openid">
               <el-tag size="mini" type="success">已绑定</el-tag>
-              <div style="margin-top: 6px; color: #606266; font-size: 12px; word-break: break-all;">{{ scope.row.wechat_openid }}</div>
+              <div class="wechat-id">{{ scope.row.wechat_openid }}</div>
             </div>
             <el-tag v-else size="mini" type="info">未绑定</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center" width="180">
+        <el-table-column label="操作" align="center" width="180" fixed="right">
           <template slot-scope="scope">
             <el-button size="mini" type="primary" plain @click="handleEdit(scope.row)">编辑</el-button>
             <el-button size="mini" type="danger" plain @click="handleDelete(scope.row.id)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
-    </div>
-    <!-- 分页组件 -->
-    <div style="margin-top: 20px; text-align: center;">
-      <el-pagination
+      <el-empty v-if="!loading && !accounts.length" description="暂无账号数据"></el-empty>
+      <div v-else class="pagination-row">
+        <el-pagination
           @size-change="handleSizeChange"
           @current-change="handleCurrentChange"
           :current-page="currentPage"
@@ -54,8 +66,9 @@
           :page-size="pageSize"
           layout="total, sizes, prev, pager, next, jumper"
           :total="totalItems">
-      </el-pagination>
+        </el-pagination>
       </div>
+    </el-card>
 
     <!-- 新增/编辑账号模态框 -->
     <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="30%">
@@ -81,7 +94,7 @@
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button @click="closeDialog = false">取消</el-button>
+        <el-button @click="dialogVisible = false">取消</el-button>
         <el-button type="primary" @click="handleSaveEdit">{{ isEditing ? '保存' : '新增' }}</el-button>
       </div>
     </el-dialog>
@@ -94,6 +107,7 @@ import axios from "axios";
 export default {
   data() {
     return {
+      loading: false,
       searchAccount: '',
       accounts: [], // 账号信息列表
       currentPage: 1, // 当前页数
@@ -101,9 +115,9 @@ export default {
       totalItems: 0, // 总条数
       searchType: 'id', // 默认查询类型
       keyword: '', // 查询关键词
+      selectedRows: [], // 批量选中的行
       dialogVisible: false, // 账号信息模态框可见性
       editItem: { // 编辑/新增的数据
-        // id: '',
         username: '',
         password: '',
         role: '',
@@ -115,7 +129,7 @@ export default {
   },
   computed: {
     dialogTitle() {
-      return this.isEditing ? '编辑信息' : '新增信息'; //false为新增，true为编辑
+      return this.isEditing ? '编辑信息' : '新增信息';
     }
   },
   mounted() {
@@ -124,7 +138,7 @@ export default {
   methods: {
     // 获取账号信息
     fetchAccounts() {
-
+      this.loading = true;
       let url = '/accounts/search';
       let params = {
         page: this.currentPage,
@@ -148,6 +162,9 @@ export default {
           })
           .catch(error => {
             console.error('Error fetching accounts:', error);
+          })
+          .finally(() => {
+            this.loading = false;
           });
     },
     reset() {//重置
@@ -170,8 +187,7 @@ export default {
     },
     showAddDialog() {
       this.isEditing = false;
-      this.editItem = { // 新增表单置空
-        // id: '',
+      this.editItem = {
         username: '',
         password: '',
         role: '',
@@ -210,7 +226,7 @@ export default {
       // 将选中行的数据赋值给编辑的数据项
       this.editItem = Object.assign({}, row);
       // 设置编辑状态为true
-      this.isEditing = true; // 设置编辑状态为true，表示编辑
+      this.isEditing = true;
       // 打开新增/编辑弹窗
       this.dialogVisible = true;
     },
@@ -311,56 +327,20 @@ export default {
         this.currentPage = maxPage;
       }
     }
-    // // 显示新增账号模态框
-    // showAddModal() {
-    //   this.currentAccount = {id: null, username: '', password: '', role: ''};
-    //   this.isAdding = true;
-    //   this.accountModalVisible = true;
-    // },
-    // // 编辑账号信息
-    // editAccount(account) {
-    //   this.currentAccount = {...account};
-    //   this.isAdding = false;
-    //   this.accountModalVisible = true;
-    // },
-    // // 保存或新增账号信息
-    // saveAccount() {
-    //   if (this.isAdding) {
-    //     axios.post('/accounts/add', this.currentAccount)
-    //         .then(() => {
-    //           this.accountModalVisible = false;
-    //           this.fetchAccounts();
-    //         })
-    //         .catch(error => {
-    //           console.error('Error adding account:', error);
-    //         });
-    //   } else {
-    //     axios.put(`/accounts/update/${this.currentAccount.id}`, this.currentAccount)
-    //         .then(() => {
-    //           this.accountModalVisible = false;
-    //           this.fetchAccounts();
-    //         })
-    //         .catch(error => {
-    //           console.error('Error updating account:', error);
-    //         });
-    //   }
-    // },
-    // // 删除账号
-    // deleteAccount(id) {
-    //   axios.delete(`/accounts/delete/${id}`)
-    //       .then(() => {
-    //         this.fetchAccounts();
-    //       })
-    //       .catch(error => {
-    //         console.error('Error deleting account:', error);
-    //       });
-    // }
   }
 };
 </script>
 
 <style scoped>
-.table-container {
-  margin-top: 20px;
+.account-page {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.wechat-id {
+  margin-top: 6px;
+  color: #606266;
+  font-size: 12px;
+  word-break: break-all;
 }
 </style>

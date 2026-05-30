@@ -31,7 +31,8 @@ export const ROLE_MENU_CATALOG = [
   { key: '/SystemPaymentChannel', label: '收款渠道', group: '系统设置', defaultRoles: ['admin', 'nurse'] },
   { key: '/SystemConsentTemplate', label: '知情同意书库', group: '系统设置', defaultRoles: ['admin', 'nurse'] },
   { key: '/SystemAccountPermission', label: '账号权限', group: '系统设置', defaultRoles: ['admin'] },
-  { key: '/SystemAccountManage', label: '账号管理', group: '系统设置', defaultRoles: ['admin'] }
+  { key: '/SystemAccountManage', label: '账号管理', group: '系统设置', defaultRoles: ['admin'] },
+  { key: '/SystemSettings', label: '系统设置', group: '系统设置', defaultRoles: ['admin', 'doctor', 'nurse'] }
 ]
 
 export function normalizeAdminRole(rawRole) {

@@ -1,22 +1,36 @@
 <template>
-  <div style="height: 100%; width: 100%">
-    <!-- 查询框 -->
-    <div style="display: flex; justify-content: space-between; align-items: center;">
+  <div class="treatment-page">
+    <!-- 页面标题区 -->
+    <div class="hero-card">
       <div>
-        <el-select v-model="searchType" placeholder="请选择查询条件" style="width: 150px;">
-          <el-option label="序号" value="id"></el-option>
-          <el-option label="姓名" value="name"></el-option>
-        </el-select>
-        <el-input v-model="keyword" style="width: 300px; margin-left: 10px; margin-right: 10px" placeholder="请输入关键词"></el-input>
-        <el-button type="primary" @click="search">查询</el-button>
-        <el-button type="info" @click="reset">重置</el-button>
+        <div class="page-kicker">治疗管理</div>
+        <h2>治疗计划</h2>
+        <p>管理待治疗预约，制定治疗方案并记录治疗过程。</p>
       </div>
     </div>
 
-    <!-- 表格 -->
-    <div style="margin: 10px 0">
-      <el-table :data="appointments" stripe :header-cell-style="{ backgroundColor: 'aliceblue', color: '#666' }"
-                @selection-change="handleSelectionChange">
+    <!-- 查询区 -->
+    <el-card shadow="never" class="query-card">
+      <div class="query-row">
+        <el-select v-model="searchType" placeholder="请选择查询条件" class="query-select">
+          <el-option label="序号" value="id"></el-option>
+          <el-option label="姓名" value="name"></el-option>
+        </el-select>
+        <el-input v-model="keyword" class="query-input" placeholder="请输入关键词" @keyup.enter.native="search"></el-input>
+        <el-button type="primary" icon="el-icon-search" @click="search">查询</el-button>
+        <el-button icon="el-icon-refresh" @click="reset">重置</el-button>
+      </div>
+    </el-card>
+
+    <!-- 表格区 -->
+    <el-card shadow="never" class="table-card">
+      <el-table
+        :data="appointments"
+        stripe
+        v-loading="loading"
+        :header-cell-style="{ backgroundColor: '#f8fafc', color: '#475569', fontWeight: '600' }"
+        @selection-change="handleSelectionChange"
+      >
         <el-table-column type="selection" width="55" align="center"></el-table-column>
         <el-table-column prop="id" label="序号" width="70" align="center"></el-table-column>
         <el-table-column prop="patient_name" label="患者姓名"></el-table-column>
@@ -24,112 +38,109 @@
         <el-table-column prop="appointment_time" label="预约时间"></el-table-column>
         <el-table-column prop="appointment_purpose" label="预约目的"></el-table-column>
         <el-table-column prop="status" label="状态"></el-table-column>
-        <el-table-column label="操作" align="center" width="220">
+        <el-table-column label="操作" align="center" width="220" fixed="right">
           <template slot-scope="scope">
             <el-button size="mini" type="primary" plain @click="handleEdit(scope.row)">治疗</el-button>
             <el-button size="mini" type="danger" plain @click="handleDelete(scope.row.id)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
-    </div>
+      <el-empty v-if="!loading && !appointments.length" description="暂无待治疗预约"></el-empty>
+      <div v-else class="pagination-row">
+        <el-pagination
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+            :current-page="currentPage"
+            :page-sizes="[5, 10, 20, 50]"
+            :page-size="pageSize"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="totalItems">
+        </el-pagination>
+      </div>
+    </el-card>
 
-    <!-- 分页组件 -->
-    <div style="margin-top: 20px; text-align: center;">
-      <el-pagination
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-          :current-page="currentPage"
-          :page-sizes="[5, 10, 20, 50]"
-          :page-size="pageSize"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="totalItems">
-        <!--实现分页功能的，通过分页组件可以让用户方便地切换不同的页码和调整每页显示的条目数量，从而更好地浏览大量数据-->
-      </el-pagination>
-      <!-- 治疗弹窗 -->
-      <el-dialog :title="title" :visible.sync="dialogVisible" width="30%">
-        <el-steps :active="activeStep">
-          <el-step title="预约信息"></el-step>
-          <el-step title="治疗计划"></el-step>
-          <el-step title="治疗清单"></el-step>
-        </el-steps>
-        <el-form ref="form" :model="editItem" label-width="80px">
-          <!-- 步骤一 -->
-          <div v-show="activeStep === 0">
-            <el-form-item label="患者姓名" prop="patient_name">
-              <el-input v-model="editItem.patient_name"></el-input>
-            </el-form-item>
-            <el-form-item label="预约目的" prop="appointment_purpose">
-              <el-input v-model="editItem.appointment_purpose"></el-input>
-            </el-form-item>
-            <el-form-item label="状态" prop="status">
-              <el-input v-model="editItem.status"></el-input>
-            </el-form-item>
-            <el-form-item label="默认医生" prop="doctor_account_id">
-              <el-select v-model="editItem.doctor_account_id" placeholder="请选择默认医生" style="width: 100%" @change="handleDefaultDoctorChange">
-                <el-option v-for="doctor in doctors" :key="doctor.id" :label="doctor.name" :value="doctor.id"></el-option>
-              </el-select>
-            </el-form-item>
+    <!-- 治疗弹窗 -->
+    <el-dialog :title="title" :visible.sync="dialogVisible" width="560px">
+      <el-steps :active="activeStep" simple>
+        <el-step title="预约信息"></el-step>
+        <el-step title="治疗计划"></el-step>
+        <el-step title="治疗清单"></el-step>
+      </el-steps>
+      <el-form ref="form" :model="editItem" label-width="90px" class="step-form">
+        <!-- 步骤一 -->
+        <div v-show="activeStep === 0">
+          <el-form-item label="患者姓名" prop="patient_name">
+            <el-input v-model="editItem.patient_name"></el-input>
+          </el-form-item>
+          <el-form-item label="预约目的" prop="appointment_purpose">
+            <el-input v-model="editItem.appointment_purpose"></el-input>
+          </el-form-item>
+          <el-form-item label="状态" prop="status">
+            <el-input v-model="editItem.status"></el-input>
+          </el-form-item>
+          <el-form-item label="默认医生" prop="doctor_account_id">
+            <el-select v-model="editItem.doctor_account_id" placeholder="请选择默认医生" style="width: 100%" @change="handleDefaultDoctorChange">
+              <el-option v-for="doctor in doctors" :key="doctor.id" :label="doctor.name" :value="doctor.id"></el-option>
+            </el-select>
+          </el-form-item>
+        </div>
+
+        <!-- 步骤二 -->
+        <div v-show="activeStep === 1">
+          <el-form-item label="治疗日期" prop="treatment_date">
+            <el-date-picker v-model="editItem.treatment_date" type="date" placeholder="选择日期" value-format="yyyy-MM-dd"></el-date-picker>
+          </el-form-item>
+          <el-form-item label="治疗方案" prop="treatment_content">
+            <el-checkbox-group v-model="selectedTreatmentPlans">
+              <el-checkbox v-for="plan in treatmentPlans" :key="plan.id" :label="plan">
+                {{ plan.treatment_content }}
+              </el-checkbox>
+            </el-checkbox-group>
+          </el-form-item>
+          <div v-for="(plan, index) in selectedTreatmentPlans" :key="index" class="plan-row">
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <el-form-item label="处置医生">
+                  <el-select v-model="plan.doctor_account_id" placeholder="请选择处置医生" style="width: 100%" @change="handlePlanDoctorChange(plan)">
+                    <el-option v-for="doctor in doctors" :key="doctor.id" :label="doctor.name" :value="doctor.id"></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="金额">
+                  <el-input v-model="plan.treatment_free" readonly></el-input>
+                </el-form-item>
+              </el-col>
+            </el-row>
           </div>
+          <el-form-item label="总金额" prop="treatment_fee">
+            <el-input v-model="editItem.treatment_fee" readonly></el-input>
+          </el-form-item>
+        </div>
 
-          <!-- 步骤二 -->
-          <div v-show="activeStep === 1">
-            <el-form-item label="治疗日期" prop="treatment_date">
-              <el-date-picker v-model="editItem.treatment_date" type="date" placeholder="选择日期" value-format="yyyy-MM-dd"></el-date-picker>
-            </el-form-item>
-            <el-form-item label="治疗方案" prop="treatment_content">
-              <el-checkbox-group v-model="selectedTreatmentPlans">
-                <el-checkbox v-for="plan in treatmentPlans" :key="plan.id" :label="plan">
-                  {{ plan.treatment_content }}
-                </el-checkbox>
-              </el-checkbox-group>
-            </el-form-item>
-            <div v-for="(plan, index) in selectedTreatmentPlans" :key="index" style="margin-top: 10px;">
-              <el-row :gutter="20">
-                <el-col :span="12">
-                  <el-form-item label="处置医生">
-                    <el-select v-model="plan.doctor_account_id" placeholder="请选择处置医生" style="width: 100%" @change="handlePlanDoctorChange(plan)">
-                      <el-option v-for="doctor in doctors" :key="doctor.id" :label="doctor.name" :value="doctor.id"></el-option>
-                    </el-select>
-                  </el-form-item>
-                </el-col>
-                <el-col :span="12">
-                  <el-form-item label="金额">
-                    <el-input v-model="plan.treatment_free" readonly></el-input>
-                  </el-form-item>
-                </el-col>
-              </el-row>
-            </div>
-            <el-form-item label="总金额" prop="treatment_fee">
-              <el-input v-model="editItem.treatment_fee" readonly></el-input>
-            </el-form-item>
-          </div>
-
-
-
-          <!-- 步骤三 -->
-          <div v-show="activeStep === 2">
-            <div>患者姓名：{{ editItem.patient_name }}</div>
-            <div>预约目的：{{ editItem.appointment_purpose }}</div>
-            <div>状态：{{ editItem.status }}</div>
-            <div>医生姓名：{{ editItem.doctor_name }}</div>
-            <div>治疗日期：{{ editItem.treatment_date }}</div>
-            <div>治疗方案：</div>
-            <ul>
-              <li v-for="plan in selectedTreatmentPlans" :key="plan.id">
-                {{ plan.treatment_content }} -- 医生：{{ plan.doctor_name || '未指定' }} -- 金额：{{ plan.treatment_free }}
-              </li>
-            </ul>
-            <div>总金额：{{ editItem.treatment_fee }}</div>
-          </div>
-        </el-form>
-        <span slot="footer" class="dialog-footer">
-          <el-button v-show="activeStep > 0" @click="prevStep">上一步</el-button>
-          <el-button v-show="activeStep < 2" type="primary" @click="nextStep">下一步</el-button>
-          <el-button v-show="activeStep === 2" type="primary" @click="handleSaveEdit">保存</el-button>
-          <el-button @click="closeDialog">取消</el-button>
-        </span>
-      </el-dialog>
-    </div>
+        <!-- 步骤三 -->
+        <div v-show="activeStep === 2" class="summary-panel">
+          <div class="summary-line"><span class="summary-label">患者姓名：</span>{{ editItem.patient_name }}</div>
+          <div class="summary-line"><span class="summary-label">预约目的：</span>{{ editItem.appointment_purpose }}</div>
+          <div class="summary-line"><span class="summary-label">状态：</span>{{ editItem.status }}</div>
+          <div class="summary-line"><span class="summary-label">医生姓名：</span>{{ editItem.doctor_name }}</div>
+          <div class="summary-line"><span class="summary-label">治疗日期：</span>{{ editItem.treatment_date }}</div>
+          <div class="summary-line"><span class="summary-label">治疗方案：</span></div>
+          <ul class="summary-list">
+            <li v-for="plan in selectedTreatmentPlans" :key="plan.id">
+              {{ plan.treatment_content }} -- 医生：{{ plan.doctor_name || '未指定' }} -- 金额：{{ plan.treatment_free }}
+            </li>
+          </ul>
+          <div class="summary-line total"><span class="summary-label">总金额：</span>{{ editItem.treatment_fee }}</div>
+        </div>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button v-show="activeStep > 0" @click="prevStep">上一步</el-button>
+        <el-button v-show="activeStep < 2" type="primary" @click="nextStep">下一步</el-button>
+        <el-button v-show="activeStep === 2" type="primary" @click="handleSaveEdit">保存</el-button>
+        <el-button @click="closeDialog">取消</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 <script>
@@ -140,15 +151,16 @@ export default {
   name: 'TreatmentPlan',
   data() {
     return {
+      loading: false,
       appointments: [],
       treatments: [],
       treatmentPlans: [],
       doctors: [],
       selectedTreatmentPlans: [],
       selectedRows: [],
-      currentPage: 1,//当前页数
+      currentPage: 1,
       pageSize: 5,
-      totalItems: 0,//总条数
+      totalItems: 0,
       searchType: 'id',
       keyword: '',
       title: '治疗方案',
@@ -164,13 +176,13 @@ export default {
         treatment_content: '',
         treatment_fee: '',
       },
-      activeStep: 0,//步骤条当前步骤
+      activeStep: 0,
     };
   },
 
   mounted() {
-    this.search();//按条件查询
-    this.loadTreatmentPlans()//加载治疗方案
+    this.search();
+    this.loadTreatmentPlans()
     this.loadDoctors()
   },
   methods: {
@@ -202,6 +214,7 @@ export default {
       return text
     },
     search() {
+      this.loading = true;
       let url = '/appointments/selectAll';
       let params = {
         page: this.currentPage,
@@ -218,7 +231,7 @@ export default {
           .then(response => {
             const result = response.data;
             if (result.code !== '200') {
-              this.$message.error((res.data.msg || '获取待治疗预约失败') + '，请刷新页面重试。如问题持续，请联系管理员。')
+              this.$message.error((result.data.msg || '获取待治疗预约失败') + '，请刷新页面重试。如问题持续，请联系管理员。')
               return;
             }
             const data = result.data || {};
@@ -231,6 +244,9 @@ export default {
           .catch(error => {
             console.error('Error fetching appointments:', error);
             showApiError(this, '获取待治疗预约', error)
+          })
+          .finally(() => {
+            this.loading = false;
           });
     },
     reset() {
@@ -249,7 +265,7 @@ export default {
       this.search();
     },
     handleSelectionChange(val) {
-      this.selectedRows = val.map(row => row.id);//提取选中的id
+      this.selectedRows = val.map(row => row.id);
     },
     closeDialog() {
       this.dialogVisible = false;
@@ -397,14 +413,14 @@ export default {
     calculateFee() {
       let totalFee = 0;
       this.selectedTreatmentPlans.forEach(plan => {
-        totalFee += parseFloat(plan.treatment_free);// 确保金额是浮点数
+        totalFee += parseFloat(plan.treatment_free);
       });
       this.editItem.treatment_fee = totalFee.toFixed(2);
       this.syncSelectedTreatmentPlanDefaults();
     }
   },
 
-    watch: {//被调用来重新计算费用
+    watch: {
     'selectedTreatmentPlans': {
       handler: 'calculateFee',
       deep: true
@@ -413,6 +429,46 @@ export default {
 };
 </script>
 <style scoped>
+.treatment-page {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.step-form {
+  margin-top: 20px;
+}
+.plan-row {
+  margin-top: 10px;
+}
+.summary-panel {
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 12px;
+}
+.summary-line {
+  line-height: 2;
+  color: #475569;
+}
+.summary-line.total {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #e2e8f0;
+  font-weight: 600;
+  color: #0f172a;
+}
+.summary-label {
+  color: #64748b;
+  display: inline-block;
+  width: 80px;
+}
+.summary-list {
+  margin: 8px 0;
+  padding-left: 20px;
+  color: #475569;
+}
+.summary-list li {
+  line-height: 1.8;
+}
 .dialog-footer {
   text-align: right;
 }

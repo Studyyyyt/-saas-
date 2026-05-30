@@ -1,8 +1,11 @@
 <template>
   <div class="api-key-page">
-    <div class="page-header">
-      <h2 class="page-title">开放接口密钥</h2>
-      <p class="page-desc">管理外部系统和 AI 工具访问本系统所需的 API Key</p>
+    <div class="hero-card">
+      <div>
+        <div class="page-kicker">系统设置</div>
+        <h2>开放接口密钥</h2>
+        <p>管理外部系统和 AI 工具访问本系统所需的 API Key</p>
+      </div>
     </div>
 
     <div v-if="loading" class="loading-wrap">
@@ -180,23 +183,6 @@ export default {
 .api-key-page {
   max-width: 720px;
   margin: 0 auto;
-}
-
-.page-header {
-  margin-bottom: 24px;
-}
-
-.page-title {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.page-desc {
-  margin: 6px 0 0;
-  font-size: 13px;
-  color: #64748b;
 }
 
 .loading-wrap {

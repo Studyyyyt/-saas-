@@ -1,35 +1,43 @@
 <template>
-  <div class="user-profile">
-    <el-card class="user-card">
-      <div slot="header" class="clearfix">
-        <span>个人信息</span>
-        <el-button style="float: right; padding: 3px 0" type="text" @click="editProfile">编辑</el-button>
+  <div class="person-page">
+    <div class="hero-card">
+      <div>
+        <div class="page-kicker">个人中心</div>
+        <h2>个人信息</h2>
+        <p>查看并管理您的个人资料。</p>
       </div>
+      <div class="hero-actions">
+        <el-button type="primary" plain @click="editProfile">编辑资料</el-button>
+      </div>
+    </div>
 
-      <div class="user-info" style="">
-        <el-avatar icon="el-icon-user-solid"></el-avatar>
-        <el-form :model="user">
-          <el-form-item label="姓名">
-            <span>{{ user.name }}</span>
-          </el-form-item>
-          <el-form-item label="年龄">
-            <span>{{ user.age }}</span>
-          </el-form-item>
-          <el-form-item label="邮箱">
-            <span>{{ user.email }}</span>
-          </el-form-item>
-          <el-form-item label="地址">
-            <span>{{ user.address }}</span>
-          </el-form-item>
-          <el-form-item label="联系方式">
-            <span>{{ user.phone }}</span>
-          </el-form-item>
-        </el-form>
+    <el-card shadow="never" class="info-card">
+      <div class="profile-header">
+        <el-avatar :size="80" icon="el-icon-user-solid" class="profile-avatar"></el-avatar>
+        <div class="profile-name">{{ user.name }}</div>
       </div>
+      <el-divider></el-divider>
+      <el-form label-width="100px" class="profile-form">
+        <el-form-item label="姓名">
+          <span class="form-value">{{ user.name }}</span>
+        </el-form-item>
+        <el-form-item label="年龄">
+          <span class="form-value">{{ user.age }}</span>
+        </el-form-item>
+        <el-form-item label="邮箱">
+          <span class="form-value">{{ user.email }}</span>
+        </el-form-item>
+        <el-form-item label="地址">
+          <span class="form-value">{{ user.address }}</span>
+        </el-form-item>
+        <el-form-item label="联系方式">
+          <span class="form-value">{{ user.phone }}</span>
+        </el-form-item>
+      </el-form>
     </el-card>
 
     <!-- 编辑个人信息的对话框 -->
-    <el-dialog :visible.sync="dialogVisible" title="编辑个人信息">
+    <el-dialog :visible.sync="dialogVisible" title="编辑个人信息" width="480px">
       <el-form :model="editUser" label-width="80px">
         <el-form-item label="姓名">
           <el-input v-model="editUser.name"></el-input>
@@ -43,7 +51,7 @@
         <el-form-item label="地址">
           <el-input v-model="editUser.address"></el-input>
         </el-form-item>
-        <el-form-item label="地址">
+        <el-form-item label="联系方式">
           <el-input v-model="editUser.phone"></el-input>
         </el-form-item>
       </el-form>
@@ -87,11 +95,44 @@ export default {
 </script>
 
 <style scoped>
-.user-card {
-  width: 500px;
-  margin: 20px auto;
+.person-page {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
-.user-info {
-  margin-top: 20px;
+.info-card {
+  max-width: 600px;
+  border-radius: 18px;
+}
+.profile-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 0 8px;
+}
+.profile-avatar {
+  font-size: 36px;
+  background: linear-gradient(135deg, #5A8F7B 0%, #7AAF9B 100%);
+  color: #fff;
+  transition: transform 0.3s ease;
+}
+.profile-avatar:hover {
+  transform: scale(1.05);
+}
+.profile-name {
+  margin-top: 12px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #2C3E35;
+}
+.profile-form .el-form-item {
+  margin-bottom: 14px;
+}
+.form-value {
+  color: #475569;
+  font-size: 15px;
+}
+.dialog-footer {
+  text-align: right;
 }
 </style>

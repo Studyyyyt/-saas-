@@ -10,7 +10,7 @@
     </div>
 
     <el-card shadow="never" class="table-card">
-      <el-table :data="accounts" stripe :header-cell-style="{ backgroundColor: 'aliceblue', color: '#666' }">
+      <el-table :data="accounts" stripe :header-cell-style="{ backgroundColor: '#f8fafc', color: '#475569', fontWeight: '600' }">
         <el-table-column prop="id" label="序号" width="70" align="center"></el-table-column>
         <el-table-column prop="username" label="账号名称"></el-table-column>
         <el-table-column prop="name" label="姓名"></el-table-column>
@@ -21,13 +21,14 @@
             <el-tag v-else size="mini" type="info">未绑定</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="180">
+        <el-table-column label="操作" width="180" align="center" fixed="right">
           <template slot-scope="scope">
             <el-button size="mini" type="primary" plain @click="handleEdit(scope.row)">编辑</el-button>
             <el-button size="mini" type="danger" plain @click="handleDelete(scope.row.id)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
+      <el-empty v-if="!accounts.length" description="暂无账号数据"></el-empty>
     </el-card>
 
     <el-dialog :title="isEditing ? '编辑员工账号' : '新增员工账号'" :visible.sync="dialogVisible" width="420px">
@@ -44,10 +45,10 @@
         </el-form-item>
         <el-form-item label="微信OpenID"><el-input v-model="editItem.wechat_openid"></el-input></el-form-item>
       </el-form>
-      <span slot="footer">
+      <div slot="footer" class="dialog-footer">
         <el-button @click="dialogVisible = false">取消</el-button>
         <el-button type="primary" @click="saveAccount">确定</el-button>
-      </span>
+      </div>
     </el-dialog>
   </div>
 </template>
@@ -91,7 +92,7 @@ export default {
           ...item,
           roleLabel: this.formatRole(item.role)
         }))
-      }).catch(() => {
+      }).catch(error => {
         showApiError(this, '获取账号列表', error)
       })
     },
@@ -133,9 +134,5 @@ export default {
 
 <style scoped>
 .system-page { display:flex; flex-direction:column; gap:14px; }
-.hero-card { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:18px; border-radius:18px; background:#fff; box-shadow:0 8px 24px rgba(31,71,136,.08); }
-.page-kicker { color:#64748b; font-size:13px; }
-.hero-card h2 { margin:6px 0 8px; color:#0f172a; font-size:24px; }
-.hero-card p { margin:0; color:#94a3b8; }
-.table-card { border-radius:18px; }
+.dialog-footer { text-align: right; }
 </style>

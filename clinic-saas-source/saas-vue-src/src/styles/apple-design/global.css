@@ -453,3 +453,69 @@
 .apple-design-scope ::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.25);
 }
+
+/* === 页面级布局组件（hero-card / query-card / table-card / pagination-row）=== */
+.apple-design-scope .hero-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 18px;
+  border-radius: var(--apple-radius-lg);
+  background: var(--apple-bg-secondary);
+  box-shadow: var(--apple-shadow-md);
+}
+.apple-design-scope .page-kicker {
+  color: var(--apple-text-tertiary);
+  font-size: var(--apple-text-sm);
+}
+.apple-design-scope .hero-card h2 {
+  margin: 6px 0 8px;
+  color: var(--apple-text-primary);
+  font-size: var(--apple-text-xl);
+}
+.apple-design-scope .hero-card p {
+  margin: 0;
+  color: var(--apple-text-tertiary);
+}
+.apple-design-scope .hero-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.apple-design-scope .query-card,
+.apple-design-scope .table-card {
+  border-radius: var(--apple-radius-lg);
+}
+.apple-design-scope .query-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.apple-design-scope .query-input {
+  width: 260px;
+}
+.apple-design-scope .query-select {
+  width: 160px;
+}
+.apple-design-scope .pagination-row {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 16px;
+}
+
+@media (max-width: 768px) {
+  .apple-design-scope .hero-card {
+    flex-direction: column;
+  }
+  .apple-design-scope .query-input,
+  .apple-design-scope .query-select,
+  .apple-design-scope .category-tree-select {
+    width: 100%;
+  }
+  .apple-design-scope .pagination-row {
+    justify-content: center;
+  }
+}

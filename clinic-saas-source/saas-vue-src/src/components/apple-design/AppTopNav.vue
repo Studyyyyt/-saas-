@@ -1,147 +1,35 @@
 <template>
   <nav class="app-top-nav" :class="{ 'is-scrolled': isScrolled }">
     <div class="nav-inner">
-      <!-- Logo -->
-      <div class="nav-brand" @click="$router.push('/home')">
-        <div class="brand-mark">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2C7.5 2 4 6.5 4 10c0 3.5 3 7 8 12 5-5 8-8.5 8-12 0-3.5-3.5-8-8-8z"/>
-            <circle cx="12" cy="10" r="3"/>
-          </svg>
+      <!-- 左侧：汉堡按钮 + Logo -->
+      <div class="nav-left">
+        <div class="sidebar-toggle" @click="$emit('toggle-sidebar')" title="展开/折叠菜单">
+          <i class="el-icon-s-fold"></i>
         </div>
-        <span class="brand-text">一隐口腔</span>
-      </div>
-
-      <!-- 桌面菜单 -->
-      <div class="nav-menu">
-        <!-- 可排序的核心菜单 -->
-        <div
-          v-for="(item, index) in coreMenuItems"
-          :key="item.path || item.group || item.label"
-          class="menu-item-wrapper"
-          :class="{ 'is-dragging': draggingIndex === index, 'is-drag-over': dragOverIndex === index }"
-          draggable="true"
-          @dragstart="handleDragStart($event, index)"
-          @dragend="handleDragEnd"
-          @dragover="handleDragOver($event, index)"
-          @drop="handleDrop($event, index)"
-          @mouseenter="openDropdown(item.group || item.path)"
-          @mouseleave="scheduleCloseDropdown()"
-        >
-          <!-- 拖拽手柄 -->
-          <div
-            class="drag-handle"
-            title="按住拖动排序"
-            @mousedown="showDragHandle = true"
-          >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-              <circle cx="2.5" cy="2" r="1.2"/>
-              <circle cx="6" cy="2" r="1.2"/>
-              <circle cx="9.5" cy="2" r="1.2"/>
-              <circle cx="2.5" cy="6" r="1.2"/>
-              <circle cx="6" cy="6" r="1.2"/>
-              <circle cx="9.5" cy="6" r="1.2"/>
-              <circle cx="2.5" cy="10" r="1.2"/>
-              <circle cx="6" cy="10" r="1.2"/>
-              <circle cx="9.5" cy="10" r="1.2"/>
+        <div class="nav-brand" @click="$router.push('/home')">
+          <div class="brand-mark">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2C7.5 2 4 6.5 4 10c0 3.5 3 7 8 12 5-5 8-8.5 8-12 0-3.5-3.5-8-8-8z"/>
+              <circle cx="12" cy="10" r="3"/>
             </svg>
           </div>
-
-          <router-link
-            v-if="!item.children"
-            :to="item.path"
-            class="menu-item"
-            :class="{ active: $route.path === item.path }"
-          >
-            <i v-if="item.icon" :class="item.icon" class="menu-item-icon"></i>
-            <span>{{ item.label }}</span>
-            <div v-if="$route.path === item.path" class="active-indicator"></div>
-          </router-link>
-
-          <div
-            v-else
-            class="menu-item has-dropdown"
-            :class="{ active: isGroupActive(item), open: hoverGroup === item.group }"
-          >
-            <i v-if="item.icon" :class="item.icon" class="menu-item-icon"></i>
-            <span>{{ item.label }}</span>
-            <i class="el-icon-arrow-down dropdown-arrow"></i>
-            <div v-if="isGroupActive(item)" class="active-indicator"></div>
-
-            <transition name="apple-dropdown">
-              <div
-                v-show="hoverGroup === item.group"
-                class="dropdown-panel"
-                @mouseenter="cancelCloseDropdown()"
-                @mouseleave="scheduleCloseDropdown()"
-              >
-                <div class="dropdown-group-header">{{ item.label }}</div>
-                <router-link
-                  v-for="child in item.children"
-                  :key="child.path"
-                  :to="child.path"
-                  class="dropdown-item"
-                  :class="{ active: $route.path === child.path }"
-                >
-                  <i v-if="item.icon" :class="item.icon" class="dropdown-item-icon"></i>
-                  {{ child.label }}
-                </router-link>
-              </div>
-            </transition>
-          </div>
+          <span class="brand-text">一隐口腔</span>
         </div>
+      </div>
 
-        <!-- 更多菜单 -->
-        <div
-          v-if="moreMenuItems.length"
-          class="menu-item-wrapper more-wrapper"
-          @mouseenter="openDropdown('__more__')"
-          @mouseleave="scheduleCloseDropdown()"
+      <!-- 桌面核心菜单 -->
+      <div class="nav-menu">
+        <router-link
+          v-for="item in coreMenuItems"
+          :key="item.path"
+          :to="item.path"
+          class="menu-item"
+          :class="{ active: $route.path === item.path }"
         >
-          <div
-            class="menu-item has-dropdown"
-            :class="{ open: hoverGroup === '__more__' }"
-          >
-            <span>更多</span>
-            <i class="el-icon-arrow-down dropdown-arrow"></i>
-
-            <transition name="apple-dropdown">
-              <div
-                v-show="hoverGroup === '__more__'"
-                class="dropdown-panel more-dropdown"
-                @mouseenter="cancelCloseDropdown()"
-                @mouseleave="scheduleCloseDropdown()"
-              >
-                <!-- 更多中的单级菜单 -->
-                <router-link
-                  v-for="item in moreMenuItems.filter(i => !i.children)"
-                  :key="item.path"
-                  :to="item.path"
-                  class="dropdown-item"
-                  :class="{ active: $route.path === item.path }"
-                >
-                  <i v-if="item.icon" :class="item.icon" class="dropdown-item-icon"></i>
-                  {{ item.label }}
-                </router-link>
-
-                <!-- 更多中的分组菜单（展平显示，不显示分组标题） -->
-                <template v-for="(item, idx) in moreMenuItems.filter(i => i.children)">
-                  <div :key="'sep-' + item.group" v-if="idx > 0 || moreMenuItems.filter(i => !i.children).length > 0" class="more-divider"></div>
-                  <router-link
-                    v-for="child in item.children"
-                    :key="child.path"
-                    :to="child.path"
-                    class="dropdown-item"
-                    :class="{ active: $route.path === child.path }"
-                  >
-                    <i v-if="item.icon" :class="item.icon" class="dropdown-item-icon"></i>
-                    {{ child.label }}
-                  </router-link>
-                </template>
-              </div>
-            </transition>
-          </div>
-        </div>
+          <i v-if="item.icon" :class="item.icon" class="menu-item-icon"></i>
+          <span>{{ item.label }}</span>
+          <div v-if="$route.path === item.path" class="active-indicator"></div>
+        </router-link>
       </div>
 
       <!-- 右侧操作区 -->
@@ -190,7 +78,7 @@
     <transition name="apple-slide">
       <div v-show="mobileMenuOpen" class="mobile-menu-panel">
         <div
-          v-for="item in orderedVisibleMenuItems"
+          v-for="item in visibleMenuItems"
           :key="item.path || item.group"
           class="mobile-menu-group"
         >
@@ -230,9 +118,6 @@ import {
 } from '@/utils/adminSession'
 import { canAccessRoleMenu } from '@/utils/roleMenuCatalog'
 
-const MENU_ORDER_KEY = 'nav_menu_order_v2'
-const CORE_MENU_COUNT = 5
-
 export default {
   name: 'AppTopNav',
   data() {
@@ -240,13 +125,8 @@ export default {
       user: getAdminSession() || {},
       username: '',
       isScrolled: false,
-      hoverGroup: null,
-      dropdownCloseTimer: null,
       showUserMenu: false,
       mobileMenuOpen: false,
-      showDragHandle: false,
-      draggingIndex: -1,
-      dragOverIndex: -1,
       menuItems: [
         { label: '首页概览', path: '/home', icon: 'el-icon-s-home' },
         { label: '患者列表', path: '/Patient', icon: 'el-icon-user' },
@@ -334,27 +214,12 @@ export default {
         }
       })
     },
-    orderedVisibleMenuItems() {
-      const savedOrder = this.getSavedOrder()
-      if (!savedOrder || savedOrder.length === 0) {
-        return this.visibleMenuItems
-      }
-      // 按 savedOrder 排序 visibleMenuItems
-      const orderMap = new Map(savedOrder.map((key, idx) => [key, idx]))
-      const sorted = [...this.visibleMenuItems].sort((a, b) => {
-        const keyA = a.path || a.group || a.label
-        const keyB = b.path || b.group || b.label
-        const idxA = orderMap.has(keyA) ? orderMap.get(keyA) : 9999
-        const idxB = orderMap.has(keyB) ? orderMap.get(keyB) : 9999
-        return idxA - idxB
-      })
-      return sorted
-    },
     coreMenuItems() {
-      return this.orderedVisibleMenuItems.slice(0, CORE_MENU_COUNT)
-    },
-    moreMenuItems() {
-      return this.orderedVisibleMenuItems.slice(CORE_MENU_COUNT)
+      // 顶部只保留最高频的 5 个核心入口
+      const corePaths = ['/home', '/Patient', '/MedicalRecord', '/Appointment', '/Followup']
+      return corePaths
+        .map(path => this.menuItems.find(item => item.path === path))
+        .filter(item => item && canAccessRoleMenu(this.user, item.path))
     },
     normalizedRole() {
       const role = (this.user && this.user.role ? String(this.user.role) : '').trim()
@@ -402,98 +267,6 @@ export default {
     },
     handleFull() {
       document.documentElement.requestFullscreen()
-    },
-    isGroupActive(item) {
-      if (!item.children) return false
-      return item.children.some(child => this.$route.path === child.path)
-    },
-    openDropdown(group) {
-      this.cancelCloseDropdown()
-      this.hoverGroup = group
-    },
-    scheduleCloseDropdown() {
-      this.cancelCloseDropdown()
-      this.dropdownCloseTimer = setTimeout(() => {
-        this.hoverGroup = null
-      }, 150)
-    },
-    cancelCloseDropdown() {
-      if (this.dropdownCloseTimer) {
-        clearTimeout(this.dropdownCloseTimer)
-        this.dropdownCloseTimer = null
-      }
-    },
-    // 拖拽排序
-    menuOrderKey() {
-      const userId = this.user && this.user.id ? String(this.user.id) : 'guest'
-      return `${MENU_ORDER_KEY}_${userId}`
-    },
-    getSavedOrder() {
-      try {
-        const raw = localStorage.getItem(this.menuOrderKey())
-        return raw ? JSON.parse(raw) : null
-      } catch {
-        return null
-      }
-    },
-    saveOrder(order) {
-      try {
-        localStorage.setItem(this.menuOrderKey(), JSON.stringify(order))
-      } catch {
-        // ignore
-      }
-    },
-    handleDragStart(e, index) {
-      this.draggingIndex = index
-      e.dataTransfer.effectAllowed = 'move'
-      e.dataTransfer.setData('text/plain', String(index))
-      // 设置拖拽时的半透明预览图效果
-      if (e.dataTransfer.setDragImage) {
-        const rect = e.target.getBoundingClientRect()
-        e.dataTransfer.setDragImage(e.target, e.clientX - rect.left, e.clientY - rect.top)
-      }
-    },
-    handleDragEnd() {
-      this.draggingIndex = -1
-      this.dragOverIndex = -1
-    },
-    handleDragOver(e, index) {
-      e.preventDefault()
-      e.dataTransfer.dropEffect = 'move'
-      if (this.draggingIndex !== -1 && this.draggingIndex !== index) {
-        this.dragOverIndex = index
-      }
-    },
-    handleDrop(e, targetIndex) {
-      e.preventDefault()
-      const sourceIndex = parseInt(e.dataTransfer.getData('text/plain'), 10)
-      if (isNaN(sourceIndex) || sourceIndex === targetIndex) {
-        this.dragOverIndex = -1
-        return
-      }
-
-      // 获取当前核心菜单顺序的 keys
-      const coreKeys = this.coreMenuItems.map(
-        item => item.path || item.group || item.label
-      )
-
-      // 在核心菜单范围内移动
-      const [moved] = coreKeys.splice(sourceIndex, 1)
-      coreKeys.splice(targetIndex, 0, moved)
-
-      // 与更多菜单合并成完整顺序
-      const moreKeys = this.moreMenuItems.map(
-        item => item.path || item.group || item.label
-      )
-      const fullOrder = [...coreKeys, ...moreKeys]
-
-      // 保存
-      this.saveOrder(fullOrder)
-
-      // 强制刷新
-      this.$forceUpdate()
-      this.dragOverIndex = -1
-      this.draggingIndex = -1
     }
   }
 }
@@ -527,6 +300,33 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--apple-content-padding);
+}
+
+/* 左侧区域 */
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* 侧边栏切换按钮 */
+.sidebar-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--apple-radius-md);
+  cursor: pointer;
+  color: var(--apple-text-secondary);
+  font-size: 16px;
+  transition: all var(--apple-transition-fast);
+}
+
+.sidebar-toggle:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--apple-accent);
 }
 
 /* Logo */
@@ -571,71 +371,14 @@ export default {
   justify-content: center;
   gap: 2px;
   flex: 1;
-  margin-left: 28px;
-  margin-right: 28px;
+  margin-left: 20px;
+  margin-right: 20px;
   overflow-x: auto;
   scrollbar-width: none;
-  /* 使用 padding-bottom + margin-bottom 技巧，避免下拉面板被 overflow 裁剪 */
-  padding-bottom: 240px;
-  margin-bottom: -240px;
-  /* padding-bottom 会扩展点击热区，导致下方内容被遮挡，需要禁用指针事件 */
-  pointer-events: none;
 }
 
 .nav-menu::-webkit-scrollbar {
   display: none;
-}
-
-.menu-item-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  border-radius: var(--apple-radius-sm);
-  transition: background-color 0.2s ease;
-  pointer-events: auto;
-}
-
-.menu-item-wrapper.is-dragging {
-  opacity: 0.5;
-}
-
-.menu-item-wrapper.is-drag-over {
-  background: rgba(90, 143, 123, 0.06);
-}
-
-/* 拖拽手柄 */
-.drag-handle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 36px;
-  margin-left: 2px;
-  color: var(--apple-text-tertiary);
-  cursor: grab;
-  opacity: 0.35;
-  transition: all 0.2s ease;
-  border-radius: 6px;
-  flex-shrink: 0;
-}
-
-.drag-handle:hover {
-  background: rgba(90, 143, 123, 0.08);
-  color: var(--apple-accent);
-  opacity: 1;
-}
-
-.menu-item-wrapper:hover .drag-handle {
-  opacity: 0.6;
-}
-
-.menu-item-wrapper.is-dragging .drag-handle {
-  opacity: 1;
-  color: var(--apple-accent);
-}
-
-.drag-handle:active {
-  cursor: grabbing;
 }
 
 .menu-item {
@@ -694,124 +437,12 @@ export default {
   animation: apple-nav-indicator 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
-.dropdown-arrow {
-  font-size: 10px;
-  transition: transform var(--apple-transition-fast);
-  color: var(--apple-text-tertiary);
-}
-
-.menu-item.has-dropdown.open .dropdown-arrow {
-  transform: rotate(180deg);
-}
-
-/* 下拉面板 */
-.dropdown-panel {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  min-width: 200px;
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-radius: 16px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  box-shadow: 0 24px 40px -8px rgba(0, 0, 0, 0.1), 0 8px 12px -4px rgba(0, 0, 0, 0.04);
-  padding: 8px;
-  z-index: 1001;
-}
-
-.dropdown-group-header {
-  padding: 8px 12px 4px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--apple-text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-  margin-bottom: 4px;
-}
-
-/* 填充 menu-item 与 dropdown-panel 之间的间隙 */
-.dropdown-panel::before {
-  content: '';
-  position: absolute;
-  top: -8px;
-  left: 0;
-  right: 0;
-  height: 8px;
-}
-
-.dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 12px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--apple-text-primary);
-  text-decoration: none;
-  border-radius: 10px;
-  transition: all var(--apple-transition-fast);
-  white-space: nowrap;
-}
-
-.dropdown-item-icon {
-  font-size: 14px;
-  width: 16px;
-  text-align: center;
-  color: var(--apple-text-tertiary);
-  transition: color 0.2s ease;
-}
-
-.dropdown-item:hover {
-  background: rgba(0, 0, 0, 0.04);
-  color: var(--apple-accent);
-}
-
-.dropdown-item:hover .dropdown-item-icon {
-  color: var(--apple-accent);
-}
-
-.dropdown-item.active {
-  color: var(--apple-accent);
-  background: var(--apple-accent-light);
-  font-weight: 600;
-}
-
-.dropdown-item.active .dropdown-item-icon {
-  color: var(--apple-accent);
-}
-
-/* 更多下拉面板 */
-.more-dropdown {
-  max-height: 420px;
-  overflow-y: auto;
-  scrollbar-width: thin;
-}
-
-.more-dropdown::-webkit-scrollbar {
-  width: 4px;
-}
-
-.more-dropdown::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.12);
-  border-radius: 2px;
-}
-
-.more-divider {
-  height: 1px;
-  background: rgba(0, 0, 0, 0.06);
-  margin: 4px 10px;
-}
-
 /* 右侧操作区 */
 .nav-actions {
   display: flex;
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
-  margin-left: 16px;
 }
 
 .action-btn {
@@ -1052,11 +683,11 @@ export default {
 @keyframes apple-dropdown-in {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(-6px) scale(0.98);
+    transform: translateY(-6px) scale(0.98);
   }
   to {
     opacity: 1;
-    transform: translateX(-50%) translateY(0) scale(1);
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -1078,6 +709,10 @@ export default {
     display: none;
   }
 
+  .sidebar-toggle {
+    display: none;
+  }
+
   .nav-actions .user-name {
     display: none;
   }
@@ -1088,6 +723,12 @@ export default {
 
   .mobile-menu-panel {
     display: block;
+  }
+}
+
+@media (max-width: 768px) {
+  .brand-text {
+    display: none;
   }
 }
 </style>

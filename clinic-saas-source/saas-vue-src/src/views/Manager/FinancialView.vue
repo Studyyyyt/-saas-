@@ -1,27 +1,42 @@
 <template>
   <div class="financial-page">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
+    <!-- 页面标题区 -->
+    <div class="hero-card">
       <div>
-        <el-select v-model="searchType" placeholder="请选择查询条件" style="width: 150px;">
+        <div class="page-kicker">财务管理</div>
+        <h2>财务流水</h2>
+        <p>管理诊所收入与支出，查看医生业绩统计。</p>
+      </div>
+      <div class="hero-actions">
+        <el-button type="primary" plain @click="showAddDialog">新增</el-button>
+      </div>
+    </div>
+
+    <!-- 查询区 -->
+    <el-card shadow="never" class="query-card">
+      <div class="query-row">
+        <el-select v-model="searchType" placeholder="请选择查询条件" class="query-select">
           <el-option label="编号" value="id"></el-option>
           <el-option label="名称" value="name"></el-option>
           <el-option label="金额" value="amount"></el-option>
           <el-option label="日期" value="date"></el-option>
           <el-option label="类型" value="type"></el-option>
         </el-select>
-        <el-input v-model="keyword" style="width: 300px; margin-left: 10px; margin-right: 10px" placeholder="请输入关键词"></el-input>
-        <el-button type="primary" @click="search">查询</el-button>
-        <el-button type="info" @click="reset">重置</el-button>
+        <el-input v-model="keyword" class="query-input" placeholder="请输入关键词" @keyup.enter.native="search"></el-input>
+        <el-button type="primary" icon="el-icon-search" @click="search">查询</el-button>
+        <el-button icon="el-icon-refresh" @click="reset">重置</el-button>
       </div>
-    </div>
+    </el-card>
 
-    <div style="margin: 10px 0">
-      <el-button type="primary" plain @click="showAddDialog">新增</el-button>
-    </div>
-
-    <div style="margin: 10px 0">
-      <el-table :data="finances" stripe :header-cell-style="{ backgroundColor: 'aliceblue', color: '#666' }"
-                @selection-change="handleSelectionChange">
+    <!-- 表格区 -->
+    <el-card shadow="never" class="table-card">
+      <el-table
+        :data="finances"
+        stripe
+        v-loading="loading"
+        :header-cell-style="{ backgroundColor: '#f8fafc', color: '#475569', fontWeight: '600' }"
+        @selection-change="handleSelectionChange"
+      >
         <el-table-column type="selection" width="55" align="center"></el-table-column>
         <el-table-column prop="id" label="编号" width="70" align="center"></el-table-column>
         <el-table-column prop="name" label="名称"></el-table-column>
@@ -30,27 +45,28 @@
         <el-table-column prop="type" label="类型"></el-table-column>
         <el-table-column prop="payment_channel_name" label="收款渠道"></el-table-column>
         <el-table-column prop="remark" label="备注"></el-table-column>
-        <el-table-column label="操作" align="center" width="220">
+        <el-table-column label="操作" align="center" width="220" fixed="right">
           <template slot-scope="scope">
             <el-button size="mini" type="primary" plain @click="handleEdit(scope.row)">编辑</el-button>
             <el-button size="mini" type="danger" plain @click="handleDelete(scope.row.id)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
-    </div>
+      <el-empty v-if="!loading && !finances.length" description="暂无财务流水"></el-empty>
+      <div v-else class="pagination-row">
+        <el-pagination
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+            :current-page="currentPage"
+            :page-sizes="[5, 10, 20, 50]"
+            :page-size="pageSize"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="totalItems">
+        </el-pagination>
+      </div>
+    </el-card>
 
-    <div style="margin-top: 20px; text-align: center;">
-      <el-pagination
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-          :current-page="currentPage"
-          :page-sizes="[5, 10, 20, 50]"
-          :page-size="pageSize"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="totalItems">
-      </el-pagination>
-    </div>
-
+    <!-- 医生业绩统计 -->
     <el-card class="doctor-performance-card" shadow="never">
       <div slot="header" class="doctor-performance-header">
         <div>
@@ -108,7 +124,7 @@
           border
           show-summary
           :summary-method="buildDoctorPerformanceSummary"
-          :header-cell-style="{ backgroundColor: 'aliceblue', color: '#666' }">
+          :header-cell-style="{ backgroundColor: '#f8fafc', color: '#475569', fontWeight: '600' }">
         <el-table-column prop="doctor_name" label="医生" min-width="160"></el-table-column>
         <el-table-column prop="project_count" label="业绩操作数" width="110" align="center"></el-table-column>
         <el-table-column prop="turnover_amount" label="营业额" min-width="130" align="right">
@@ -126,7 +142,7 @@
       </el-table>
     </el-card>
 
-    <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="30%">
+    <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="480px">
       <el-form ref="form" :model="editItem" label-width="80px">
         <el-form-item label="名称" prop="name">
           <el-input v-model="editItem.name"></el-input>
@@ -147,10 +163,10 @@
           <el-input v-model="editItem.remark"></el-input>
         </el-form-item>
       </el-form>
-      <span slot="footer" class="dialog-footer">
+      <div slot="footer" class="dialog-footer">
         <el-button @click="closeDialog">取消</el-button>
         <el-button type="primary" @click="handleSaveEdit">保存</el-button>
-      </span>
+      </div>
     </el-dialog>
   </div>
 </template>
@@ -178,6 +194,7 @@ export default {
   name: 'FinancialManagement',
   data() {
     return {
+      loading: false,
       finances: [],
       selectedRows: [],
       currentPage: 1,
@@ -216,6 +233,7 @@ export default {
   },
   methods: {
     search() {
+      this.loading = true;
       let url = '/finances/selectAll';
       const params = {
         page: this.currentPage,
@@ -236,6 +254,9 @@ export default {
           .catch(error => {
             console.error('Error fetching finances:', error);
             showApiError(this, '获取财务流水', error)
+          })
+          .finally(() => {
+            this.loading = false;
           });
     },
     fetchDoctorPerformance() {
@@ -254,7 +275,7 @@ export default {
       }).then(response => {
         const result = response.data || {};
         if (result.code !== '200') {
-          this.$message.error((res.data.msg || '获取医生业绩统计失败') + '，请刷新页面重试。如问题持续，请联系管理员。')
+          this.$message.error((result.data.msg || '获取医生业绩统计失败') + '，请刷新页面重试。如问题持续，请联系管理员。')
           return;
         }
         const data = result.data || {};
@@ -408,12 +429,13 @@ export default {
 
 <style scoped>
 .financial-page {
-  height: 100%;
-  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .doctor-performance-card {
-  margin-top: 20px;
+  margin-top: 6px;
 }
 
 .doctor-performance-header {
