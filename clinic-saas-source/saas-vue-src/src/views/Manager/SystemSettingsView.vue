@@ -12,7 +12,7 @@
         v-for="group in settingGroups"
         :key="group.key"
         class="settings-group-card"
-        @click="goTo(group.path)"
+        @click="goTo(group)"
       >
         <div class="settings-group-icon" :style="{ background: group.gradient }">
           {{ group.icon }}
@@ -136,13 +136,27 @@ export default {
           desc: '耗材分类、库存预警、采购配置',
           path: '/material-categories',
           tags: ['耗材分类', '库存预警']
+        },
+        {
+          key: 'api-docs',
+          name: 'API 接口文档',
+          icon: '📘',
+          gradient: 'linear-gradient(135deg, #2563eb, #3b82f6)',
+          desc: '在线查看 Swagger 接口文档，供外部系统对接调试',
+          path: 'http://localhost:8080/swagger-ui/index.html',
+          external: true,
+          tags: ['Swagger', 'OpenAPI']
         }
       ]
     }
   },
   methods: {
-    goTo(path) {
-      this.$router.push(path)
+    goTo(group) {
+      if (group.external) {
+        window.open(group.path, '_blank')
+      } else {
+        this.$router.push(group.path)
+      }
     }
   }
 }

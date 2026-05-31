@@ -1,6 +1,5 @@
 package com.example.springboot.service;
 
-import com.example.springboot.config.OpenAiAnalysisProperties;
 import com.example.springboot.entity.Appointment;
 import com.example.springboot.entity.Finance;
 import com.example.springboot.entity.MedicalRecord;
@@ -39,9 +38,6 @@ class BusinessDailyAnalysisServiceTest {
         TreatmentMapper treatmentMapper = mock(TreatmentMapper.class);
         PatientMapper patientMapper = mock(PatientMapper.class);
 
-        OpenAiAnalysisProperties properties = new OpenAiAnalysisProperties();
-        properties.setEnabled(false);
-
         BusinessDailyAnalysisService service = new BusinessDailyAnalysisService(
                 analysisMapper,
                 appointmentMapper,
@@ -49,8 +45,6 @@ class BusinessDailyAnalysisServiceTest {
                 medicalRecordMapper,
                 treatmentMapper,
                 patientMapper,
-                properties,
-                mock(com.example.springboot.service.AiModelProviderService.class),
                 new ObjectMapper()
         );
 
@@ -117,9 +111,6 @@ class BusinessDailyAnalysisServiceTest {
 
     @Test
     void testModelConnectionShouldReturnDisabledWhenOpenAiNotEnabled() {
-        OpenAiAnalysisProperties properties = new OpenAiAnalysisProperties();
-        properties.setEnabled(false);
-
         BusinessDailyAnalysisService service = new BusinessDailyAnalysisService(
                 mock(BusinessDailyAnalysisMapper.class),
                 mock(AppointmentMapper.class),
@@ -127,8 +118,6 @@ class BusinessDailyAnalysisServiceTest {
                 mock(MedicalRecordMapper.class),
                 mock(TreatmentMapper.class),
                 mock(PatientMapper.class),
-                properties,
-                mock(com.example.springboot.service.AiModelProviderService.class),
                 new ObjectMapper()
         );
 

@@ -55,7 +55,7 @@
                     :key="child.key"
                     class="menu-item level-3"
                     :class="{ active: isMenuActive(child.path) }"
-                    @click="goTo(child.path)"
+                    @click="goTo(child.path, child.external)"
                   >
                     {{ child.title }}
                   </div>
@@ -68,7 +68,7 @@
                 :key="item.key"
                 class="menu-item level-2"
                 :class="{ active: isMenuActive(item.path) }"
-                @click="goTo(item.path)"
+                @click="goTo(item.path, item.external)"
               >
                 {{ item.title }}
               </div>
@@ -107,7 +107,8 @@ const menuGroups = [
     icon: 'el-icon-link',
     sortOrder: 2,
     children: [
-      { key: 'api-key', title: 'API Key 管理', path: '/SystemSettings/open/api-key', sortOrder: 1 }
+      { key: 'api-key', title: 'API Key 管理', path: '/SystemSettings/open/api-key', sortOrder: 1 },
+      { key: 'api-docs', title: 'API 接口文档', path: 'http://localhost:8080/swagger-ui/index.html', external: true, sortOrder: 2 }
     ]
   },
   {
@@ -201,7 +202,11 @@ export default {
       }
       return this.$route.path === path
     },
-    goTo(path) {
+    goTo(path, external) {
+      if (external) {
+        window.open(path, '_blank')
+        return
+      }
       if (this.$route.path !== path) {
         this.$router.push(path)
       }

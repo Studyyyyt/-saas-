@@ -6,6 +6,9 @@ import com.example.springboot.mapper.*;
 import com.example.springboot.service.*;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
@@ -22,10 +25,10 @@ import java.util.*;
 @Slf4j
 @RestController
 @RequestMapping("/api/open/clinic/{clinicId}")
+@Tag(name = "开放数据接口", description = "供 n8n 等外部系统通过 API Key 调用的诊所数据接口")
 public class OpenDataController {
 
     private final BusinessDailyAnalysisService businessDailyAnalysisService;
-    private final BusinessPeriodReportService businessPeriodReportService;
     private final PatientFollowupMapper patientFollowupMapper;
     private final AppointmentService appointmentService;
     private final PatientWorkbenchService patientWorkbenchService;
@@ -46,7 +49,6 @@ public class OpenDataController {
     private final OpenPatientService openPatientService;
 
     public OpenDataController(BusinessDailyAnalysisService businessDailyAnalysisService,
-                              BusinessPeriodReportService businessPeriodReportService,
                               PatientFollowupMapper patientFollowupMapper,
                               AppointmentService appointmentService,
                               PatientWorkbenchService patientWorkbenchService,
@@ -66,7 +68,6 @@ public class OpenDataController {
                               MedicalRecordMapper medicalRecordMapper,
                               OpenPatientService openPatientService) {
         this.businessDailyAnalysisService = businessDailyAnalysisService;
-        this.businessPeriodReportService = businessPeriodReportService;
         this.patientFollowupMapper = patientFollowupMapper;
         this.appointmentService = appointmentService;
         this.patientWorkbenchService = patientWorkbenchService;
@@ -116,87 +117,45 @@ public class OpenDataController {
      * @param request  HTTP请求（用于获取apiKeyClinicId）
      * @return 经营统计数据
      */
+    @Operation(summary = "经营统计", description = "获取经营日报核心统计数据")
     @GetMapping("/business-stats")
-    public Result getBusinessStats(@PathVariable("clinicId") Long clinicId,
-                                   @RequestParam(name = "period", defaultValue = "day") String period,
-                                   HttpServletRequest request) {
+    public Result getBusinessStats(
+            @Parameter(description = "诊所ID", required = true) @PathVariable("clinicId") Long clinicId,
+            HttpServletRequest request) {
         if (!validateClinicId(request, clinicId)) {
             return Result.error("403", "无权访问该诊所数据");
         }
 
-        String p = period == null ? "day" : period.trim().toLowerCase();
-
-        Map<String, Object> data;
-        switch (p) {
-            case "week" -> {
-                data = businessPeriodReportService.getLatestWeeklyReport();
-            }
-            case "month" -> {
-                data = businessPeriodReportService.getLatestMonthlyReport();
-            }
-            default -> {
-                data = businessDailyAnalysisService.getLatestAnalysis();
-            }
-        }
+        Map<String, Object> data = businessDailyAnalysisService.getLatestAnalysis();
 
         if (data == null) {
             return Result.success(null);
         }
 
         Map<String, Object> trimmed = new LinkedHashMap<>();
-        if ("day".equals(p)) {
-            trimmed.put("analysis_date", data.get("analysis_date"));
-            trimmed.put("operating_score", data.get("operating_score"));
-            trimmed.put("trend", data.get("trend"));
-            trimmed.put("highlights", data.get("highlights"));
-            trimmed.put("risks", data.get("risks"));
-            trimmed.put("opportunities", data.get("opportunities"));
-            trimmed.put("actions", data.get("actions"));
-            trimmed.put("daily_metrics_summary", data.get("metrics"));
-        } else {
-            trimmed.put("report_period", data.get("period_key"));
-            trimmed.put("operating_score", data.get("operating_score"));
-            trimmed.put("summary", data.get("summary"));
-            trimmed.put("highlights", data.get("highlights"));
-            trimmed.put("recommendations", data.get("analysis"));
-        }
+        trimmed.put("analysis_date", data.get("analysis_date"));
+        trimmed.put("operating_score", data.get("operating_score"));
+        trimmed.put("trend", data.get("trend"));
+        trimmed.put("highlights", data.get("highlights"));
+        trimmed.put("risks", data.get("risks"));
+        trimmed.put("opportunities", data.get("opportunities"));
+        trimmed.put("actions", data.get("actions"));
+        trimmed.put("daily_metrics_summary", data.get("metrics"));
         return Result.success(trimmed);
     }
 
     /**
      * 获取最新经营日报（原始完整视图）
      */
+    @Operation(summary = "最新经营日报", description = "获取最新经营日报完整数据")
     @GetMapping("/business-analysis/latest")
-    public Result getBusinessAnalysisLatest(@PathVariable("clinicId") Long clinicId,
-                                            HttpServletRequest request) {
+    public Result getBusinessAnalysisLatest(
+            @Parameter(description = "诊所ID", required = true) @PathVariable("clinicId") Long clinicId,
+            HttpServletRequest request) {
         if (!validateClinicId(request, clinicId)) {
             return Result.error("403", "无权访问该诊所数据");
         }
         return Result.success(businessDailyAnalysisService.getLatestAnalysis());
-    }
-
-    /**
-     * 获取最新经营周报（原始完整视图）
-     */
-    @GetMapping("/business-analysis/weekly/latest")
-    public Result getBusinessAnalysisWeeklyLatest(@PathVariable("clinicId") Long clinicId,
-                                                  HttpServletRequest request) {
-        if (!validateClinicId(request, clinicId)) {
-            return Result.error("403", "无权访问该诊所数据");
-        }
-        return Result.success(businessPeriodReportService.getLatestWeeklyReport());
-    }
-
-    /**
-     * 获取最新经营月报（原始完整视图）
-     */
-    @GetMapping("/business-analysis/monthly/latest")
-    public Result getBusinessAnalysisMonthlyLatest(@PathVariable("clinicId") Long clinicId,
-                                                   HttpServletRequest request) {
-        if (!validateClinicId(request, clinicId)) {
-            return Result.error("403", "无权访问该诊所数据");
-        }
-        return Result.success(businessPeriodReportService.getLatestMonthlyReport());
     }
 
     /**
@@ -208,10 +167,12 @@ public class OpenDataController {
      * @param request  HTTP请求
      * @return DailyBusinessMetrics 原始经营指标
      */
+    @Operation(summary = "原始经营指标", description = "获取指定日期的原始经营日报指标数据")
     @GetMapping("/daily-metrics")
-    public Result getDailyMetrics(@PathVariable("clinicId") Long clinicId,
-                                  @RequestParam(name = "date", required = false) String date,
-                                  HttpServletRequest request) {
+    public Result getDailyMetrics(
+            @Parameter(description = "诊所ID", required = true) @PathVariable("clinicId") Long clinicId,
+            @Parameter(description = "分析日期（yyyy-MM-dd，默认昨日") @RequestParam(name = "date", required = false) String date,
+            HttpServletRequest request) {
         if (!validateClinicId(request, clinicId)) {
             return Result.error("403", "无权访问该诊所数据");
         }
@@ -238,8 +199,10 @@ public class OpenDataController {
      * @param request      HTTP请求
      * @return 分页回访列表
      */
+    @Operation(summary = "回访列表", description = "查询患者回访列表，支持姓名模糊匹配和日期范围筛选")
     @GetMapping("/followups")
-    public Result getFollowups(@PathVariable("clinicId") Long clinicId,
+    public Result getFollowups(
+            @Parameter(description = "诊所ID", required = true) @PathVariable("clinicId") Long clinicId,
                                @RequestParam(name = "patientName", required = false) String patientName,
                                @RequestParam(name = "startDate", required = false) String startDate,
                                @RequestParam(name = "endDate", required = false) String endDate,
@@ -273,12 +236,14 @@ public class OpenDataController {
      * @param request  HTTP请求
      * @return 分页患者列表
      */
+    @Operation(summary = "患者列表", description = "查询患者列表，支持姓名模糊匹配")
     @GetMapping("/patients")
-    public Result getPatients(@PathVariable("clinicId") Long clinicId,
-                              @RequestParam(name = "name", required = false) String name,
-                              @RequestParam(defaultValue = "1") int page,
-                              @RequestParam(defaultValue = "10") int size,
-                              HttpServletRequest request) {
+    public Result getPatients(
+            @Parameter(description = "诊所ID", required = true) @PathVariable("clinicId") Long clinicId,
+            @Parameter(description = "患者姓名（模糊匹配）") @RequestParam(name = "name", required = false) String name,
+            @Parameter(description = "页码（默认1）") @RequestParam(defaultValue = "1") int page,
+            @Parameter(description = "每页条数（默认10）") @RequestParam(defaultValue = "10") int size,
+            HttpServletRequest request) {
         if (!validateClinicId(request, clinicId)) {
             return Result.error("403", "无权访问该诊所数据");
         }
@@ -289,16 +254,18 @@ public class OpenDataController {
     /**
      * 查询预约列表（支持日期范围）
      */
+    @Operation(summary = "预约列表", description = "查询预约列表，支持日期范围、状态、医生筛选")
     @GetMapping("/appointments")
-    public Result getAppointments(@PathVariable("clinicId") Long clinicId,
-                                  @RequestParam(defaultValue = "1") int page,
-                                  @RequestParam(defaultValue = "10") int size,
-                                  @RequestParam(required = false) String status,
-                                  @RequestParam(required = false) String appointmentDate,
-                                  @RequestParam(required = false) String startDate,
-                                  @RequestParam(required = false) String endDate,
-                                  @RequestParam(required = false) Long doctorAccountId,
-                                  HttpServletRequest request) {
+    public Result getAppointments(
+            @Parameter(description = "诊所ID", required = true) @PathVariable("clinicId") Long clinicId,
+            @Parameter(description = "页码（默认1）") @RequestParam(defaultValue = "1") int page,
+            @Parameter(description = "每页条数（默认10）") @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "预约状态") @RequestParam(required = false) String status,
+            @Parameter(description = "指定日期（yyyy-MM-dd）") @RequestParam(required = false) String appointmentDate,
+            @Parameter(description = "开始日期（yyyy-MM-dd）") @RequestParam(required = false) String startDate,
+            @Parameter(description = "结束日期（yyyy-MM-dd）") @RequestParam(required = false) String endDate,
+            @Parameter(description = "医生账号ID") @RequestParam(required = false) Long doctorAccountId,
+            HttpServletRequest request) {
         if (!validateClinicId(request, clinicId)) {
             return Result.error("403", "无权访问该诊所数据");
         }
@@ -311,10 +278,12 @@ public class OpenDataController {
     /**
      * 获取患者基础详情（就诊次数、总费用、欠款等）
      */
+    @Operation(summary = "患者详情", description = "获取患者基础详情，包含就诊次数、总费用、欠款等聚合数据")
     @GetMapping("/patients/{patientId}/details")
-    public Result getPatientDetails(@PathVariable("clinicId") Long clinicId,
-                                    @PathVariable("patientId") Long patientId,
-                                    HttpServletRequest request) {
+    public Result getPatientDetails(
+            @Parameter(description = "诊所ID", required = true) @PathVariable("clinicId") Long clinicId,
+            @Parameter(description = "患者ID", required = true) @PathVariable("patientId") Long patientId,
+            HttpServletRequest request) {
         if (!validateClinicId(request, clinicId)) {
             return Result.error("403", "无权访问该诊所数据");
         }
@@ -328,12 +297,14 @@ public class OpenDataController {
     /**
      * 按患者查询病历列表
      */
+    @Operation(summary = "患者病历列表", description = "按患者查询历史病历列表")
     @GetMapping("/patients/{patientId}/medical-records")
-    public Result getPatientMedicalRecords(@PathVariable("clinicId") Long clinicId,
-                                           @PathVariable("patientId") Long patientId,
-                                           @RequestParam(defaultValue = "1") int page,
-                                           @RequestParam(defaultValue = "10") int size,
-                                           HttpServletRequest request) {
+    public Result getPatientMedicalRecords(
+            @Parameter(description = "诊所ID", required = true) @PathVariable("clinicId") Long clinicId,
+            @Parameter(description = "患者ID", required = true) @PathVariable("patientId") Long patientId,
+            @Parameter(description = "页码（默认1）") @RequestParam(defaultValue = "1") int page,
+            @Parameter(description = "每页条数（默认10）") @RequestParam(defaultValue = "10") int size,
+            HttpServletRequest request) {
         if (!validateClinicId(request, clinicId)) {
             return Result.error("403", "无权访问该诊所数据");
         }
@@ -343,13 +314,15 @@ public class OpenDataController {
     /**
      * 查询医生排班列表
      */
+    @Operation(summary = "医生排班", description = "查询医生排班列表")
     @GetMapping("/doctors")
-    public Result getDoctors(@PathVariable("clinicId") Long clinicId,
-                             @RequestParam(defaultValue = "1") int page,
-                             @RequestParam(defaultValue = "10") int size,
-                             @RequestParam(required = false) String status,
-                             @RequestParam(required = false) String scheduleDate,
-                             HttpServletRequest request) {
+    public Result getDoctors(
+            @Parameter(description = "诊所ID", required = true) @PathVariable("clinicId") Long clinicId,
+            @Parameter(description = "页码（默认1）") @RequestParam(defaultValue = "1") int page,
+            @Parameter(description = "每页条数（默认10）") @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "排班状态") @RequestParam(required = false) String status,
+            @Parameter(description = "排班日期（yyyy-MM-dd）") @RequestParam(required = false) String scheduleDate,
+            HttpServletRequest request) {
         if (!validateClinicId(request, clinicId)) {
             return Result.error("403", "无权访问该诊所数据");
         }
@@ -362,15 +335,17 @@ public class OpenDataController {
     /**
      * 查询耗材列表（支持低库存预警）
      */
+    @Operation(summary = "耗材列表", description = "查询耗材列表，支持低库存预警筛选")
     @GetMapping("/materials")
-    public Result getMaterials(@PathVariable("clinicId") Long clinicId,
-                               @RequestParam(required = false) String keyword,
-                               @RequestParam(required = false) Long categoryId,
-                               @RequestParam(required = false) Boolean lowStockOnly,
-                               @RequestParam(required = false) String status,
-                               @RequestParam(defaultValue = "1") int page,
-                               @RequestParam(defaultValue = "20") int size,
-                               HttpServletRequest request) {
+    public Result getMaterials(
+            @Parameter(description = "诊所ID", required = true) @PathVariable("clinicId") Long clinicId,
+            @Parameter(description = "关键词") @RequestParam(required = false) String keyword,
+            @Parameter(description = "分类ID") @RequestParam(required = false) Long categoryId,
+            @Parameter(description = "仅低库存") @RequestParam(required = false) Boolean lowStockOnly,
+            @Parameter(description = "状态") @RequestParam(required = false) String status,
+            @Parameter(description = "页码（默认1）") @RequestParam(defaultValue = "1") int page,
+            @Parameter(description = "每页条数（默认20）") @RequestParam(defaultValue = "20") int size,
+            HttpServletRequest request) {
         if (!validateClinicId(request, clinicId)) {
             return Result.error("403", "无权访问该诊所数据");
         }
@@ -405,13 +380,15 @@ public class OpenDataController {
     /**
      * 医生业绩统计
      */
+    @Operation(summary = "医生业绩", description = "按医生统计营业额、实收、退费、欠款")
     @GetMapping("/finances/doctor-performance")
-    public Result getDoctorPerformance(@PathVariable("clinicId") Long clinicId,
-                                       @RequestParam(required = false) String startDate,
-                                       @RequestParam(required = false) String endDate,
-                                       @RequestParam(required = false) Long doctorAccountId,
-                                       @RequestParam(required = false) String doctorName,
-                                       HttpServletRequest request) {
+    public Result getDoctorPerformance(
+            @Parameter(description = "诊所ID", required = true) @PathVariable("clinicId") Long clinicId,
+            @Parameter(description = "开始日期（yyyy-MM-dd）") @RequestParam(required = false) String startDate,
+            @Parameter(description = "结束日期（yyyy-MM-dd）") @RequestParam(required = false) String endDate,
+            @Parameter(description = "医生账号ID") @RequestParam(required = false) Long doctorAccountId,
+            @Parameter(description = "医生姓名") @RequestParam(required = false) String doctorName,
+            HttpServletRequest request) {
         if (!validateClinicId(request, clinicId)) {
             return Result.error("403", "无权访问该诊所数据");
         }
@@ -436,8 +413,10 @@ public class OpenDataController {
      * @param request   HTTP请求
      * @return 分页财务记录
      */
+    @Operation(summary = "财务收支", description = "查询财务收支记录，支持日期范围、收支类型、患者筛选")
     @GetMapping("/finances")
-    public Result getFinances(@PathVariable("clinicId") Long clinicId,
+    public Result getFinances(
+            @Parameter(description = "诊所ID", required = true) @PathVariable("clinicId") Long clinicId,
                               @RequestParam(required = false) String startDate,
                               @RequestParam(required = false) String endDate,
                               @RequestParam(required = false) String type,
@@ -469,8 +448,10 @@ public class OpenDataController {
      * @param request        HTTP请求
      * @return 分页咨询记录
      */
+    @Operation(summary = "咨询记录", description = "查询咨询记录列表，支持日期范围、渠道、意向等级、处理结果筛选")
     @GetMapping("/consultations")
-    public Result getConsultations(@PathVariable("clinicId") Long clinicId,
+    public Result getConsultations(
+            @Parameter(description = "诊所ID", required = true) @PathVariable("clinicId") Long clinicId,
                                    @RequestParam(required = false) String startDate,
                                    @RequestParam(required = false) String endDate,
                                    @RequestParam(required = false) String channel,
@@ -535,8 +516,10 @@ public class OpenDataController {
      * @param request   HTTP请求
      * @return 分页义齿加工订单
      */
+    @Operation(summary = "义齿加工订单", description = "查询义齿加工订单列表，支持日期范围、状态、加工厂筛选")
     @GetMapping("/lab-orders")
-    public Result getLabOrders(@PathVariable("clinicId") Long clinicId,
+    public Result getLabOrders(
+            @Parameter(description = "诊所ID", required = true) @PathVariable("clinicId") Long clinicId,
                                @RequestParam(required = false) String startDate,
                                @RequestParam(required = false) String endDate,
                                @RequestParam(required = false) String status,
@@ -560,9 +543,11 @@ public class OpenDataController {
      * @param request  HTTP请求
      * @return 加工厂列表（不分页）
      */
+    @Operation(summary = "义齿加工厂", description = "查询义齿加工厂列表")
     @GetMapping("/lab-factories")
-    public Result getLabFactories(@PathVariable("clinicId") Long clinicId,
-                                  HttpServletRequest request) {
+    public Result getLabFactories(
+            @Parameter(description = "诊所ID", required = true) @PathVariable("clinicId") Long clinicId,
+            HttpServletRequest request) {
         if (!validateClinicId(request, clinicId)) {
             return Result.error("403", "无权访问该诊所数据");
         }
@@ -573,16 +558,18 @@ public class OpenDataController {
     /**
      * 查询治疗记录列表
      */
+    @Operation(summary = "治疗记录", description = "查询治疗记录列表，支持患者、医生、日期范围筛选")
     @GetMapping("/treatments")
-    public Result getTreatments(@PathVariable("clinicId") Long clinicId,
-                                @RequestParam(defaultValue = "1") int page,
-                                @RequestParam(defaultValue = "10") int size,
-                                @RequestParam(required = false) Long patientId,
-                                @RequestParam(required = false) Long doctorAccountId,
-                                @RequestParam(required = false) String startDate,
-                                @RequestParam(required = false) String endDate,
-                                @RequestParam(required = false) String status,
-                                HttpServletRequest request) {
+    public Result getTreatments(
+            @Parameter(description = "诊所ID", required = true) @PathVariable("clinicId") Long clinicId,
+            @Parameter(description = "页码（默认1）") @RequestParam(defaultValue = "1") int page,
+            @Parameter(description = "每页条数（默认10）") @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "患者ID") @RequestParam(required = false) Long patientId,
+            @Parameter(description = "医生账号ID") @RequestParam(required = false) Long doctorAccountId,
+            @Parameter(description = "开始日期（yyyy-MM-dd）") @RequestParam(required = false) String startDate,
+            @Parameter(description = "结束日期（yyyy-MM-dd）") @RequestParam(required = false) String endDate,
+            @Parameter(description = "状态") @RequestParam(required = false) String status,
+            HttpServletRequest request) {
         if (!validateClinicId(request, clinicId)) {
             return Result.error("403", "无权访问该诊所数据");
         }
@@ -606,8 +593,10 @@ public class OpenDataController {
      * @param request      HTTP请求
      * @return 分页耗材采购记录
      */
+    @Operation(summary = "耗材采购记录", description = "查询耗材采购记录列表，支持日期范围、供应商筛选")
     @GetMapping("/material-purchases")
-    public Result getMaterialPurchases(@PathVariable("clinicId") Long clinicId,
+    public Result getMaterialPurchases(
+            @Parameter(description = "诊所ID", required = true) @PathVariable("clinicId") Long clinicId,
                                        @RequestParam(required = false) String startDate,
                                        @RequestParam(required = false) String endDate,
                                        @RequestParam(required = false) String supplierName,
@@ -632,10 +621,12 @@ public class OpenDataController {
      * @param request     HTTP请求
      * @return 治疗项目目录列表
      */
+    @Operation(summary = "治疗项目目录", description = "查询治疗项目目录列表，可选择仅返回启用状态的项目")
     @GetMapping("/treatment-catalog")
-    public Result getTreatmentCatalog(@PathVariable("clinicId") Long clinicId,
-                                      @RequestParam(required = false, defaultValue = "false") boolean enabledOnly,
-                                      HttpServletRequest request) {
+    public Result getTreatmentCatalog(
+            @Parameter(description = "诊所ID", required = true) @PathVariable("clinicId") Long clinicId,
+            @Parameter(description = "是否只返回启用状态") @RequestParam(required = false, defaultValue = "false") boolean enabledOnly,
+            HttpServletRequest request) {
         if (!validateClinicId(request, clinicId)) {
             return Result.error("403", "无权访问该诊所数据");
         }
@@ -656,8 +647,10 @@ public class OpenDataController {
      * @param request   HTTP请求
      * @return 分页广告投放花费记录
      */
+    @Operation(summary = "广告投放花费", description = "查询广告投放花费记录列表，支持日期范围、平台筛选")
     @GetMapping("/advertising-spending")
-    public Result getAdvertisingSpending(@PathVariable("clinicId") Long clinicId,
+    public Result getAdvertisingSpending(
+            @Parameter(description = "诊所ID", required = true) @PathVariable("clinicId") Long clinicId,
                                          @RequestParam(required = false) String startDate,
                                          @RequestParam(required = false) String endDate,
                                          @RequestParam(required = false) String platform,
@@ -681,10 +674,12 @@ public class OpenDataController {
      * @param request  HTTP请求
      * @return 风险标签列表（不分页）
      */
+    @Operation(summary = "患者风险标签", description = "查询指定患者的风险标签列表")
     @GetMapping("/patients/{id}/risk-tags")
-    public Result getPatientRiskTags(@PathVariable("clinicId") Long clinicId,
-                                     @PathVariable("id") Long id,
-                                     HttpServletRequest request) {
+    public Result getPatientRiskTags(
+            @Parameter(description = "诊所ID", required = true) @PathVariable("clinicId") Long clinicId,
+            @Parameter(description = "患者ID", required = true) @PathVariable("id") Long id,
+            HttpServletRequest request) {
         if (!validateClinicId(request, clinicId)) {
             return Result.error("403", "无权访问该诊所数据");
         }
@@ -739,10 +734,12 @@ public class OpenDataController {
      * @param request  HTTP请求
      * @return 患者时间轴事件列表（不分页）
      */
+    @Operation(summary = "患者时间轴", description = "查询指定患者的就诊时间轴事件列表")
     @GetMapping("/patients/{id}/timeline")
-    public Result getPatientTimeline(@PathVariable("clinicId") Long clinicId,
-                                     @PathVariable("id") Long id,
-                                     HttpServletRequest request) {
+    public Result getPatientTimeline(
+            @Parameter(description = "诊所ID", required = true) @PathVariable("clinicId") Long clinicId,
+            @Parameter(description = "患者ID", required = true) @PathVariable("id") Long id,
+            HttpServletRequest request) {
         if (!validateClinicId(request, clinicId)) {
             return Result.error("403", "无权访问该诊所数据");
         }
@@ -757,10 +754,12 @@ public class OpenDataController {
      * @param request  HTTP请求
      * @return 患者洞察摘要
      */
+    @Operation(summary = "患者洞察摘要", description = "查询指定患者的智能洞察摘要，包含就诊统计、高价值标记、流失风险等")
     @GetMapping("/patients/{id}/insight")
-    public Result getPatientInsight(@PathVariable("clinicId") Long clinicId,
-                                    @PathVariable("id") Long id,
-                                    HttpServletRequest request) {
+    public Result getPatientInsight(
+            @Parameter(description = "诊所ID", required = true) @PathVariable("clinicId") Long clinicId,
+            @Parameter(description = "患者ID", required = true) @PathVariable("id") Long id,
+            HttpServletRequest request) {
         if (!validateClinicId(request, clinicId)) {
             return Result.error("403", "无权访问该诊所数据");
         }
@@ -780,8 +779,10 @@ public class OpenDataController {
      * @param request         HTTP请求
      * @return 分页病历列表
      */
+    @Operation(summary = "病历列表", description = "查询病历列表，支持日期范围、医生、患者姓名筛选")
     @GetMapping("/medical-records")
-    public Result getMedicalRecords(@PathVariable("clinicId") Long clinicId,
+    public Result getMedicalRecords(
+            @Parameter(description = "诊所ID", required = true) @PathVariable("clinicId") Long clinicId,
                                     @RequestParam(required = false) String startDate,
                                     @RequestParam(required = false) String endDate,
                                     @RequestParam(required = false) Long doctorAccountId,
@@ -811,15 +812,17 @@ public class OpenDataController {
      * @param request  HTTP请求
      * @return 分页库存物品列表
      */
+    @Operation(summary = "库存物品", description = "查询库存物品列表，支持分类、品牌、供应商筛选")
     @GetMapping("/inventory")
-    public Result getInventory(@PathVariable("clinicId") Long clinicId,
-                               @RequestParam(required = false) String category,
-                               @RequestParam(required = false) String brand,
-                               @RequestParam(required = false) String supplier,
-                               @RequestParam(required = false) String keyword,
-                               @RequestParam(defaultValue = "1") int page,
-                               @RequestParam(defaultValue = "10") int size,
-                               HttpServletRequest request) {
+    public Result getInventory(
+            @Parameter(description = "诊所ID", required = true) @PathVariable("clinicId") Long clinicId,
+            @Parameter(description = "物品分类") @RequestParam(required = false) String category,
+            @Parameter(description = "品牌") @RequestParam(required = false) String brand,
+            @Parameter(description = "供应商") @RequestParam(required = false) String supplier,
+            @Parameter(description = "关键词") @RequestParam(required = false) String keyword,
+            @Parameter(description = "页码（默认1）") @RequestParam(defaultValue = "1") int page,
+            @Parameter(description = "每页条数（默认10）") @RequestParam(defaultValue = "10") int size,
+            HttpServletRequest request) {
         if (!validateClinicId(request, clinicId)) {
             return Result.error("403", "无权访问该诊所数据");
         }
@@ -835,9 +838,11 @@ public class OpenDataController {
      * @param request  HTTP请求
      * @return 支付渠道列表（不分页）
      */
+    @Operation(summary = "支付渠道", description = "查询支付渠道列表")
     @GetMapping("/payment-channels")
-    public Result getPaymentChannels(@PathVariable("clinicId") Long clinicId,
-                                     HttpServletRequest request) {
+    public Result getPaymentChannels(
+            @Parameter(description = "诊所ID", required = true) @PathVariable("clinicId") Long clinicId,
+            HttpServletRequest request) {
         if (!validateClinicId(request, clinicId)) {
             return Result.error("403", "无权访问该诊所数据");
         }

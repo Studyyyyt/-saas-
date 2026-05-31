@@ -60,6 +60,39 @@ security:
   patient-admin-secondary-password: ${SECURITY_PATIENT_ADMIN_SECONDARY_PASSWORD:246810}
 
 # --------------------------------------------
+# Swagger / OpenAPI 接口文档配置
+# --------------------------------------------
+springdoc:
+  swagger-ui:
+    # Swagger UI 页面标题
+    title: "口腔门诊 SaaS 接口文档"
+    # 接口分组按 Tag 排序
+    tags-sorter: alpha
+    # 接口按路径排序
+    operations-sorter: alpha
+    # 默认展开所有接口分组
+    doc-expansion: list
+    # 显示请求时长
+    display-request-duration: true
+    # 持久化认证信息
+    persist-authorization: true
+    # 默认模型展开深度
+    default-models-expand-depth: 1
+    #  deepLinking
+    deep-linking: true
+    # 显示扩展信息
+    show-extensions: true
+    # 显示通用扩展
+    show-common-extensions: true
+    # 自定义 CSS（可选，用于微调样式）
+    # css: /swagger-custom.css
+  api-docs:
+    # API 文档路径
+    path: /v3/api-docs
+    # 启用 API 文档
+    enabled: true
+
+# --------------------------------------------
 # 企业微信机器人通知（可选）
 # --------------------------------------------
 # 配置企业微信机器人 Webhook 地址后，AI 经营分析任务完成时会

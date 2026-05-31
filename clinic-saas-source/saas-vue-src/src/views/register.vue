@@ -1,7 +1,24 @@
 <template>
   <div class="register-page apple-design-scope">
-    <!-- 背景纹理层 -->
-    <div class="bg-texture"></div>
+    <!-- 流动渐变背景 -->
+    <div class="bg-gradient-flow"></div>
+    <!-- 浮动粒子层 -->
+    <div class="particles">
+      <div
+        class="particle"
+        v-for="n in 30"
+        :key="n"
+        :style="particleStyle(n)"
+      ></div>
+    </div>
+    <!-- 几何装饰层 -->
+    <div class="geo-decor geo-1"></div>
+    <div class="geo-decor geo-2"></div>
+    <div class="geo-decor geo-3"></div>
+    <div class="geo-decor geo-4"></div>
+    <div class="geo-line line-1"></div>
+    <div class="geo-line line-2"></div>
+    <!-- 水墨晕染装饰 -->
     <div class="ink-wash ink-1"></div>
     <div class="ink-wash ink-2"></div>
 
@@ -106,6 +123,27 @@ export default {
     }
   },
   methods: {
+    particleStyle(n) {
+      const seeded = (seed) => {
+        const x = Math.sin(seed * 9999) * 10000;
+        return x - Math.floor(x);
+      };
+      const top = seeded(n * 7) * 100;
+      const left = seeded(n * 13) * 100;
+      const delay = seeded(n * 3) * 12;
+      const duration = 10 + seeded(n * 5) * 12;
+      const size = 2 + seeded(n * 11) * 5;
+      const opacity = 0.30 + seeded(n * 17) * 0.50;
+      return {
+        top: `${top}%`,
+        left: `${left}%`,
+        animationDelay: `${delay}s`,
+        animationDuration: `${duration}s`,
+        width: `${size}px`,
+        height: `${size}px`,
+        opacity: opacity.toFixed(2)
+      };
+    },
     register() {
       this.$refs['registerRef'].validate((valid) => {
         if (valid) {
@@ -145,22 +183,115 @@ export default {
   overflow: hidden;
 }
 
-/* === 宣纸纹理背景 === */
-.bg-texture {
+/* === 流动渐变背景 === */
+.bg-gradient-flow {
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 60% 40% at 30% 20%, rgba(90, 143, 123, 0.06), transparent),
-    radial-gradient(ellipse 50% 50% at 70% 80%, rgba(90, 143, 123, 0.04), transparent);
+    radial-gradient(ellipse 80% 60% at 20% 40%, rgba(90, 143, 123, 0.18), transparent 55%),
+    radial-gradient(ellipse 60% 80% at 80% 20%, rgba(90, 143, 123, 0.14), transparent 55%),
+    radial-gradient(ellipse 70% 70% at 50% 80%, rgba(120, 100, 80, 0.10), transparent 55%),
+    radial-gradient(ellipse 50% 50% at 30% 10%, rgba(90, 143, 123, 0.12), transparent 45%);
+  background-size: 200% 200%;
+  animation: gradientFlow 20s ease-in-out infinite alternate;
 }
-.bg-texture::after {
-  content: '';
-  position: absolute;
+@keyframes gradientFlow {
+  0%   { background-position: 0% 0%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 100%; }
+}
+
+/* === 浮动粒子层 === */
+.particles {
+  position: fixed;
   inset: 0;
-  background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-  opacity: 0.6;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(90, 143, 123, 0.85), rgba(90, 143, 123, 0.15));
+  filter: blur(1px);
+  animation: particleFloat linear infinite;
+}
+@keyframes particleFloat {
+  0%   { transform: translateY(0) translateX(0) scale(1); }
+  25%  { transform: translateY(-30px) translateX(15px) scale(1.2); }
+  50%  { transform: translateY(-15px) translateX(-10px) scale(0.9); }
+  75%  { transform: translateY(-40px) translateX(5px) scale(1.1); }
+  100% { transform: translateY(0) translateX(0) scale(1); }
+}
+
+/* === 几何装饰层 === */
+.geo-decor {
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+  border-radius: 50%;
+  border: 1.5px solid rgba(90, 143, 123, 0.22);
+}
+.geo-1 {
+  width: 500px;
+  height: 500px;
+  top: -15%;
+  right: -10%;
+  animation: geoRotate 30s linear infinite;
+}
+.geo-2 {
+  width: 350px;
+  height: 350px;
+  bottom: -10%;
+  left: -8%;
+  animation: geoRotate 25s linear infinite reverse;
+}
+.geo-3 {
+  width: 180px;
+  height: 180px;
+  top: 40%;
+  right: 15%;
+  border-color: rgba(90, 143, 123, 0.15);
+  animation: geoRotate 20s linear infinite;
+}
+.geo-4 {
+  width: 120px;
+  height: 120px;
+  bottom: 25%;
+  right: 25%;
+  border-color: rgba(90, 143, 123, 0.12);
+  animation: geoRotate 18s linear infinite reverse;
+}
+@keyframes geoRotate {
+  0%   { transform: rotate(0deg) scale(1); }
+  50%  { transform: rotate(180deg) scale(1.05); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+.geo-line {
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(90, 143, 123, 0.22), transparent);
+}
+.line-1 {
+  width: 60%;
+  top: 30%;
+  left: -10%;
+  animation: lineSlide 15s ease-in-out infinite;
+}
+.line-2 {
+  width: 50%;
+  bottom: 35%;
+  right: -10%;
+  animation: lineSlide 18s ease-in-out infinite reverse;
+}
+@keyframes lineSlide {
+  0%, 100% { transform: translateX(0) scaleX(1); opacity: 0.5; }
+  50%      { transform: translateX(80px) scaleX(1.3); opacity: 1; }
 }
 
 /* === 水墨晕染装饰 === */
@@ -172,19 +303,19 @@ export default {
   filter: blur(60px);
 }
 .ink-1 {
-  width: 350px;
-  height: 350px;
-  background: rgba(90, 143, 123, 0.10);
-  top: -5%;
-  right: -8%;
+  width: 400px;
+  height: 400px;
+  background: rgba(90, 143, 123, 0.18);
+  top: -8%;
+  right: -10%;
   animation: inkFloat 18s ease-in-out infinite;
 }
 .ink-2 {
-  width: 280px;
-  height: 280px;
-  background: rgba(120, 100, 80, 0.06);
-  bottom: 5%;
-  left: -5%;
+  width: 320px;
+  height: 320px;
+  background: rgba(120, 100, 80, 0.10);
+  bottom: 2%;
+  left: -8%;
   animation: inkFloat 22s ease-in-out infinite reverse;
 }
 
