@@ -31,7 +31,7 @@
               <circle cx="12" cy="10" r="3"/>
             </svg>
           </div>
-          <h1 class="brand-title">一隐口腔</h1>
+          <h1 class="brand-title">{{ displayClinicName }}</h1>
           <div class="divider-line"></div>
           <p class="brand-subtitle">诊所管理系统</p>
         </div>
@@ -247,7 +247,7 @@
         </el-dialog>
 
         <div class="login-footer">
-          <div class="footer-icp">湘ICP备2026011054号 · 一隐口腔诊所</div>
+          <div class="footer-icp">湘ICP备2026011054号 · {{ displayClinicFooterName }}</div>
         </div>
       </div>
     </div>
@@ -256,7 +256,7 @@
 
 <script>
 import axios from "axios";
-import { saveAdminSession } from "@/utils/adminSession";
+import { saveAdminSession, getAdminSession } from "@/utils/adminSession";
 
 export default {
   name: "Login",
@@ -328,6 +328,17 @@ export default {
           { min: 10, message: '激活码格式不正确', trigger: 'blur' }
         ]
       }
+    }
+  },
+  computed: {
+    // 登录页品牌名称：优先使用本地持久化会话中的诊所名，未获取时显示默认名称
+    displayClinicName() {
+      const session = getAdminSession()
+      return (session && session.currentClinicName) ? session.currentClinicName : '诊所管理系统'
+    },
+    displayClinicFooterName() {
+      const session = getAdminSession()
+      return (session && session.currentClinicName) ? session.currentClinicName : '诊所管理系统'
     }
   },
   created() {

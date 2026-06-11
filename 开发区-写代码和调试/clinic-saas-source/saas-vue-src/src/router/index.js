@@ -40,6 +40,7 @@ import SystemSettingsView from "@/views/Manager/SystemSettingsView.vue";
 import SystemSettingsLayout from "@/views/Manager/SystemSettingsLayout.vue";
 import SystemApiKeyView from "@/views/Manager/SystemApiKeyView.vue";
 import SystemClinicManageView from "@/views/Manager/SystemClinicManageView.vue";
+import SystemClinicInfoView from "@/views/Manager/SystemClinicInfoView.vue";
 import SystemRoleManageView from "@/views/Manager/SystemRoleManageView.vue";
 import AIOverviewView from "@/views/Manager/AIOverviewView.vue";
 import HelpDocumentLayout from "@/views/Manager/HelpDocumentLayout.vue";
@@ -121,6 +122,7 @@ const routes = [
           { path: 'basic/account', component: SystemAccountManageView },
           { path: 'basic/account-permission', component: SystemAccountPermissionView, meta: { allowedRoles: ['admin'] } },
           { path: 'basic/roles', name: 'SystemRoleManageView', component: SystemRoleManageView, meta: { allowedRoles: ['admin'] } },
+          { path: 'basic/clinic-info', name: 'SystemClinicInfoView', component: SystemClinicInfoView, meta: { allowedRoles: ['admin'] } },
           { path: 'basic/clinics', name: 'SystemClinicManageView', component: SystemClinicManageView, meta: { allowedRoles: ['admin'] } },
           { path: 'open/api-key', name: 'SystemApiKeyView', component: SystemApiKeyView, meta: { allowedRoles: ['admin'] } },
           { path: 'ai/overview', name: 'AIOverviewView', component: AIOverviewView, meta: { allowedRoles: ['admin'] } },

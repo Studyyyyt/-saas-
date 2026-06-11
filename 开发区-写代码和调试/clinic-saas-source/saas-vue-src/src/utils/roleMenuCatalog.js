@@ -33,6 +33,7 @@ export const ROLE_MENU_CATALOG = [
   { key: '/SystemAccountPermission', label: '账号权限', group: '系统设置', defaultRoles: ['admin'] },
   { key: '/SystemAccountManage', label: '账号管理', group: '系统设置', defaultRoles: ['admin'] },
   { key: '/SystemSettings/basic/roles', label: '角色管理', group: '系统设置', defaultRoles: ['admin'] },
+  { key: '/SystemSettings/basic/clinic-info', label: '诊所信息', group: '系统设置', defaultRoles: ['admin'] },
   { key: '/SystemSettings/basic/clinics', label: '诊所管理', group: '系统设置', defaultRoles: ['admin'] },
   { key: '/SystemSettings', label: '系统设置', group: '系统设置', defaultRoles: ['admin', 'doctor', 'nurse'] }
 ]

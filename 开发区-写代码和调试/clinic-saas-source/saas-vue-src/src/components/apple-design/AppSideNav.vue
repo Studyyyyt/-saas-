@@ -41,7 +41,7 @@
 
       <!-- 底部 -->
       <div class="side-nav-footer">
-        <div v-if="!collapsed" class="footer-text">一隐口腔 SaaS</div>
+        <div v-if="!collapsed" class="footer-text">{{ clinicBrandName }}</div>
         <div v-else class="footer-dot"></div>
       </div>
     </div>
@@ -143,6 +143,10 @@ export default {
             : null
         })
         .filter(Boolean)
+    },
+    clinicBrandName() {
+      // 从当前登录会话中读取诊所名称，未获取时显示默认品牌名
+      return (this.user && this.user.currentClinicName) ? `${this.user.currentClinicName} SaaS` : '诊所管理系统'
     }
   },
   methods: {

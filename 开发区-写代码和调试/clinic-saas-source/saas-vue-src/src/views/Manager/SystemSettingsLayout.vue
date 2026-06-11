@@ -97,6 +97,7 @@ const menuGroups = [
     icon: 'el-icon-s-tools',
     sortOrder: 1,
     children: [
+      { key: 'clinic-info', title: '诊所信息', path: '/SystemSettings/basic/clinic-info', sortOrder: 0 },
       { key: 'clinics', title: '诊所管理', path: '/SystemSettings/basic/clinics', sortOrder: 1 },
       { key: 'treatment', title: '项目与治疗', path: '/SystemSettings/basic/treatment', sortOrder: 2 },
       { key: 'payment', title: '财务与收费', path: '/SystemSettings/basic/payment', sortOrder: 3 },

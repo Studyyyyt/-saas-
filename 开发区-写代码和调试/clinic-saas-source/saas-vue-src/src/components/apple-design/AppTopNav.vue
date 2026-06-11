@@ -13,7 +13,7 @@
               <circle cx="12" cy="10" r="3"/>
             </svg>
           </div>
-          <span class="brand-text">一隐口腔</span>
+          <span class="brand-text">{{ brandName }}</span>
         </div>
       </div>
 
@@ -55,6 +55,10 @@
                 <el-tag size="mini" :type="clinicRoleTagType(clinic.role)">{{ clinicRoleLabel(clinic.role) }}</el-tag>
               </div>
               <div v-if="isAdmin" class="clinic-dropdown-divider"></div>
+              <div v-if="isAdmin" class="clinic-dropdown-item clinic-dropdown-item--manage" @click="$router.push('/SystemSettings/basic/clinic-info')">
+                <i class="el-icon-office-building"></i>
+                <span>诊所信息</span>
+              </div>
               <div v-if="isAdmin" class="clinic-dropdown-item clinic-dropdown-item--manage" @click="$router.push('/SystemSettings/basic/clinics')">
                 <i class="el-icon-s-tools"></i>
                 <span>诊所管理</span>
@@ -316,6 +320,10 @@ export default {
       return corePaths
         .map(path => this.menuItems.find(item => item.path === path))
         .filter(item => item && canAccessRoleMenu(this.user, item.path))
+    },
+    brandName() {
+      // 优先使用当前登录用户的诊所名称，未获取时显示默认品牌名
+      return this.currentClinicName || '诊所管理系统'
     },
     normalizedRole() {
       const role = (this.user && this.user.role ? String(this.user.role) : '').trim()
