@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数奥口腔云 - 集成AI的口腔门诊SaaS管理系统</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0066CC;
+      --primary-light: #00B4D8;
+      --primary-dark: #004C99;
+      --accent: #FFD700;
+      --accent-soft: #FFF3B0;
+      --bg-dark: #0A192F;
+      --bg-card: #112240;
+      --bg-card-hover: #1A3255;
+      --text-primary: #E2E8F0;
+      --text-secondary: #8892B0;
+      --text-muted: #5C6B82;
+      --border: rgba(100, 255, 218, 0.1);
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      --shadow-glow: 0 0 40px rgba(0, 180, 216, 0.15);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Noto Sans SC', 'Outfit', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-primary);
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    /* === 粒子背景 === */
+    #particles-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* === 导航栏 === */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      padding: 1.2rem 5%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: var(--transition);
+      background: transparent;
+    }
+
+    .navbar.scrolled {
+      background: rgba(10, 25, 47, 0.92);
+      backdrop-filter: blur(20px);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+      padding: 0.8rem 5%;
+    }
+
+    .logo {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .logo span {
+      background: linear-gradient(135deg, var(--primary-light), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2.5rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: var(--transition);
+      position: relative;
+    }
+
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--primary-light), var(--accent));
+      transition: var(--transition);
+    }
+
+    .nav-links a:hover {
+      color: var(--text-primary);
+    }
+
+    .nav-links a:hover::after {
+      width: 100%;
+    }
+
+    .nav-cta {
+      padding: 0.6rem 1.5rem;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: 0 4px 20px rgba(0, 102, 204, 0.3);
+    }
+
+    .nav-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(0, 102, 204, 0.4);
+    }
+
+    .mobile-menu-btn {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--text-primary);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    /* === 通用区域 === */
+    section {
+      position: relative;
+      z-index: 1;
+      padding: 6rem 5%;
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+
+    .section-tag {
+      display: inline-block;
+      padding: 0.35rem 1rem;
+      background: rgba(0, 180, 216, 0.1);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      color: var(--primary-light);
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+    }
+
+    .section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.8rem;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .section-desc {
+      color: var(--text-secondary);
+      font-size: 1.15rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* === Hero区域 === */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding-top: 80px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, rgba(0, 180, 216, 0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+      max-width: 1280px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 0 5%;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: rgba(255, 215, 0, 0.1);
+      border: 1px solid rgba(255, 215, 0, 0.2);
+      border-radius: 50px;
+      color: var(--accent);
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin-bottom: 1.5rem;
+      animation: fadeInUp 0.8s ease;
+    }
+
+    .hero-badge .dot {
+      width: 8px;
+      height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .hero-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 3.8rem;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 1.5rem;
+      letter-spacing: -1px;
+    }
+
+    .hero-title .highlight {
+      background: linear-gradient(135deg, var(--primary-light), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-subtitle {
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      margin-bottom: 2.5rem;
+      max-width: 540px;
+      line-height: 1.8;
+    }
+
+    .hero-cta-group {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      padding: 1rem 2.5rem;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: 0 8px 30px rgba(0, 102, 204, 0.35);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 40px rgba(0, 102, 204, 0.45);
+    }
+
+    .btn-secondary {
+      padding: 1rem 2.5rem;
+      background: transparent;
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--primary-light);
+      background: rgba(0, 180, 216, 0.05);
+      transform: translateY(-3px);
+    }
+
+    /* Hero右侧 - 仪表板预览 */
+    .hero-visual {
+      position: relative;
+      animation: fadeInRight 1s ease 0.3s both;
+    }
+
+    .dashboard-mockup {
+      background: var(--bg-card);
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-glow);
+      transform: perspective(1000px) rotateY(-8deg) rotateX(3deg);
+      transition: var(--transition);
+    }
+
+    .dashboard-mockup:hover {
+      transform: perspective(1000px) rotateY(-4deg) rotateX(1deg);
+      box-shadow: 0 0 60px rgba(0, 180, 216, 0.2);
+    }
+
+    .mockup-header {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .mockup-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .mockup-dot.red { background: #FF5F56; }
+    .mockup-dot.yellow { background: #FFBD2E; }
+    .mockup-dot.green { background: #27C93F; }
+
+    .mockup-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .mockup-card {
+      background: var(--bg-dark);
+      border-radius: 10px;
+      padding: 1rem;
+      border: 1px solid var(--border);
+    }
+
+    .mockup-card-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-bottom: 0.3rem;
+    }
+
+    .mockup-card-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--primary-light);
+    }
+
+    .mockup-chart {
+      height: 120px;
+      background: linear-gradient(180deg, rgba(0, 180, 216, 0.15) 0%, transparent 100%);
+      border-radius: 10px;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .mockup-chart::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60%;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 8%,
+        rgba(0, 180, 216, 0.3) 8%,
+        rgba(0, 180, 216, 0.3) 10%,
+        transparent 10%,
+        transparent 18%,
+        rgba(0, 180, 216, 0.5) 18%,
+        rgba(0, 180, 216, 0.5) 22%,
+        transparent 22%,
+        transparent 30%,
+        rgba(0, 180, 216, 0.4) 30%,
+        rgba(0, 180, 216, 0.4) 34%
+      );
+    }
+
+    .mockup-ai-panel {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: linear-gradient(135deg, rgba(255, 215, 0, 0.08), rgba(0, 180, 216, 0.08));
+      border-radius: 10px;
+      border: 1px solid rgba(255, 215, 0, 0.15);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .mockup-ai-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent), #FFAA00);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .mockup-ai-text {
+      flex: 1;
+    }
+
+    .mockup-ai-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .mockup-ai-desc {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    /* === 数据展示 === */
+    .stats-section {
+      padding: 3rem 5%;
+      background: linear-gradient(180deg, transparent, rgba(0, 102, 204, 0.03), transparent);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2rem;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: 2rem 1rem;
+      position: relative;
+    }
+
+    .stat-item::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 20%;
+      height: 60%;
+      width: 1px;
+      background: linear-gradient(180deg, transparent, var(--border), transparent);
+    }
+
+    .stat-item:last-child::after {
+      display: none;
+    }
+
+    .stat-number {
+      font-family: 'Outfit', sans-serif;
+      font-size: 3rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary-light), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    /* === 功能特性 === */
+    .features-section {
+      background: linear-gradient(180deg, rgba(0, 102, 204, 0.02), transparent);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary), var(--primary-light));
+      transform: scaleX(0);
+      transition: var(--transition);
+    }
+
+    .feature-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(0, 180, 216, 0.2);
+      box-shadow: var(--shadow-glow);
+    }
+
+    .feature-card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .feature-icon {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, rgba(0, 102, 204, 0.2), rgba(0, 180, 216, 0.2));
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 1.25rem;
+      border: 1px solid var(--border);
+    }
+
+    .feature-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-desc {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+
+    /* === AI亮点区域 === */
+    .ai-section {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ai-section::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(255, 215, 0, 0.06) 0%, transparent 70%);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .ai-showcase {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+    }
+
+    .ai-visual {
+      position: relative;
+    }
+
+    .ai-orbit {
+      width: 400px;
+      height: 400px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .ai-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(135deg, var(--accent), #FFAA00);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      box-shadow: 0 0 60px rgba(255, 215, 0, 0.3);
+      z-index: 2;
+      animation: pulse-glow 3s infinite;
+    }
+
+    .ai-orbit-ring {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border: 1px dashed rgba(255, 215, 0, 0.15);
+      border-radius: 50%;
+    }
+
+    .ai-orbit-ring.ring-1 {
+      width: 200px;
+      height: 200px;
+      animation: rotate 20s linear infinite;
+    }
+
+    .ai-orbit-ring.ring-2 {
+      width: 300px;
+      height: 300px;
+      animation: rotate 30s linear infinite reverse;
+    }
+
+    .ai-orbit-ring.ring-3 {
+      width: 400px;
+      height: 400px;
+      animation: rotate 40s linear infinite;
+    }
+
+    .ai-node {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      background: var(--bg-card);
+      border: 1px solid rgba(255, 215, 0, 0.2);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      transition: var(--transition);
+    }
+
+    .ai-node:hover {
+      transform: scale(1.2);
+      border-color: var(--accent);
+      background: var(--bg-card-hover);
+    }
+
+    .ai-node.node-1 { top: 0; left: 50%; transform: translate(-50%, -50%); }
+    .ai-node.node-2 { top: 20%; right: 0; transform: translate(50%, -50%); }
+    .ai-node.node-3 { bottom: 20%; right: 0; transform: translate(50%, 50%); }
+    .ai-node.node-4 { bottom: 0; left: 50%; transform: translate(-50%, 50%); }
+    .ai-node.node-5 { bottom: 20%; left: 0; transform: translate(-50%, 50%); }
+    .ai-node.node-6 { top: 20%; left: 0; transform: translate(-50%, -50%); }
+
+    .ai-content .feature-list {
+      list-style: none;
+      margin-top: 1.5rem;
+    }
+
+    .ai-content .feature-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.75rem 0;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .ai-content .feature-list li:last-child {
+      border-bottom: none;
+    }
+
+    .ai-content .feature-list .check {
+      color: var(--accent);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* === 技术架构 === */
+    .arch-section {
+      background: linear-gradient(180deg, transparent, rgba(0, 102, 204, 0.02));
+    }
+
+    .arch-flow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 3rem;
+    }
+
+    .arch-block {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem 2rem;
+      text-align: center;
+      min-width: 160px;
+      transition: var(--transition);
+    }
+
+    .arch-block:hover {
+      border-color: var(--primary-light);
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-glow);
+    }
+
+    .arch-block-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .arch-block-title {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 0.95rem;
+    }
+
+    .arch-block-desc {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      margin-top: 0.25rem;
+    }
+
+    .arch-arrow {
+      color: var(--primary-light);
+      font-size: 1.5rem;
+      animation: bounce-x 2s infinite;
+    }
+
+    .arch-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+
+    .arch-detail-card {
+      background: var(--bg-card);
+      border-radius: 14px;
+      padding: 1.5rem;
+      border: 1px solid var(--border);
+    }
+
+    .arch-detail-card h4 {
+      color: var(--primary-light);
+      font-size: 1rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .arch-detail-card p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      line-height: 1.7;
+    }
+
+    /* === 部署优势 === */
+    .deploy-section {
+      position: relative;
+    }
+
+    .deploy-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .deploy-card {
+      display: flex;
+      gap: 1.25rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.75rem;
+      transition: var(--transition);
+    }
+
+    .deploy-card:hover {
+      border-color: rgba(0, 180, 216, 0.2);
+      transform: translateX(5px);
+    }
+
+    .deploy-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, rgba(0, 102, 204, 0.2), rgba(0, 180, 216, 0.2));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+
+    .deploy-content h4 {
+      color: var(--text-primary);
+      font-size: 1.1rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .deploy-content p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    /* === CTA区域 === */
+    .cta-section {
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-section::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, rgba(0, 180, 216, 0.06) 0%, transparent 60%);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .cta-box {
+      background: linear-gradient(135deg, var(--bg-card), rgba(0, 102, 204, 0.1));
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 4rem 3rem;
+      max-width: 800px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .cta-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    .cta-desc {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      margin-bottom: 2rem;
+    }
+
+    /* === 页脚 === */
+    .footer {
+      padding: 3rem 5%;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .footer-brand {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    /* === 动画 === */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInRight {
+      from {
+        opacity: 0;
+        transform: translateX(40px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 60px rgba(255, 215, 0, 0.3); }
+      50% { box-shadow: 0 0 80px rgba(255, 215, 0, 0.5); }
+    }
+
+    @keyframes rotate {
+      from { transform: translate(-50%, -50%) rotate(0deg); }
+      to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    @keyframes bounce-x {
+      0%, 100% { transform: translateX(0); }
+      50% { transform: translateX(5px); }
+    }
+
+    /* 滚动显示 */
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* === 响应式 === */
+    @media (max-width: 1024px) {
+      .hero-grid {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+
+      .hero-subtitle {
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .hero-cta-group {
+        justify-content: center;
+      }
+
+      .hero-visual {
+        order: -1;
+        max-width: 500px;
+        margin: 0 auto;
+      }
+
+      .ai-showcase {
+        grid-template-columns: 1fr;
+      }
+
+      .ai-visual {
+        order: -1;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .stat-item:nth-child(2)::after {
+        display: none;
+      }
+
+      .features-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .arch-detail-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .nav-links, .nav-cta {
+        display: none;
+      }
+
+      .mobile-menu-btn {
+        display: block;
+      }
+
+      .hero-title {
+        font-size: 2.5rem;
+      }
+
+      .section-title {
+        font-size: 2rem;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+
+      .stat-item::after {
+        display: none;
+      }
+
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .deploy-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .arch-flow {
+        flex-direction: column;
+      }
+
+      .arch-arrow {
+        transform: rotate(90deg);
+        animation: bounce-y 2s infinite;
+      }
+
+      .arch-detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .cta-box {
+        padding: 2.5rem 1.5rem;
+      }
+
+      .cta-title {
+        font-size: 1.8rem;
+      }
+
+      .ai-orbit {
+        width: 300px;
+        height: 300px;
+      }
+
+      .ai-orbit-ring.ring-1 { width: 150px; height: 150px; }
+      .ai-orbit-ring.ring-2 { width: 225px; height: 225px; }
+      .ai-orbit-ring.ring-3 { width: 300px; height: 300px; }
+
+      section {
+        padding: 4rem 5%;
+      }
+    }
+
+    @keyframes bounce-y {
+      0%, 100% { transform: translateY(0) rotate(90deg); }
+      50% { transform: translateY(5px) rotate(90deg); }
+    }
+  </style>
+</head>
+<body>
+  <!-- 粒子背景画布 -->
+  <canvas id="particles-canvas"></canvas>
+
+  <!-- 导航栏 -->
+  <nav class="navbar" id="navbar">
+    <a href="#" class="logo">
+      <div class="logo-icon">🦷</div>
+      数奥口腔<span>云</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#features">核心功能</a></li>
+      <li><a href="#ai">AI智能</a></li>
+      <li><a href="#arch">技术架构</a></li>
+      <li><a href="#deploy">部署方案</a></li>
+    </ul>
+    <button class="nav-cta">立即体验</button>
+    <button class="mobile-menu-btn">☰</button>
+  </nav>
+
+  <!-- Hero区域 -->
+  <section class="hero">
+    <div class="hero-grid">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <span class="dot"></span>
+          集成AI的新一代口腔门诊管理系统
+        </div>
+        <h1 class="hero-title">
+          让口腔诊所<br>
+          <span class="highlight">更智能、更高效</span>
+        </h1>
+        <p class="hero-subtitle">
+          数奥口腔云是集成了22+ AI Agent的一站式SaaS管理平台，覆盖患者管理、电子病历、预约排班、经营分析等全业务流程，助力诊所数字化转型。
+        </p>
+        <div class="hero-cta-group">
+          <a href="#features" class="btn-primary">
+            探索功能 →
+          </a>
+          <a href="#ai" class="btn-secondary">
+            了解AI能力
+          </a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="dashboard-mockup">
+          <div class="mockup-header">
+            <div class="mockup-dot red"></div>
+            <div class="mockup-dot yellow"></div>
+            <div class="mockup-dot green"></div>
+          </div>
+          <div class="mockup-grid">
+            <div class="mockup-card">
+              <div class="mockup-card-label">今日预约</div>
+              <div class="mockup-card-value">24</div>
+            </div>
+            <div class="mockup-card">
+              <div class="mockup-card-label">本月营收</div>
+              <div class="mockup-card-value">¥128K</div>
+            </div>
+            <div class="mockup-card">
+              <div class="mockup-card-label">新增患者</div>
+              <div class="mockup-card-value">18</div>
+            </div>
+          </div>
+          <div class="mockup-chart"></div>
+          <div class="mockup-ai-panel">
+            <div class="mockup-ai-icon">✨</div>
+            <div class="mockup-ai-text">
+              <div class="mockup-ai-title">AI 智能助手</div>
+              <div class="mockup-ai-desc">正在分析今日经营数据...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 数据展示 -->
+  <section class="stats-section">
+    <div class="stats-grid">
+      <div class="stat-item reveal">
+        <div class="stat-number" data-target="22">0</div>
+        <div class="stat-label">AI Agent覆盖场景</div>
+      </div>
+      <div class="stat-item reveal">
+        <div class="stat-number" data-target="18">0</div>
+        <div class="stat-label">MCP业务查询Tool</div>
+      </div>
+      <div class="stat-item reveal">
+        <div class="stat-number" data-target="12">0</div>
+        <div class="stat-label">核心业务模块</div>
+      </div>
+      <div class="stat-item reveal">
+        <div class="stat-number" data-target="100">0</div>
+        <div class="stat-label">离线可用性%</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 功能特性 -->
+  <section class="features-section" id="features">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-tag">核心功能</div>
+        <h2 class="section-title">一站式数字化诊所管理</h2>
+        <p class="section-desc">覆盖口腔门诊日常运营所需的全部功能模块，数据互通，流程闭环</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card reveal">
+          <div class="feature-icon">👤</div>
+          <h3 class="feature-title">患者360°全景视图</h3>
+          <p class="feature-desc">整合患者基础资料、就诊记录、影像资料、风险标签、治疗时间轴，一个页面掌握患者全貌。</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon">📅</div>
+          <h3 class="feature-title">智能预约排班</h3>
+          <p class="feature-desc">日历/列表双模式管理预约，支持医生排班、时段分配，AI辅助预约优化建议。</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon">📝</div>
+          <h3 class="feature-title">电子病历系统</h3>
+          <p class="feature-desc">病历模板、常用语、AI病历扩写，快速生成规范病历，支持知情同意书电子签署。</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon">💰</div>
+          <h3 class="feature-title">治疗收费管理</h3>
+          <p class="feature-desc">治疗项目目录、处置记录、收费退款全流程管理，财务流水清晰可追溯。</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon">📦</div>
+          <h3 class="feature-title">耗材库存管理</h3>
+          <p class="feature-desc">耗材档案、采购记录、库存预警、分类统计，低库存自动提醒，避免缺货影响诊疗。</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon">🏭</div>
+          <h3 class="feature-title">义齿加工全链路</h3>
+          <p class="feature-desc">加工厂管理、订单跟踪、账单结算、周转统计，覆盖义齿加工完整业务流程。</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon">📊</div>
+          <h3 class="feature-title">经营分析报表</h3>
+          <p class="feature-desc">日报/周报/月报自动生成，多维度经营数据分析，助力诊所管理者科学决策。</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon">💬</div>
+          <h3 class="feature-title">咨询营销管理</h3>
+          <p class="feature-desc">咨询记录、跟进历史、渠道分析、漏斗转化、广告投放统计，提升获客效率。</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon">🏥</div>
+          <h3 class="feature-title">医保结算支持</h3>
+          <p class="feature-desc">医保配置、患者档案、结算流程完整支持，满足口腔门诊医保业务需求。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI亮点 -->
+  <section class="ai-section" id="ai">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-tag">AI 智能中心</div>
+        <h2 class="section-title">AI 驱动的智能诊所</h2>
+        <p class="section-desc">22+ AI Agent覆盖全业务场景，通过 n8n 工作流配置驱动，无需在系统内配置任何 API Key</p>
+      </div>
+      <div class="ai-showcase">
+        <div class="ai-visual reveal">
+          <div class="ai-orbit">
+            <div class="ai-orbit-ring ring-1"></div>
+            <div class="ai-orbit-ring ring-2"></div>
+            <div class="ai-orbit-ring ring-3"></div>
+            <div class="ai-center">🤖</div>
+            <div class="ai-node node-1">📝</div>
+            <div class="ai-node node-2">📊</div>
+            <div class="ai-node node-3">💬</div>
+            <div class="ai-node node-4">📅</div>
+            <div class="ai-node node-5">🏥</div>
+            <div class="ai-node node-6">💡</div>
+          </div>
+        </div>
+        <div class="ai-content reveal">
+          <h3 class="feature-title" style="font-size: 1.5rem; margin-bottom: 1rem;">全场景AI能力矩阵</h3>
+          <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+            系统不直接调用 OpenAI API，所有 AI 能力通过 n8n 工作流间接调用。支持 OpenAI、Claude、DeepSeek 等多种模型提供商，灵活切换。
+          </p>
+          <ul class="feature-list">
+            <li><span class="check">✓</span> <strong>病历扩写</strong> — 基于简短记录自动生成规范病历</li>
+            <li><span class="check">✓</span> <strong>患者洞察</strong> — 智能分析患者画像与风险点</li>
+            <li><span class="check">✓</span> <strong>经营分析</strong> — 自然语言对话式查询经营数据</li>
+            <li><span class="check">✓</span> <strong>预约辅助</strong> — 智能排班建议与预约优化</li>
+            <li><span class="check">✓</span> <strong>咨询辅助</strong> — 跟进建议与转化分析</li>
+            <li><span class="check">✓</span> <strong>耗材/库存辅助</strong> — 采购建议与分类优化</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 技术架构 -->
+  <section class="arch-section" id="arch">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-tag">技术架构</div>
+        <h2 class="section-title">现代化技术栈，稳定可靠</h2>
+        <p class="section-desc">前后端分离架构，Docker容器化部署，支持离线优先与开放集成</p>
+      </div>
+      <div class="arch-flow reveal">
+        <div class="arch-block">
+          <div class="arch-block-icon">🖥️</div>
+          <div class="arch-block-title">Vue 2 前端</div>
+          <div class="arch-block-desc">Element UI + Vue Router</div>
+        </div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-block">
+          <div class="arch-block-icon">⚙️</div>
+          <div class="arch-block-title">Spring Boot 3</div>
+          <div class="arch-block-desc">MyBatis + MySQL</div>
+        </div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-block">
+          <div class="arch-block-icon">🗄️</div>
+          <div class="arch-block-title">MySQL</div>
+          <div class="arch-block-desc">Flyway 迁移管理</div>
+        </div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-block">
+          <div class="arch-block-icon">🤖</div>
+          <div class="arch-block-title">n8n 工作流</div>
+          <div class="arch-block-desc">AI Agent 编排</div>
+        </div>
+      </div>
+      <div class="arch-detail-grid">
+        <div class="arch-detail-card reveal">
+          <h4>🔌 MCP Data Server</h4>
+          <p>独立 Python 服务，通过 stdio/SSE 连接 Claude Code CLI，暴露 18+ 业务查询 Tool，直接读取 MySQL 或调用后端 API。</p>
+        </div>
+        <div class="arch-detail-card reveal">
+          <h4>📴 离线优先架构</h4>
+          <p>基于 Dexie.js + IndexedDB 实现离线缓存、待同步队列与自动回放。断网时也能正常录入患者、预约、病历。</p>
+        </div>
+        <div class="arch-detail-card reveal">
+          <h4>🔐 三级权限体系</h4>
+          <p>Admin / Doctor / Nurse 三级角色，前端路由 + 后端菜单权限双重控制，敏感操作支持二级密码验证。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 部署优势 -->
+  <section class="deploy-section" id="deploy">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-tag">部署方案</div>
+        <h2 class="section-title">Docker 一键部署，快速上线</h2>
+        <p class="section-desc">前后端 + MySQL + n8n + MCP 全部容器化，保证开发环境与生产环境一致</p>
+      </div>
+      <div class="deploy-grid">
+        <div class="deploy-card reveal">
+          <div class="deploy-icon">🐳</div>
+          <div class="deploy-content">
+            <h4>Docker Compose 编排</h4>
+            <p>一条命令启动完整开发环境，前后端、数据库、AI工作流服务一键拉起</p>
+          </div>
+        </div>
+        <div class="deploy-card reveal">
+          <div class="deploy-icon">🔄</div>
+          <div class="deploy-content">
+            <h4>热重载开发体验</h4>
+            <p>Spring Boot DevTools + Vue HMR，代码修改后秒级生效，无需重启容器</p>
+          </div>
+        </div>
+        <div class="deploy-card reveal">
+          <div class="deploy-icon">📦</div>
+          <div class="deploy-content">
+            <h4>自动化部署脚本</h4>
+            <p>内置生产部署脚本，自动构建、备份、替换、重启，支持跳过测试与回归验证</p>
+          </div>
+        </div>
+        <div class="deploy-card reveal">
+          <div class="deploy-icon">🌐</div>
+          <div class="deploy-content">
+            <h4>开放 API 集成</h4>
+            <p>标准化开放接口供 n8n、MCP 及外部系统调用，支持 Webhook 通知与数据同步</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <div class="container">
+      <div class="cta-box reveal">
+        <h2 class="cta-title">开启智能诊所新时代</h2>
+        <p class="cta-desc">数奥口腔云已准备好助力您的诊所实现数字化转型，让 AI 成为您的得力助手。</p>
+        <div class="hero-cta-group" style="justify-content: center;">
+          <button class="btn-primary">立即预约演示</button>
+          <button class="btn-secondary">联系咨询</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 页脚 -->
+  <footer class="footer">
+    <div class="footer-brand">数奥口腔云</div>
+    <p>集成AI的口腔门诊SaaS管理系统 · 让诊所更智能、更高效</p>
+    <p style="margin-top: 0.5rem; font-size: 0.8rem;">© 2024 数奥科技. All rights reserved.</p>
+  </footer>
+
+  <script>
+    // 导航栏滚动效果
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 50) {
+        navbar.classList.add('scrolled');
+      } else {
+        navbar.classList.remove('scrolled');
+      }
+    });
+
+    // 滚动显示动画
+    const revealElements = document.querySelectorAll('.reveal');
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+    revealElements.forEach(el => revealObserver.observe(el));
+
+    // 数字计数动画
+    const statNumbers = document.querySelectorAll('.stat-number');
+    const countObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const el = entry.target;
+          const target = parseInt(el.dataset.target);
+          const duration = 2000;
+          const step = target / (duration / 16);
+          let current = 0;
+
+          const timer = setInterval(() => {
+            current += step;
+            if (current >= target) {
+              el.textContent = target + '+';
+              clearInterval(timer);
+            } else {
+              el.textContent = Math.floor(current);
+            }
+          }, 16);
+
+          countObserver.unobserve(el);
+        }
+      });
+    }, { threshold: 0.5 });
+
+    statNumbers.forEach(el => countObserver.observe(el));
+
+    // 粒子背景
+    const canvas = document.getElementById('particles-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    let animationId;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    class Particle {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.vx = (Math.random() - 0.5) * 0.3;
+        this.vy = (Math.random() - 0.5) * 0.3;
+        this.radius = Math.random() * 1.5 + 0.5;
+        this.opacity = Math.random() * 0.3 + 0.1;
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+
+        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+      }
+
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(0, 180, 216, ${this.opacity})`;
+        ctx.fill();
+      }
+    }
+
+    function initParticles() {
+      particles = [];
+      const count = Math.min(80, Math.floor((canvas.width * canvas.height) / 15000));
+      for (let i = 0; i < count; i++) {
+        particles.push(new Particle());
+      }
+    }
+
+    function drawConnections() {
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 150) {
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = `rgba(0, 180, 216, ${0.08 * (1 - dist / 150)})`;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+        }
+      }
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+
+      drawConnections();
+      animationId = requestAnimationFrame(animate);
+    }
+
+    initParticles();
+    animate();
+
+    // 页面卸载时清理
+    window.addEventListener('beforeunload', () => {
+      cancelAnimationFrame(animationId);
+    });
+  </script>
+</body>
+</html>

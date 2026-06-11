@@ -9,15 +9,16 @@ CLAUDE.md
 .vscode/
 
 # Docker 运行时数据
-clinic-saas-source/docker/mysql-data/
-clinic-saas-source/docker/patient-uploads/
+【01】开发区-写代码和调试/clinic-saas-source/docker/mysql-data/
+【01】开发区-写代码和调试/clinic-saas-source/docker/mysql-data-dev/
+【01】开发区-写代码和调试/clinic-saas-source/docker/patient-uploads/
 
 # 后端构建产物
-clinic-saas-source/saas-springboot-src/target/
+【01】开发区-写代码和调试/clinic-saas-source/saas-springboot-src/target/
 
 # 前端依赖和构建产物
-clinic-saas-source/saas-vue-src/node_modules/
-clinic-saas-source/saas-vue-src/dist/
+【01】开发区-写代码和调试/clinic-saas-source/saas-vue-src/node_modules/
+【01】开发区-写代码和调试/clinic-saas-source/saas-vue-src/dist/
 
 # Python 虚拟环境与缓存
 __pycache__/
@@ -25,7 +26,11 @@ __pycache__/
 .venv/
 
 # n8n 部署包（工作流导出保留在 n8n-json/）
-n8n/
+【01】开发区-写代码和调试/n8n/
+
+# Docker 交付包与镜像
+【01】开发区-写代码和调试/clinic-saas-source/docker/deliver/
+*.tar
 
 # 环境变量（可能包含敏感信息）
 .env
